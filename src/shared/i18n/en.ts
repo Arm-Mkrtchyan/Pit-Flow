@@ -308,6 +308,18 @@ export const en = {
     'The app started empty. Details: {message}. A copy of the old data was kept under "{backup}".',
   'load.noBackup': '(backup in progress)',
 
+  // Units
+  'unit.t': 't',
+  'unit.pct': '%',
+  'unit.gpt': 'g/t',
+  'unit.m3': 'm³',
+  'unit.tm3': 't/m³',
+  'unit.m': 'm',
+  'unit.s': 's',
+
+  // Language
+  'language.label': 'Language',
+
   'common.cancel': 'Cancel',
   'common.close': 'Close',
 } as const;

@@ -14,7 +14,7 @@ import {
   Typography,
 } from 'antd';
 import dayjs from 'dayjs';
-import { t } from '../../shared/i18n/t';
+import { t, unit, type UnitCode } from '../../shared/i18n/t';
 import { fmtTonnes } from '../../shared/format';
 import { formatThousands, parseThousands } from '../../shared/ui/numberInput';
 import { clearAllData, useAppStore } from '../../store';
@@ -38,7 +38,7 @@ interface NumField {
   scale?: number;
   precision?: number;
   thousands?: boolean;
-  suffix?: string;
+  suffix?: UnitCode;
 }
 
 const GENERAL: NumField[] = [
@@ -132,7 +132,7 @@ function NumberSetting({ field }: { field: NumField }) {
         value={Number((value * scale).toPrecision(12))}
         formatter={field.thousands ? formatThousands : undefined}
         parser={field.thousands ? parseThousands : undefined}
-        addonAfter={field.suffix}
+        addonAfter={field.suffix ? unit(field.suffix) : undefined}
         onChange={(v) => {
           if (v !== null && Number.isFinite(v)) update({ [field.key]: v / scale });
         }}
@@ -263,7 +263,7 @@ export function SettingsDrawer() {
             onChange={(v) => update({ roundingStep: v })}
             options={[1, 10, 100].map((v) => ({
               value: v as Settings['roundingStep'],
-              label: `${v} t`,
+              label: `${v} ${unit('t')}`,
             }))}
             aria-label={t('settings.rounding')}
           />

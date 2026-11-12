@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Button, InputNumber, Popover, Space } from 'antd';
-import { t } from '../../shared/i18n/t';
+import { t, unit } from '../../shared/i18n/t';
 import { formatThousands, parseThousands } from '../../shared/ui/numberInput';
 import type { RowDescriptor } from '../../types/domain';
 
@@ -39,7 +39,7 @@ export function ApplyAllPopover({ desc, onApply }: Props) {
               parser={thousands ? parseThousands : undefined}
               onChange={setValue}
               onPressEnter={() => apply(value)}
-              addonAfter={desc.unit}
+              addonAfter={unit(desc.unit)}
             />
             <Button type="primary" onClick={() => apply(value)}>
               {t('schedule.apply')}

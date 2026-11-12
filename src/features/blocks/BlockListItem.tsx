@@ -1,6 +1,6 @@
 import { memo } from 'react';
 import { Space, Tag, Tooltip, Typography, theme } from 'antd';
-import { t } from '../../shared/i18n/t';
+import { t, unit } from '../../shared/i18n/t';
 import { fmtGrade, fmtTonnes } from '../../shared/format';
 import { materialColor } from '../../shared/utils/materialColor';
 import type { BlockView } from './useBlockListView';
@@ -47,8 +47,8 @@ export const BlockListItem = memo(function BlockListItem({ view, index, active, 
         </Space>
       </div>
       <Typography.Text type="secondary" className={styles.itemStats}>
-        {fmtTonnes(remaining)} t · {t('field.cu')} {fmtGrade(block.cu)} % · {t('field.mo')}{' '}
-        {fmtGrade(block.mo)} % · {t('field.eq')} {fmtGrade(block.eq)} %
+        {fmtTonnes(remaining)} {unit('t')} · {t('field.cu')} {fmtGrade(block.cu)} % ·{' '}
+        {t('field.mo')} {fmtGrade(block.mo)} % · {t('field.eq')} {fmtGrade(block.eq)} %
       </Typography.Text>
     </div>
   );

@@ -7,6 +7,7 @@ import { persistedSchema } from './schema';
 import { createBlocksSlice } from './slices/blocks';
 import { createHistorySlice } from './slices/history';
 import { createPlanSlice } from './slices/plan';
+import { createPrefsSlice } from './slices/prefs';
 import { createSettingsSlice } from './slices/settings';
 import { createSolutionSlice } from './slices/solution';
 import { createUiSlice } from './slices/ui';
@@ -23,7 +24,7 @@ export const STORAGE_KEY = 'pitflow-state';
 /** Persisted subset: inputs, settings, last solution and history. UI state is not persisted. */
 type Persisted = Pick<
   RootState,
-  'blocks' | 'userInputs' | 'plan' | 'settings' | 'solution' | 'history'
+  'blocks' | 'userInputs' | 'plan' | 'settings' | 'solution' | 'history' | 'language'
 >;
 
 const partialize = (s: RootState): Persisted => ({
@@ -33,6 +34,7 @@ const partialize = (s: RootState): Persisted => ({
   settings: s.settings,
   solution: s.solution,
   history: s.history,
+  language: s.language,
 });
 
 export const useAppStore = create<RootState>()(
@@ -43,6 +45,7 @@ export const useAppStore = create<RootState>()(
       ...createSettingsSlice(...a),
       ...createSolutionSlice(...a),
       ...createHistorySlice(...a),
+      ...createPrefsSlice(...a),
       ...createUiSlice(...a),
     }),
     {

@@ -2,7 +2,7 @@ import type { Block, BlockFieldKey } from '../../types/domain';
 import { makeBlockId } from '../../shared/utils/ids';
 import { t } from '../../shared/i18n/t';
 import { fmtNumber } from '../../shared/format';
-import { blockRowSchema, parseNumber, parseString } from './rowSchema';
+import { createBlockRowSchema, parseNumber, parseString } from './rowSchema';
 import type { Cell, FieldMapping, ImportIssue, MappedResult, ParsedFile } from './types';
 
 const DENSITY_TOLERANCE = 0.01;
@@ -16,6 +16,7 @@ export function mapRows(file: ParsedFile, mapping: FieldMapping): MappedResult {
   const blocks: Block[] = [];
   const seen = new Set<string>();
   let totalRows = 0;
+  const schema = createBlockRowSchema();
 
   file.rows.forEach((row, i) => {
     if (isBlankRow(row)) return;
@@ -28,7 +29,7 @@ export function mapRows(file: ParsedFile, mapping: FieldMapping): MappedResult {
     const optNum = (k: BlockFieldKey) =>
       mapping[k] === undefined ? undefined : parseNumber(cell(k));
 
-    const parsed = blockRowSchema.safeParse({
+    const parsed = schema.safeParse({
       elevation: parseNumber(cell('elevation')),
       group: parseNumber(cell('group')),
       material: parseString(cell('material')),

@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { Layout, Typography } from 'antd';
 import { t } from '../shared/i18n/t';
+import { LanguageSwitch } from './LanguageSwitch';
 import styles from './AppLayout.module.css';
 
 const { Header, Sider, Content } = Layout;
@@ -19,6 +20,9 @@ export function AppLayout({ left, center, right }: AppLayoutProps) {
           {t('app.title')}
         </Typography.Title>
         <Typography.Text className={styles.subtitle}>{t('app.subtitle')}</Typography.Text>
+        <div className={styles.headerRight}>
+          <LanguageSwitch />
+        </div>
       </Header>
       <Layout>
         <Sider width={340} theme="light" className={styles.sider} aria-label={t('layout.blocks')}>

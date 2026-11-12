@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Button, Empty, Table, Tag, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { t } from '../../shared/i18n/t';
+import { t, unit } from '../../shared/i18n/t';
 import { fmtByUnit, fmtTonnes } from '../../shared/format';
 import { useAppStore } from '../../store';
 import type { BlockClass, BlockId, IsoDate, RowDescriptor, RowUnit } from '../../types/domain';
@@ -110,7 +110,7 @@ export function ScheduleTable() {
               <div className={styles.label}>
                 <span>
                   <Typography.Text strong>{t(row.desc.labelKey)}</Typography.Text>{' '}
-                  <Typography.Text type="secondary">({row.desc.unit})</Typography.Text>{' '}
+                  <Typography.Text type="secondary">({unit(row.desc.unit)})</Typography.Text>{' '}
                   {row.desc.kind === 'limit' && <Tag bordered={false}>{t('row.kind.limit')}</Tag>}
                 </span>
                 <ApplyAllPopover desc={row.desc} onApply={(v) => applyToAll(row.desc.key, v)} />
@@ -133,13 +133,13 @@ export function ScheduleTable() {
             return (
               <span>
                 {t('result.achieved', { row: t(row.desc.labelKey) })}{' '}
-                <Typography.Text type="secondary">({row.desc.unit})</Typography.Text>
+                <Typography.Text type="secondary">({unit(row.desc.unit)})</Typography.Text>
               </span>
             );
           case 'info':
             return (
               <Typography.Text type="secondary">
-                {t(row.labelKey)} ({row.unit})
+                {t(row.labelKey)} ({unit(row.unit)})
               </Typography.Text>
             );
           case 'alloc':

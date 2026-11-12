@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Descriptions, Drawer, Empty, Table, Tag, Typography } from 'antd';
-import { t } from '../../shared/i18n/t';
+import { t, unit } from '../../shared/i18n/t';
 import { fmtByUnit, fmtDeviation, fmtGrade, fmtTonnes } from '../../shared/format';
 import { useAppStore } from '../../store';
 import type { Allocation, IsoDate } from '../../types/domain';
@@ -43,7 +43,7 @@ export function DayAllocationDrawer({ date, onClose }: Props) {
               return (
                 <Descriptions.Item
                   key={desc.key}
-                  label={`${t(desc.labelKey)} (${desc.unit})`}
+                  label={`${t(desc.labelKey)} (${unit(desc.unit)})`}
                   contentStyle={{ background: colors[r.status] }}
                 >
                   <div>
@@ -59,7 +59,7 @@ export function DayAllocationDrawer({ date, onClose }: Props) {
               );
             })}
             {INFO_ROWS.map((info) => (
-              <Descriptions.Item key={info.key} label={`${t(info.labelKey)} (${info.unit})`}>
+              <Descriptions.Item key={info.key} label={`${t(info.labelKey)} (${unit(info.unit)})`}>
                 {fmtByUnit(result.info[info.key], info.unit)}
               </Descriptions.Item>
             ))}
@@ -86,23 +86,23 @@ export function DayAllocationDrawer({ date, onClose }: Props) {
                 ),
               },
               {
-                title: `${t('drawer.tonnes')} (t)`,
+                title: `${t('drawer.tonnes')} (${unit('t')})`,
                 dataIndex: 'tonnes',
                 align: 'right',
                 render: (v: number) => fmtTonnes(v),
               },
               {
-                title: `${t('field.cu')} %`,
+                title: `${t('field.cu')} ${unit('%')}`,
                 align: 'right',
                 render: (_, a) => fmtGrade(byId.get(a.blockId)?.cu),
               },
               {
-                title: `${t('field.mo')} %`,
+                title: `${t('field.mo')} ${unit('%')}`,
                 align: 'right',
                 render: (_, a) => fmtGrade(byId.get(a.blockId)?.mo),
               },
               {
-                title: `${t('drawer.endBalance')} (t)`,
+                title: `${t('drawer.endBalance')} (${unit('t')})`,
                 dataIndex: 'endBalance',
                 align: 'right',
                 render: (v: number) => fmtTonnes(v),

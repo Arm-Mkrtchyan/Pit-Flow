@@ -105,6 +105,7 @@ export const persistedSchema = z.object({
     warnings: z.array(warning),
   }),
   history: z.array(acceptedEntry),
+  language: z.enum(['en', 'ru', 'hy']),
 });
 
 export type PersistedState = z.infer<typeof persistedSchema>;

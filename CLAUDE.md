@@ -63,7 +63,7 @@ Each feature exposes a public `index.ts`; import from other features only throug
 - Strict TypeScript; no `any`, no non-null assertions without a comment explaining why.
 - Function components + hooks only. Keep components presentational; logic goes in hooks, store slices or pure modules.
 - Use antd components and theme tokens; no custom CSS frameworks. Minimal CSS modules only where antd can't do it.
-- All user-facing strings go in `shared/i18n/en.ts`.
+- All user-facing strings go in `shared/i18n/en.ts` **and** their translations in `ru.ts` (Russian) and `hy.ts` (Armenian); a missing key fails typecheck. Use `t()` at render/call time, never at module load (it would freeze the language). Unit symbols go through `unit()`.
 - Solver code in `features/solver/` must stay framework-free and runnable in a Worker.
 - Number formatting via `shared/format.ts` only.
 - Persisted state changes require a schema version bump and a migration.

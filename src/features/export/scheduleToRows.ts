@@ -1,6 +1,6 @@
 import type { Block, BlockId, Schedule } from '../../types/domain';
 import { INFO_ROWS, ROW_DESCRIPTORS, type DayResult } from '../schedule';
-import { t } from '../../shared/i18n/t';
+import { t, unit } from '../../shared/i18n/t';
 
 export type SheetCell = string | number | null;
 export type Sheet = SheetCell[][];
@@ -23,18 +23,18 @@ export function scheduleToSheets(
     const label = t(desc.labelKey);
     summary.push([
       `${label} — ${t('export.target')}`,
-      desc.unit,
+      unit(desc.unit),
       ...results.map((r) => r.rows[desc.key].target),
     ]);
     summary.push([
       `${label} — ${t('export.achieved')}`,
-      desc.unit,
+      unit(desc.unit),
       ...results.map((r) => round(r.rows[desc.key].value, dpFor(desc.unit))),
     ]);
     if (desc.kind === 'target') {
       summary.push([
         `${label} — ${t('export.deviation')}`,
-        '%',
+        unit('%'),
         ...results.map((r) => {
           const dev = r.rows[desc.key].deviation;
           return dev === null ? null : round(dev * 100, 2);
@@ -45,7 +45,7 @@ export function scheduleToSheets(
   for (const info of INFO_ROWS) {
     summary.push([
       t(info.labelKey),
-      info.unit,
+      unit(info.unit),
       ...results.map((r) => round(r.info[info.key] ?? null, dpFor(info.unit))),
     ]);
   }

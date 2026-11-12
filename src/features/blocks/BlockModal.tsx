@@ -12,7 +12,7 @@ import {
   Tag,
   Typography,
 } from 'antd';
-import { t } from '../../shared/i18n/t';
+import { t, unit } from '../../shared/i18n/t';
 import { fmtGpt, fmtGrade, fmtNumber, fmtTonnes } from '../../shared/format';
 import { classifyBlock } from '../../shared/utils/blockClass';
 import { compareBlocks } from '../../shared/utils/ids';
@@ -102,15 +102,17 @@ function BlockModalContent({ block, input }: { block: Block; input: BlockUserInp
     >
       <Descriptions size="small" bordered column={2} title={t('blockModal.properties')}>
         <Descriptions.Item label={t('field.elevation')}>
-          {fmtNumber(block.elevation)} m
+          {fmtNumber(block.elevation)} {unit('m')}
         </Descriptions.Item>
         <Descriptions.Item label={t('field.group')}>{fmtNumber(block.group)}</Descriptions.Item>
-        <Descriptions.Item label={t('field.weight')}>{fmtTonnes(block.weight)} t</Descriptions.Item>
+        <Descriptions.Item label={t('field.weight')}>
+          {fmtTonnes(block.weight)} {unit('t')}
+        </Descriptions.Item>
         <Descriptions.Item label={t('field.volume')}>
-          {opt(block.volume, fmtTonnes, 'm³')}
+          {opt(block.volume, fmtTonnes, unit('m³'))}
         </Descriptions.Item>
         <Descriptions.Item label={t('field.density')}>
-          {opt(block.density, fmtNumber, 't/m³')}
+          {opt(block.density, fmtNumber, unit('t/m³'))}
         </Descriptions.Item>
         <Descriptions.Item label={t('blockModal.sourceRow')}>{block.sourceRow}</Descriptions.Item>
         <Descriptions.Item label={t('field.cu')}>{fmtGrade(block.cu)} %</Descriptions.Item>
@@ -126,8 +128,12 @@ function BlockModalContent({ block, input }: { block: Block; input: BlockUserInp
             )
           </Typography.Text>
         </Descriptions.Item>
-        <Descriptions.Item label={t('field.as')}>{opt(block.as, fmtGpt, 'g/t')}</Descriptions.Item>
-        <Descriptions.Item label={t('field.pb')}>{opt(block.pb, fmtGpt, 'g/t')}</Descriptions.Item>
+        <Descriptions.Item label={t('field.as')}>
+          {opt(block.as, fmtGpt, unit('g/t'))}
+        </Descriptions.Item>
+        <Descriptions.Item label={t('field.pb')}>
+          {opt(block.pb, fmtGpt, unit('g/t'))}
+        </Descriptions.Item>
       </Descriptions>
 
       <Divider style={{ margin: '16px 0' }} />

@@ -42,20 +42,25 @@ const nonNeg = (label: I18nKey) => num(label).min(0, msg('import.err.negative', 
 const positive = (label: I18nKey) => num(label).positive(msg('import.err.positive', label));
 const grade = (label: I18nKey) => nonNeg(label).max(100, msg('import.err.gradeMax', label));
 
-export const blockRowSchema = z.object({
-  elevation: num('field.elevation'),
-  group: num('field.group'),
-  material: z
-    .string({ required_error: msg('import.err.missing', 'field.material') })
-    .min(1, msg('import.err.missing', 'field.material')),
-  volume: nonNeg('field.volume').optional(),
-  weight: positive('field.weight'),
-  cu: grade('field.cu'),
-  mo: grade('field.mo'),
-  as: nonNeg('field.as').optional(),
-  pb: nonNeg('field.pb').optional(),
-  eq: grade('field.eq'),
-  density: positive('field.density').optional(),
-});
+/**
+ * Row schema. Built per import (not at module load) so validation messages use the language
+ * active at the time of import.
+ */
+export const createBlockRowSchema = () =>
+  z.object({
+    elevation: num('field.elevation'),
+    group: num('field.group'),
+    material: z
+      .string({ required_error: msg('import.err.missing', 'field.material') })
+      .min(1, msg('import.err.missing', 'field.material')),
+    volume: nonNeg('field.volume').optional(),
+    weight: positive('field.weight'),
+    cu: grade('field.cu'),
+    mo: grade('field.mo'),
+    as: nonNeg('field.as').optional(),
+    pb: nonNeg('field.pb').optional(),
+    eq: grade('field.eq'),
+    density: positive('field.density').optional(),
+  });
 
-export type BlockRow = z.infer<typeof blockRowSchema>;
+export type BlockRow = z.infer<ReturnType<typeof createBlockRowSchema>>;
