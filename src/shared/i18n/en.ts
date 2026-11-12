@@ -102,6 +102,28 @@ export const en = {
   'import.warn.density':
     'Volume × density = {expected} t differs from weight {weight} t by {diff} %',
 
+  // Block modal
+  'blockModal.title': 'Block {id}',
+  'blockModal.properties': 'Properties from file',
+  'blockModal.id': 'Block ID',
+  'blockModal.class': 'Class',
+  'blockModal.classHint': 'Cu-eq {eq} % vs cutoff {cutoff} %',
+  'blockModal.sourceRow': 'File row',
+  'blockModal.remaining': 'Remaining stock (t)',
+  'blockModal.remainingHint': 'Between 0 and the original weight of {weight} t.',
+  'blockModal.setFull': 'Full',
+  'blockModal.setZero': 'Exhausted',
+  'blockModal.dependency': 'Depends on',
+  'blockModal.dependencyHint':
+    'This block can only be used once the selected block is fully extracted, starting on the day the parent is finished from a start-of-day balance below {threshold} t.',
+  'blockModal.dependencyNone': 'No dependency',
+  'blockModal.cycle': 'This would create a dependency cycle: {chain}',
+  'blockModal.self': 'A block cannot depend on itself.',
+  'blockModal.children': 'Blocks waiting on this one',
+  'blockModal.save': 'Save',
+  'blockModal.optionLabel': '{id} · {material} · {remaining} t',
+  'blockModal.lockedNow': 'Currently locked: parent still has {remaining} t.',
+
   'common.cancel': 'Cancel',
   'common.close': 'Close',
 } as const;

@@ -1,6 +1,6 @@
 import { Empty, Typography } from 'antd';
 import { t } from '../shared/i18n/t';
-import { BlockList } from '../features/blocks';
+import { BlockList, BlockModal } from '../features/blocks';
 import { ImportButton } from '../features/import';
 import { AppLayout } from './AppLayout';
 import styles from './AppLayout.module.css';
@@ -12,6 +12,7 @@ export function App() {
         <div className={styles.leftPanel}>
           <ImportButton />
           <BlockList />
+          <BlockModal />
         </div>
       }
       center={<Empty description={t('schedule.empty')} />}
