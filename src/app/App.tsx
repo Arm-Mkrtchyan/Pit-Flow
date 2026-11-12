@@ -1,7 +1,7 @@
-import { Empty, Typography } from 'antd';
-import { t } from '../shared/i18n/t';
 import { BlockList, BlockModal } from '../features/blocks';
+import { CalendarPanel } from '../features/calendar';
 import { ImportButton } from '../features/import';
+import { ScheduleTable } from '../features/schedule';
 import { AppLayout } from './AppLayout';
 import styles from './AppLayout.module.css';
 
@@ -15,13 +15,8 @@ export function App() {
           <BlockModal />
         </div>
       }
-      center={<Empty description={t('schedule.empty')} />}
-      right={
-        <>
-          <Typography.Title level={5}>{t('layout.calendar')}</Typography.Title>
-          <Typography.Text type="secondary">{t('calendar.placeholder')}</Typography.Text>
-        </>
-      }
+      center={<ScheduleTable />}
+      right={<CalendarPanel />}
     />
   );
 }

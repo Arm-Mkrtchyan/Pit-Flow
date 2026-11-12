@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { createBlocksSlice } from './slices/blocks';
+import { createPlanSlice } from './slices/plan';
 import { createSettingsSlice } from './slices/settings';
 import { createSolutionSlice } from './slices/solution';
 import { createUiSlice } from './slices/ui';
@@ -10,6 +11,7 @@ export type { RootState };
 /** Single app store. Persistence (IndexedDB) is added in M7. */
 export const useAppStore = create<RootState>()((...a) => ({
   ...createBlocksSlice(...a),
+  ...createPlanSlice(...a),
   ...createSettingsSlice(...a),
   ...createSolutionSlice(...a),
   ...createUiSlice(...a),

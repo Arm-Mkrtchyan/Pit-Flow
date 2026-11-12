@@ -17,6 +17,7 @@ import { fmtGpt, fmtGrade, fmtNumber, fmtTonnes } from '../../shared/format';
 import { classifyBlock } from '../../shared/utils/blockClass';
 import { compareBlocks } from '../../shared/utils/ids';
 import { materialColor } from '../../shared/utils/materialColor';
+import { formatThousands, parseThousands } from '../../shared/ui/numberInput';
 import { useAppStore } from '../../store';
 import type { Block, BlockId, BlockUserInput } from '../../types/domain';
 import { childrenOf, findCycleIfSet, formatChain, graphFromInputs } from './dependencyGraph';
@@ -30,10 +31,6 @@ export function BlockModal() {
   // key resets the draft state whenever another block is opened.
   return <BlockModalContent key={block.id} block={block} input={input} />;
 }
-
-const parseTonnes = (v: string | undefined): number => Number((v ?? '').replace(/[,\s]/g, ''));
-const formatTonnes = (v: number | string | undefined): string =>
-  v === undefined || v === '' ? '' : `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 
 function BlockModalContent({ block, input }: { block: Block; input: BlockUserInput }) {
   const blocks = useAppStore((s) => s.blocks);
@@ -149,8 +146,8 @@ function BlockModalContent({ block, input }: { block: Block; input: BlockUserInp
               max={block.weight}
               step={1000}
               value={remaining}
-              formatter={formatTonnes}
-              parser={parseTonnes}
+              formatter={formatThousands}
+              parser={parseThousands}
               onChange={setRemainingDraft}
               onPressEnter={save}
               aria-label={t('blockModal.remaining')}

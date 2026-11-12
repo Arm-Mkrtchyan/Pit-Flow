@@ -5,8 +5,6 @@ export const en = {
   'layout.blocks': 'Blocks',
   'layout.schedule': 'Schedule',
   'layout.calendar': 'Planning horizon',
-  'schedule.empty': 'Load blocks and select a date range to build the schedule.',
-  'calendar.placeholder': 'Select the planning horizon.',
 
   // Fields
   'field.elevation': 'Elevation',
@@ -123,6 +121,35 @@ export const en = {
   'blockModal.save': 'Save',
   'blockModal.optionLabel': '{id} · {material} · {remaining} t',
   'blockModal.lockedNow': 'Currently locked: parent still has {remaining} t.',
+
+  // Schedule rows
+  'row.tonnage': 'Daily productivity (ore)',
+  'row.cu': 'Copper content',
+  'row.mo': 'Molybdenum content',
+  'row.wasteMax': 'Max waste stripping',
+  'row.kind.target': 'target',
+  'row.kind.limit': 'max',
+
+  // Schedule table
+  'schedule.empty': 'Select a planning horizon on the right to build the schedule.',
+  'schedule.targets': 'Targets',
+  'schedule.rowHeader': 'Row',
+  'schedule.applyAll': 'Apply to all days',
+  'schedule.applyAllTitle': '{row} — all days',
+  'schedule.apply': 'Apply',
+  'schedule.resetDefault': 'Reset to default ({value})',
+  'schedule.overridden': 'Edited (default {value})',
+  'schedule.cellLabel': '{row} on {date}',
+  'schedule.daysCount': '{count} days',
+
+  // Calendar
+  'calendar.range': 'Date range',
+  'calendar.presets': 'Quick select',
+  'calendar.next': 'Next {days} days',
+  'calendar.clear': 'Clear',
+  'calendar.summary': '{days} days · {start} – {end}',
+  'calendar.none': 'No horizon selected.',
+  'calendar.maxDays': 'At most {days} days.',
 
   'common.cancel': 'Cancel',
   'common.close': 'Close',

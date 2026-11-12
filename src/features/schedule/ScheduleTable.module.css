@@ -1,0 +1,30 @@
+.cell {
+  width: 100%;
+}
+.cell :global(.ant-input-number-input) {
+  text-align: right;
+  padding-inline: 4px;
+}
+.overridden {
+  background: rgba(180, 101, 42, 0.1);
+  font-weight: 600;
+}
+.label {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.3;
+}
+.weekend {
+  color: #cf1322;
+}
+.dayHeader {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  line-height: 1.2;
+  font-weight: 500;
+}
+.dayHeader small {
+  font-weight: 400;
+  opacity: 0.65;
+}
