@@ -1,6 +1,10 @@
 .root {
   height: 100vh;
 }
+
+body {
+  margin: 0;
+}
 .header {
   display: flex;
   align-items: baseline;
