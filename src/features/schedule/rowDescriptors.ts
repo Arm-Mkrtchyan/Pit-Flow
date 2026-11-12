@@ -54,7 +54,7 @@ export const ROW_DESCRIPTORS: readonly RowDescriptor[] = [
     basis: 'tonnage',
     pool: 'waste',
     hard: true,
-    default: 30000,
+    default: 70000,
     min: 0,
     max: 1_000_000,
     precision: 0,
