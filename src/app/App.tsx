@@ -1,7 +1,7 @@
 import { BlockList, BlockModal } from '../features/blocks';
 import { CalendarPanel } from '../features/calendar';
 import { ImportButton } from '../features/import';
-import { ScheduleTable } from '../features/schedule';
+import { SchedulePanel } from '../features/schedule';
 import { AppLayout } from './AppLayout';
 import styles from './AppLayout.module.css';
 
@@ -15,7 +15,7 @@ export function App() {
           <BlockModal />
         </div>
       }
-      center={<ScheduleTable />}
+      center={<SchedulePanel />}
       right={<CalendarPanel />}
     />
   );

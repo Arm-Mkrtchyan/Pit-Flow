@@ -151,6 +151,32 @@ export const en = {
   'calendar.none': 'No horizon selected.',
   'calendar.maxDays': 'At most {days} days.',
 
+  // Solve
+  'solve.calculate': 'Calculate schedule',
+  'solve.cancel': 'Cancel',
+  'solve.needBlocks': 'Load blocks first.',
+  'solve.needRange': 'Select a planning horizon first.',
+  'solve.phase.loading': 'Loading solver…',
+  'solve.phase.building': 'Building model…',
+  'solve.phase.solving': 'Optimising…',
+  'solve.phase.rolling': 'Solving day {day} of {days}…',
+  'solve.elapsed': '{seconds} s',
+  'solve.done': 'Schedule calculated in {seconds} s.',
+  'solve.cancelled': 'Calculation cancelled.',
+  'solve.failed': 'Calculation failed: {error}',
+  'solve.status.optimal': 'Optimal',
+  'solve.status.time_limit': 'Best found (time limit)',
+  'solve.status.rolling_horizon': 'Day-by-day',
+  'solve.status.error': 'Error',
+  'solve.stale': 'Out of date — inputs changed',
+  'solve.summary': 'Ore {ore} t · waste stripped {waste} t · {blocks} blocks used',
+  'solve.warn.timeLimit': 'Time limit reached; showing the best solution found.',
+  'solve.warn.timeLimitRolling':
+    'Time limit reached; the day-by-day solution scored better and is shown.',
+  'solve.warn.fullModelFailed': 'Full model returned "{status}"; solved day by day instead.',
+  'solve.warn.tooLarge':
+    'Model too large to solve at once ({xVars} tonnage variables, {binaries} dependency binaries); solved day by day. Waste parents above the release threshold cannot be planned across days in this mode.',
+
   'common.cancel': 'Cancel',
   'common.close': 'Close',
 } as const;

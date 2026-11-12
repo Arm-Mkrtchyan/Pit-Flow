@@ -88,6 +88,8 @@ export interface Settings {
   rows: Record<RowKey, RowSettings>;
   oreCutoffEq: number;
   wasteCostPerTonne: number;
+  /** Extra penalty weight on early days (0 = none; 0.5 = day 1 counts 1.5× the last day). */
+  earlyDayPreference: number;
   releaseThreshold: number;
   releaseEpsilon: number;
   roundingStep: 1 | 10 | 100;
