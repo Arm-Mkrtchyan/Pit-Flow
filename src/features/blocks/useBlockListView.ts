@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import type { Block, BlockClass, BlockId, BlockUserInput } from '../../types/domain';
 import { classifyBlock } from '../../shared/utils/blockClass';
+import { effectiveBlock } from '../../shared/utils/effectiveBlock';
 import { compareBlocks } from '../../shared/utils/ids';
 
 export type SortKey = 'id' | 'remaining' | 'cu' | 'mo' | 'eq';
@@ -33,8 +34,9 @@ export function buildBlockViews(
   inputs: Record<BlockId, BlockUserInput>,
   oreCutoffEq: number,
 ): BlockView[] {
-  return blocks.map((block) => {
-    const input = inputs[block.id];
+  return blocks.map((fileBlock) => {
+    const input = inputs[fileBlock.id];
+    const block = effectiveBlock(fileBlock, input);
     const remaining = input?.remaining ?? block.weight;
     const lockedBy = (input?.dependsOn ?? []).filter((p) => (inputs[p]?.remaining ?? 0) > EPS);
     return {

@@ -1,5 +1,6 @@
 import type { Block, BlockFieldKey } from '../../types/domain';
 import { makeBlockId } from '../../shared/utils/ids';
+import { parseSiteName, siteBlockId, siteKey } from '../../shared/utils/site';
 import { t } from '../../shared/i18n/t';
 import { fmtNumber } from '../../shared/format';
 import { createBlockRowSchema, parseNumber, parseString } from './rowSchema';
@@ -41,6 +42,7 @@ export function mapRows(file: ParsedFile, mapping: FieldMapping): MappedResult {
       pb: optNum('pb'),
       eq: parseNumber(cell('eq')),
       density: optNum('density'),
+      site: mapping.site === undefined ? undefined : parseString(cell('site')),
     });
 
     if (!parsed.success) {
@@ -50,7 +52,17 @@ export function mapRows(file: ParsedFile, mapping: FieldMapping): MappedResult {
     }
     const r = parsed.data;
 
-    let id = makeBlockId(r.elevation, r.group, r.material);
+    // With a site (Участок) column the ID comes from it: "location_cn1740_mf_17" + MF → CN1740_MF_17.
+    // Otherwise the classic elevation-group-material ID.
+    const site = r.site !== undefined ? parseSiteName(r.site) : null;
+    if (r.site !== undefined && !site) {
+      issues.push({
+        level: 'warning',
+        row: rowNumber,
+        message: t('import.warn.siteUnparsed', { site: r.site }),
+      });
+    }
+    let id = site ? siteBlockId(site, r.material) : makeBlockId(r.elevation, r.group, r.material);
     if (seen.has(id)) {
       const renamed = `${id}-r${rowNumber}`;
       issues.push({
@@ -78,7 +90,7 @@ export function mapRows(file: ParsedFile, mapping: FieldMapping): MappedResult {
       }
     }
 
-    blocks.push({ id, sourceRow: rowNumber, ...r });
+    blocks.push({ id, sourceRow: rowNumber, ...r, ...(site ? { siteKey: siteKey(site) } : {}) });
   });
 
   return { blocks, issues, totalRows };

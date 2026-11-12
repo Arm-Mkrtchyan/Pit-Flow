@@ -37,6 +37,12 @@ export const FIELD_DEFS: FieldDef[] = [
   { key: 'pb', labelKey: 'field.pb', required: false, headers: ['pb'] },
   { key: 'eq', labelKey: 'field.eq', required: true, headers: ['cueq', 'cu_eq', 'cu eq', 'eq'] },
   { key: 'density', labelKey: 'field.density', required: false, headers: ['density', 'плотность'] },
+  {
+    key: 'site',
+    labelKey: 'field.site',
+    required: false,
+    headers: ['участок', 'site', 'location', 'տեղամաս'],
+  },
 ];
 
 /** Known columns that are deliberately not imported. */

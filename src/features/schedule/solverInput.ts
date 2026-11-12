@@ -8,6 +8,7 @@ import type {
 } from '../../types/domain';
 import type { SolverInput } from '../../types/solver';
 import { classifyBlock } from '../../shared/utils/blockClass';
+import { effectiveBlock } from '../../shared/utils/effectiveBlock';
 import { hashValue } from '../../shared/utils/hash';
 import { ROW_DESCRIPTORS } from './rowDescriptors';
 import { resolveTargets } from './targets';
@@ -22,8 +23,10 @@ export function buildSolverInput(
 ): SolverInput {
   const payload: Omit<SolverInput, 'inputHash'> = {
     days: [...days],
-    blocks: blocks.map((b) => {
-      const input = inputs[b.id];
+    blocks: blocks.map((fileBlock) => {
+      const input = inputs[fileBlock.id];
+      // Grades of the remaining material (recalculated from actuals when available).
+      const b = effectiveBlock(fileBlock, input);
       return {
         id: b.id,
         cu: b.cu,

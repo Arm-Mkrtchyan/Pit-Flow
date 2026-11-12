@@ -3,6 +3,7 @@ import { Descriptions, Drawer, Empty, Table, Tag, Typography } from 'antd';
 import { t, unit } from '../../shared/i18n/t';
 import { fmtByUnit, fmtDeviation, fmtGrade, fmtTonnes } from '../../shared/format';
 import { useAppStore } from '../../store';
+import { effectiveBlock } from '../../shared/utils/effectiveBlock';
 import type { Allocation, IsoDate } from '../../types/domain';
 import { fromIso } from '../calendar';
 import { useStatusColors } from './useStatusColors';
@@ -21,7 +22,11 @@ export function DayAllocationDrawer({ date, onClose }: Props) {
   const blocks = useAppStore((s) => s.blocks);
   const results = useScheduleResults();
   const colors = useStatusColors();
-  const byId = useMemo(() => new Map(blocks.map((b) => [b.id, b])), [blocks]);
+  const inputs = useAppStore((s) => s.userInputs);
+  const byId = useMemo(
+    () => new Map(blocks.map((b) => [b.id, effectiveBlock(b, inputs[b.id])])),
+    [blocks, inputs],
+  );
 
   const day = date ? schedule?.days.find((d) => d.date === date) : undefined;
   const result = date ? results?.get(date) : undefined;

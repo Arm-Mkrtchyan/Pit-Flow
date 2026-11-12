@@ -13,6 +13,7 @@ export function AcceptControls() {
   const accept = useAppStore((s) => s.acceptSchedule);
   const undo = useAppStore((s) => s.undoLastAcceptance);
   const stale = useIsStale();
+  const isActuals = lastEntry?.kind === 'actuals';
 
   const totals = useMemo(() => {
     if (!schedule) return null;
@@ -63,17 +64,17 @@ export function AcceptControls() {
       )}
       {lastEntry && (
         <Popconfirm
-          title={t('undo.confirmTitle')}
-          description={t('undo.confirm', {
+          title={t(isActuals ? 'undo.confirmTitleActuals' : 'undo.confirmTitle')}
+          description={t(isActuals ? 'undo.confirmActuals' : 'undo.confirm', {
             blocks: Object.keys(lastEntry.before).length,
             start: lastEntry.range[0],
             end: lastEntry.range[1],
           })}
-          okText={t('undo.button')}
+          okText={t(isActuals ? 'undo.buttonActuals' : 'undo.button')}
           cancelText={t('common.cancel')}
           onConfirm={onUndo}
         >
-          <Button size="small">{t('undo.button')}</Button>
+          <Button size="small">{t(isActuals ? 'undo.buttonActuals' : 'undo.button')}</Button>
         </Popconfirm>
       )}
     </Space.Compact>

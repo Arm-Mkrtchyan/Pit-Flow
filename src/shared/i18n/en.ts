@@ -308,6 +308,56 @@ export const en = {
     'The app started empty. Details: {message}. A copy of the old data was kept under "{backup}".',
   'load.noBackup': '(backup in progress)',
 
+  // Actuals (Excel) and site names
+  'field.site': 'Site (Участок)',
+  'import.warn.siteUnparsed':
+    'Site "{site}" is not in a recognised form (e.g. location_cn1740_mf_17); the classic ID was used.',
+  'blockModal.fileValue': 'file: {value}',
+  'blockModal.actuals':
+    'Actual extraction before {date}: {tonnes} t subtracted; grades recalculated for the remaining material.',
+  'blockModal.actualsOverrun':
+    'Actual extraction exceeded the block tonnage by {tonnes} t; check the block model.',
+  'actuals.button': 'Import actuals (Excel)',
+  'actuals.hint':
+    'Monthly plan/actual workbook: reads the ore table (Добыча Руды), actual rows only.',
+  'actuals.title': 'Actual extraction — {name}',
+  'actuals.fileInfo': 'Sheet "{sheet}" · {rows} actual rows · {shifts} shifts · {first} – {last}',
+  'actuals.before': 'Count actual extraction before',
+  'actuals.beforeHint': '{used} rows counted, {after} rows on or after this date ignored.',
+  'actuals.method':
+    'Remaining = file tonnage − extracted. Extracted grade = Σ(day tonnes × day grade) ÷ Σ day tonnes. Remaining grade = (file t × file grade − extracted t × extracted grade) ÷ remaining t. Ore rows of one site share the tonnes in proportion to their tonnage; waste rows are not changed. Re-importing recalculates from the file values.',
+  'actuals.noSites':
+    'The block list has no site (Участок) column, so actuals cannot be matched. Import a block file with a site column.',
+  'actuals.overrunWarn':
+    '{count} sites extracted more than their ore tonnage; those blocks are set to 0.',
+  'actuals.unstableWarn':
+    '{count} blocks have a small remainder whose grade changed a lot; check them against the block model.',
+  'actuals.nothingMatched': 'No actuals match blocks in the list.',
+  'actuals.col.name': 'Excel block',
+  'actuals.col.status': 'Status',
+  'actuals.col.extracted': 'Extracted, t',
+  'actuals.col.avg': 'Weighted avg grade, %',
+  'actuals.col.result': 'Result (remaining · grade before → after)',
+  'actuals.days': 'days',
+  'actuals.status.applied': 'Applied',
+  'actuals.status.overrun': 'Overrun +{tonnes} t',
+  'actuals.status.unmatched': 'Not in block list',
+  'actuals.status.noOre': 'No ore rows',
+  'actuals.status.ambiguous': 'Ambiguous: {names}',
+  'actuals.unstable': 'check',
+  'actuals.clamped': '{grades} set to 0',
+  'actuals.unmatched': 'Not found in the block list ({count}): {names}',
+  'actuals.apply': 'Apply to {blocks} blocks',
+  'actuals.done': 'Actuals applied to {blocks} blocks. You can undo this.',
+  'actuals.empty': 'No actual (Փաստ) rows with tonnes were found in {name}.',
+  'actuals.notFound':
+    'No ore extraction table found (expected headers Ամսաթիվ, Բլոկի №, Հանքաքարի Հանույթ).',
+  'undo.buttonActuals': 'Undo actuals import',
+  'undo.confirmTitleActuals': 'Undo the actuals import?',
+  'undo.confirmActuals':
+    'Restores the remaining stock and grades of {blocks} blocks to the values before the actuals import ({start} – {end}).',
+  'history.actualsItem': 'Actuals {start} – {end}',
+
   // Units
   'unit.t': 't',
   'unit.pct': '%',

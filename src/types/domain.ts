@@ -22,6 +22,10 @@ export interface Block {
   density?: number;
   /** 1-based row in the source file, for warnings. */
   sourceRow: number;
+  /** Raw Участок / site name from the file (e.g. location_cn1740_mf_17), if present. */
+  site?: string;
+  /** Normalised site key used to match actuals, e.g. "cn1740-17". */
+  siteKey?: string;
 }
 
 export type BlockFieldKey =
@@ -35,7 +39,8 @@ export type BlockFieldKey =
   | 'as'
   | 'pb'
   | 'eq'
-  | 'density';
+  | 'density'
+  | 'site';
 
 /** User-editable per-block state. */
 export interface BlockUserInput {
@@ -43,7 +48,13 @@ export interface BlockUserInput {
   remaining: number;
   /** Parent blocks (AND semantics). Single-select in UI for now. */
   dependsOn: BlockId[];
+  /** Grades of the remaining material, recalculated from actual extraction (mass balance). */
+  grades?: Partial<Record<GradeField, number>>;
+  /** Actual extraction applied to this block (from the actuals Excel). */
+  actuals?: { before: IsoDate; tonnes: number; overrun: number };
 }
+
+export type GradeField = 'cu' | 'mo' | 'as' | 'pb' | 'eq';
 
 /** Derived, never persisted. */
 export type BlockClass = 'ore' | 'waste';
@@ -131,8 +142,12 @@ export interface Schedule {
 
 export interface AcceptedEntry {
   id: string;
+  /** 'accept' = accepted schedule; 'actuals' = actual extraction imported from Excel. */
+  kind?: 'accept' | 'actuals';
   acceptedAt: string;
   range: [IsoDate, IsoDate];
   before: Record<BlockId, number>;
   taken: Record<BlockId, number>;
+  /** Full user inputs before the change (actuals also change grades). */
+  beforeInputs?: Record<BlockId, BlockUserInput>;
 }

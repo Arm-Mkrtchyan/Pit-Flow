@@ -220,7 +220,10 @@ function HistoryList() {
           }
         >
           <List.Item.Meta
-            title={t('history.item', { start: h.range[0], end: h.range[1] })}
+            title={t(h.kind === 'actuals' ? 'history.actualsItem' : 'history.item', {
+              start: h.range[0],
+              end: h.range[1],
+            })}
             description={t('history.detail', {
               when: dayjs(h.acceptedAt).format('DD.MM.YYYY HH:mm'),
               tonnes: fmtTonnes(h.tonnes),

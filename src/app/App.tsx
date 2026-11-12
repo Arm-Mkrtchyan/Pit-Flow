@@ -3,6 +3,7 @@ import { App as AntApp, Spin } from 'antd';
 import { BlockList, BlockModal } from '../features/blocks';
 import { CalendarPanel } from '../features/calendar';
 import { ImportButton } from '../features/import';
+import { ActualsButton } from '../features/actuals';
 import { SchedulePanel } from '../features/schedule';
 import { SettingsDrawer } from '../features/settings';
 import { t } from '../shared/i18n/t';
@@ -50,6 +51,7 @@ export function App() {
         left={
           <div className={styles.leftPanel}>
             <ImportButton />
+            <ActualsButton />
             <BlockList />
             <BlockModal />
           </div>

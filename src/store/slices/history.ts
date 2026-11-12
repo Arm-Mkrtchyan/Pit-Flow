@@ -1,5 +1,5 @@
 import type { StateCreator } from 'zustand';
-import type { AcceptedEntry, BlockId } from '../../types/domain';
+import type { AcceptedEntry, BlockId, BlockUserInput, IsoDate } from '../../types/domain';
 import type { RootState } from '../types';
 
 const MAX_HISTORY = 50;
@@ -17,6 +17,14 @@ export interface HistorySlice {
   acceptSchedule: () => AcceptResult;
   /** Restore the balances from before the last acceptance. */
   undoLastAcceptance: () => UndoResult;
+  /** Apply recalculated stock/grades from actual extraction, as an undoable history entry. */
+  applyActualsResult: (r: {
+    userInputs: Record<BlockId, BlockUserInput>;
+    before: Record<BlockId, number>;
+    taken: Record<BlockId, number>;
+    beforeInputs: Record<BlockId, BlockUserInput>;
+    range: [IsoDate, IsoDate];
+  }) => AcceptedEntry | null;
 }
 
 export const createHistorySlice: StateCreator<RootState, [], [], HistorySlice> = (set, get) => ({
@@ -69,7 +77,10 @@ export const createHistorySlice: StateCreator<RootState, [], [], HistorySlice> =
     const userInputs = { ...s.userInputs };
     for (const [id, remaining] of Object.entries(entry.before)) {
       const input = userInputs[id];
-      if (input) userInputs[id] = { ...input, remaining };
+      const full = entry.beforeInputs?.[id];
+      // Actuals entries restore the whole input (stock and grades); keep current dependencies.
+      if (input)
+        userInputs[id] = full ? { ...full, dependsOn: input.dependsOn } : { ...input, remaining };
     }
     set({
       userInputs,
@@ -77,5 +88,25 @@ export const createHistorySlice: StateCreator<RootState, [], [], HistorySlice> =
       solution: { ...s.solution, stale: s.solution.schedule !== null },
     });
     return { ok: true, entry };
+  },
+
+  applyActualsResult: (r) => {
+    const ids = Object.keys(r.before);
+    if (ids.length === 0) return null;
+    const entry: AcceptedEntry = {
+      id: crypto.randomUUID(),
+      kind: 'actuals',
+      acceptedAt: new Date().toISOString(),
+      range: r.range,
+      before: r.before,
+      taken: r.taken,
+      beforeInputs: r.beforeInputs,
+    };
+    set((s) => ({
+      userInputs: r.userInputs,
+      history: [entry, ...s.history].slice(0, MAX_HISTORY),
+      solution: { ...s.solution, stale: s.solution.schedule !== null || s.solution.stale },
+    }));
+    return entry;
   },
 });

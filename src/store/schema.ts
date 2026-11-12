@@ -18,6 +18,7 @@ const fieldKey = z.enum([
   'pb',
   'eq',
   'density',
+  'site',
 ]);
 
 const block = z.object({
@@ -34,9 +35,18 @@ const block = z.object({
   eq: finite,
   density: finite.optional(),
   sourceRow: z.number().int(),
+  site: z.string().optional(),
+  siteKey: z.string().optional(),
 });
 
-const userInput = z.object({ remaining: finite.min(0), dependsOn: z.array(z.string()) });
+const gradeField = z.enum(['cu', 'mo', 'as', 'pb', 'eq']);
+
+const userInput = z.object({
+  remaining: finite.min(0),
+  dependsOn: z.array(z.string()),
+  grades: z.record(gradeField, finite.min(0)).optional(),
+  actuals: z.object({ before: isoDate, tonnes: finite, overrun: finite }).optional(),
+});
 
 const rowSettings = z.object({
   tolerance: finite.min(0),
@@ -87,8 +97,10 @@ const acceptedEntry = z.object({
   id: z.string(),
   acceptedAt: z.string(),
   range: z.tuple([isoDate, isoDate]),
+  kind: z.enum(['accept', 'actuals']).optional(),
   before: z.record(z.string(), finite),
   taken: z.record(z.string(), finite),
+  beforeInputs: z.record(z.string(), userInput).optional(),
 });
 
 export const persistedSchema = z.object({

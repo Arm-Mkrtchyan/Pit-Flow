@@ -17,8 +17,10 @@ import { fmtGpt, fmtGrade, fmtNumber, fmtTonnes } from '../../shared/format';
 import { classifyBlock } from '../../shared/utils/blockClass';
 import { compareBlocks } from '../../shared/utils/ids';
 import { materialColor } from '../../shared/utils/materialColor';
+import { effectiveBlock } from '../../shared/utils/effectiveBlock';
 import { formatThousands, parseThousands } from '../../shared/ui/numberInput';
 import { useAppStore } from '../../store';
+import { fromIso } from '../calendar';
 import type { Block, BlockId, BlockUserInput } from '../../types/domain';
 import { childrenOf, findCycleIfSet, formatChain, graphFromInputs } from './dependencyGraph';
 
@@ -66,7 +68,27 @@ function BlockModalContent({ block, input }: { block: Block; input: BlockUserInp
     [blocks, block.id, userInputs],
   );
 
-  const cls = classifyBlock(block, settings.oreCutoffEq);
+  // Current grades of the remaining material (recalculated from actuals when available).
+  const current = effectiveBlock(block, input);
+  const cls = classifyBlock(current, settings.oreCutoffEq);
+  /** Current grade, with the original file value alongside when it was recalculated. */
+  const grade = (f: 'cu' | 'mo' | 'eq' | 'as' | 'pb', fmt: (v: number) => string, u: string) => {
+    const v = current[f];
+    const fileV = block[f];
+    if (v === undefined) return '—';
+    const changed = input.grades?.[f] !== undefined && fileV !== undefined && fmt(fileV) !== fmt(v);
+    return (
+      <>
+        {fmt(v)} {u}
+        {changed && (
+          <Typography.Text type="secondary">
+            {' '}
+            ({t('blockModal.fileValue', { value: `${fmt(fileV)} ${u}` })})
+          </Typography.Text>
+        )}
+      </>
+    );
+  };
   const parentRemaining = parent ? (userInputs[parent]?.remaining ?? 0) : 0;
   const remainingValid = remaining !== null && remaining >= 0 && remaining <= block.weight;
   const canSave = remainingValid && cycle === null;
@@ -115,26 +137,51 @@ function BlockModalContent({ block, input }: { block: Block; input: BlockUserInp
           {opt(block.density, fmtNumber, unit('t/m³'))}
         </Descriptions.Item>
         <Descriptions.Item label={t('blockModal.sourceRow')}>{block.sourceRow}</Descriptions.Item>
-        <Descriptions.Item label={t('field.cu')}>{fmtGrade(block.cu)} %</Descriptions.Item>
-        <Descriptions.Item label={t('field.mo')}>{fmtGrade(block.mo)} %</Descriptions.Item>
-        <Descriptions.Item label={t('field.eq')}>
-          {fmtGrade(block.eq)} %{' '}
+        {block.site && (
+          <Descriptions.Item label={t('field.site')} span={2}>
+            {block.site}
+          </Descriptions.Item>
+        )}
+        <Descriptions.Item label={t('field.cu')}>
+          {grade('cu', fmtGrade, unit('%'))}
+        </Descriptions.Item>
+        <Descriptions.Item label={t('field.mo')}>
+          {grade('mo', fmtGrade, unit('%'))}
+        </Descriptions.Item>
+        <Descriptions.Item label={t('field.eq')} span={2}>
+          {grade('eq', fmtGrade, unit('%'))}{' '}
           <Typography.Text type="secondary">
             (
             {t('blockModal.classHint', {
-              eq: fmtGrade(block.eq),
+              eq: fmtGrade(current.eq),
               cutoff: fmtGrade(settings.oreCutoffEq),
             })}
             )
           </Typography.Text>
         </Descriptions.Item>
         <Descriptions.Item label={t('field.as')}>
-          {opt(block.as, fmtGpt, unit('g/t'))}
+          {grade('as', fmtGpt, unit('g/t'))}
         </Descriptions.Item>
         <Descriptions.Item label={t('field.pb')}>
-          {opt(block.pb, fmtGpt, unit('g/t'))}
+          {grade('pb', fmtGpt, unit('g/t'))}
         </Descriptions.Item>
       </Descriptions>
+      {input.actuals && (
+        <Alert
+          style={{ marginTop: 12 }}
+          type={input.actuals.overrun > 0 ? 'warning' : 'info'}
+          showIcon
+          message={t('blockModal.actuals', {
+            tonnes: fmtTonnes(input.actuals.tonnes),
+            date: fromIso(input.actuals.before).format('DD.MM.YYYY'),
+          })}
+          description={
+            input.actuals.overrun > 0
+              ? t('blockModal.actualsOverrun', { tonnes: fmtTonnes(input.actuals.overrun) })
+              : undefined
+          }
+        />
+      )}
 
       <Divider style={{ margin: '16px 0' }} />
 

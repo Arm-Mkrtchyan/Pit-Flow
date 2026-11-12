@@ -48,7 +48,8 @@ export function applyImport(
       if (!keep) report.droppedDependencies.push(`${b.id} → ${p}`);
       return keep;
     });
-    userInputs[b.id] = { remaining, dependsOn };
+    // Keep recalculated grades and actuals info along with stock and dependencies.
+    userInputs[b.id] = { ...prev, remaining, dependsOn };
   }
   if (mode === 'merge') {
     report.removed = existingBlocks.filter((b) => !incomingIds.has(b.id)).map((b) => b.id);

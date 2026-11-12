@@ -13,6 +13,7 @@ import type {
 import { t } from '../../shared/i18n/t';
 import { fmtByUnit, fmtTonnes } from '../../shared/format';
 import { classifyBlock } from '../../shared/utils/blockClass';
+import { effectiveBlock } from '../../shared/utils/effectiveBlock';
 import { INFO_ROWS } from './resultRows';
 import { ROW_DESCRIPTORS } from './rowDescriptors';
 import { resolveTarget } from './targets';
@@ -58,9 +59,11 @@ export function computeResults(
   targets: DayTargets,
   settings: Settings,
 ): DayResult[] {
-  const byId = new Map(blocks.map((b) => [b.id, b]));
+  // Grades of the remaining material (recalculated from actuals when available).
+  const current = blocks.map((b) => effectiveBlock(b, inputs[b.id]));
+  const byId = new Map(current.map((b) => [b.id, b]));
   const cls = new Map<BlockId, BlockClass>(
-    blocks.map((b) => [b.id, classifyBlock(b, settings.oreCutoffEq)]),
+    current.map((b) => [b.id, classifyBlock(b, settings.oreCutoffEq)]),
   );
   const balance = new Map<BlockId, number>(
     blocks.map((b) => [b.id, inputs[b.id]?.remaining ?? b.weight]),
