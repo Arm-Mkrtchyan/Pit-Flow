@@ -235,6 +235,76 @@ export const en = {
   'export.sheet.allocation': 'Allocation (t)',
   'export.sheet.balances': 'End balance (t)',
 
+  // Accept / undo
+  'accept.button': 'Accept schedule',
+  'accept.confirmTitle': 'Accept this schedule?',
+  'accept.confirm':
+    'This subtracts {tonnes} t from the remaining stock of {blocks} blocks. You can undo it.',
+  'accept.done': 'Schedule accepted; remaining stock updated for {blocks} blocks.',
+  'accept.staleHint': 'Inputs changed since the calculation. Recalculate before accepting.',
+  'accept.error.noSchedule': 'There is no schedule to accept.',
+  'accept.error.stale': 'Inputs changed since the calculation. Recalculate before accepting.',
+  'accept.error.empty': 'The schedule takes no tonnes.',
+  'undo.button': 'Undo last acceptance',
+  'undo.confirmTitle': 'Undo the last acceptance?',
+  'undo.confirm':
+    'Restores the remaining stock of {blocks} blocks to the values before accepting {start} – {end}.',
+  'undo.done': 'Last acceptance undone; balances restored.',
+  'undo.missing': 'Cannot undo: these blocks no longer exist: {blocks}.',
+  'history.title': 'Accepted schedules',
+  'history.empty': 'No accepted schedules yet.',
+  'history.item': '{start} – {end}',
+  'history.detail': 'Accepted {when} · {tonnes} t from {blocks} blocks',
+
+  // Settings
+  'settings.open': 'Settings',
+  'settings.title': 'Settings',
+  'settings.staleNote': 'Changes apply immediately and mark the current schedule as out of date.',
+  'settings.section.targets': 'Targets: tolerance and priority',
+  'settings.weightsHelp':
+    'Outside-band weight: penalty for leaving the ±tolerance band (higher = more important). Centre weight: pull towards the exact target. Raise the centre weight to aim at the target instead of the band edge when stock is short.',
+  'settings.row.row': 'Row',
+  'settings.row.tolerance': 'Tolerance',
+  'settings.row.weightOut': 'Outside-band weight',
+  'settings.row.weightIn': 'Centre weight',
+  'settings.section.general': 'Classification and dependencies',
+  'settings.oreCutoff': 'Ore cutoff (Cu-eq)',
+  'settings.oreCutoffHelp':
+    'Blocks below this Cu-eq are waste: stripped only, never counted as production.',
+  'settings.release': 'Dependency release threshold',
+  'settings.releaseHelp':
+    "A child block may be used on the day its parent is finished only if the parent's start-of-day balance was below this.",
+  'settings.amber': 'Amber warning above',
+  'settings.amberHelp': 'Inside the band but further than this from the target is shown amber.',
+  'settings.section.solver': 'Solver',
+  'settings.rounding': 'Round tonnages to',
+  'settings.roundingHelp': 'Achieved values are recalculated after rounding.',
+  'settings.timeLimit': 'Time limit',
+  'settings.mipGap': 'Optimality gap',
+  'settings.mipGapHelp': 'Stop when the solution is proven within this % of the best possible.',
+  'settings.earlyDays': 'Early-day preference',
+  'settings.earlyDaysHelp':
+    '0 = all days equal; 0.5 = day 1 counts 1.5× the last day, so shortfalls fall at the end.',
+  'settings.wasteCost': 'Waste stripping cost (per t)',
+  'settings.wasteCostHelp': 'Tiny cost so waste is stripped only when it releases ore.',
+  'settings.rolling': 'Solve day by day above (variables)',
+  'settings.rollingHelp':
+    'Above this many block×day variables the model is solved one day at a time.',
+  'settings.reset': 'Reset to defaults',
+  'settings.resetConfirm': 'Reset all solver settings to defaults?',
+  'settings.section.data': 'Data',
+  'settings.clearHelp':
+    'Data is saved in this browser (IndexedDB). Clearing removes blocks, inputs, history and settings.',
+  'settings.clear': 'Clear all data',
+  'settings.clearConfirm': 'Delete all saved data in this browser? This cannot be undone.',
+
+  // Loading
+  'load.loading': 'Loading saved data…',
+  'load.errorTitle': 'Saved data could not be loaded',
+  'load.error':
+    'The app started empty. Details: {message}. A copy of the old data was kept under "{backup}".',
+  'load.noBackup': '(backup in progress)',
+
   'common.cancel': 'Cancel',
   'common.close': 'Close',
 } as const;

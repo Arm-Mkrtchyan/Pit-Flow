@@ -5,7 +5,7 @@ import { t } from '../../shared/i18n/t';
 import { fmtByUnit, fmtTonnes } from '../../shared/format';
 import { useAppStore } from '../../store';
 import type { BlockClass, BlockId, IsoDate, RowDescriptor, RowUnit } from '../../types/domain';
-import { enumerateDays, fromIso } from '../calendar/dateRange';
+import { enumerateDays, fromIso } from '../calendar';
 import { ApplyAllPopover } from './ApplyAllPopover';
 import { DayAllocationDrawer } from './DayAllocationDrawer';
 import { ResultCell } from './ResultCell';

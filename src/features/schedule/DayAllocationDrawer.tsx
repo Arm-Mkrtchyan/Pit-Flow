@@ -4,7 +4,7 @@ import { t } from '../../shared/i18n/t';
 import { fmtByUnit, fmtDeviation, fmtGrade, fmtTonnes } from '../../shared/format';
 import { useAppStore } from '../../store';
 import type { Allocation, IsoDate } from '../../types/domain';
-import { fromIso } from '../calendar/dateRange';
+import { fromIso } from '../calendar';
 import { useStatusColors } from './useStatusColors';
 import { INFO_ROWS } from './resultRows';
 import { ROW_DESCRIPTORS } from './rowDescriptors';

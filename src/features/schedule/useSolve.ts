@@ -3,7 +3,7 @@ import { App } from 'antd';
 import { useAppStore } from '../../store';
 import { t } from '../../shared/i18n/t';
 import { solveInWorker, SolveCancelled, validateSchedule, type SolveHandle } from '../solver';
-import { enumerateDays } from '../calendar/dateRange';
+import { enumerateDays } from '../calendar';
 import type { SolverPhase } from '../../types/solver';
 import { buildSolverInput } from './solverInput';
 

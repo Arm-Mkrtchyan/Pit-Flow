@@ -7,6 +7,8 @@ import type { ScheduleStatus } from '../../types/domain';
 import { useSolve, type SolveProgress } from './useSolve';
 import { warningText } from './warnings';
 import { ExportButtons } from './ExportButtons';
+import { AcceptControls } from './AcceptControls';
+import { useIsStale } from './useIsStale';
 
 const STATUS_COLOR: Record<ScheduleStatus, string> = {
   optimal: 'green',
@@ -34,7 +36,9 @@ function phaseText(p: SolveProgress): string {
 export function SolveToolbar() {
   const hasBlocks = useAppStore((s) => s.blocks.length > 0);
   const hasRange = useAppStore((s) => s.plan.range !== null);
-  const { schedule, stale, warnings } = useAppStore((s) => s.solution);
+  const { schedule, warnings } = useAppStore((s) => s.solution);
+  const stale = useIsStale();
+  const openSettings = useAppStore((s) => s.setSettingsOpen);
   const { solve, cancel, progress } = useSolve();
   const elapsed = useElapsed(progress);
 
@@ -83,6 +87,10 @@ export function SolveToolbar() {
             </Button>
           </>
         )}
+        {!progress && <AcceptControls />}
+        <Button size="small" onClick={() => openSettings(true)}>
+          {t('settings.open')}
+        </Button>
         {!progress && schedule && (
           <>
             <Tag color={STATUS_COLOR[schedule.status]}>{t(`solve.status.${schedule.status}`)}</Tag>

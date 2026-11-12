@@ -4,11 +4,12 @@ import { t } from '../../shared/i18n/t';
 import { useAppStore } from '../../store';
 import { exportCsv, exportFileName, exportXlsx, scheduleToSheets } from '../export';
 import { computeResults } from './diagnostics';
+import { useIsStale } from './useIsStale';
 
 export function ExportButtons() {
   const { message } = App.useApp();
   const [busy, setBusy] = useState(false);
-  const stale = useAppStore((s) => s.solution.stale);
+  const stale = useIsStale();
 
   const sheets = () => {
     const s = useAppStore.getState();
