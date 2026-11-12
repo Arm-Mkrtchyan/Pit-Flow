@@ -74,7 +74,10 @@ export function buildModel(input: SolverInput): BuiltModel {
   // --- target / limit rows -------------------------------------------------
   for (const row of rows) {
     const st = settings.rows[row.key];
-    const tol = st.tolerance;
+    // Exact mode: a zero-width band, so every tonne/grade-tonne off target is penalised at the
+    // outside-band weight. Total shortfall is fixed by stock, so the early-day weighting then
+    // pushes it to the last days instead of spreading it across the band.
+    const tol = settings.aimExactTarget ? 0 : st.tolerance;
     for (let d = 0; d < D; d++) {
       const V = targets[row.key][d] ?? 0;
       const pool: Array<{ v: string; g: number }> = [];

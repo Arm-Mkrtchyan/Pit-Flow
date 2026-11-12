@@ -49,6 +49,7 @@ export function buildSolverInput(
       rows: settings.rows,
       wasteCostPerTonne: settings.wasteCostPerTonne,
       earlyDayPreference: settings.earlyDayPreference,
+      aimExactTarget: settings.aimExactTarget,
       releaseThreshold: settings.releaseThreshold,
       releaseEpsilon: settings.releaseEpsilon,
       roundingStep: settings.roundingStep,

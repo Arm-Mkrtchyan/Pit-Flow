@@ -90,6 +90,11 @@ export interface Settings {
   wasteCostPerTonne: number;
   /** Extra penalty weight on early days (0 = none; 0.5 = day 1 counts 1.5× the last day). */
   earlyDayPreference: number;
+  /**
+   * Aim at the exact target (true) instead of treating the whole ±tolerance band as on target
+   * (false). Colouring always uses the band.
+   */
+  aimExactTarget: boolean;
   releaseThreshold: number;
   releaseEpsilon: number;
   roundingStep: 1 | 10 | 100;

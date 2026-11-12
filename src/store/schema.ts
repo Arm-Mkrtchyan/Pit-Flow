@@ -49,6 +49,7 @@ export const settingsSchema = z.object({
   oreCutoffEq: finite.min(0),
   wasteCostPerTonne: finite.min(0),
   earlyDayPreference: finite.min(0),
+  aimExactTarget: z.boolean(),
   releaseThreshold: finite.min(0),
   releaseEpsilon: finite.min(0),
   roundingStep: z.union([z.literal(1), z.literal(10), z.literal(100)]),

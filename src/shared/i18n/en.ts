@@ -153,6 +153,9 @@ export const en = {
 
   // Solve
   'solve.calculate': 'Calculate schedule',
+  'solve.aimExact': 'Aim at exact target',
+  'solve.aimExactHelp':
+    'Checked: fill each day to the exact target; when stock runs short, the last days fall short. Unchecked: anything within ±tolerance counts as on target, so short stock is spread over more days at the band edge. Colours always use the ±tolerance band.',
   'solve.cancel': 'Cancel',
   'solve.needBlocks': 'Load blocks first.',
   'solve.needRange': 'Select a planning horizon first.',
@@ -262,7 +265,7 @@ export const en = {
   'settings.staleNote': 'Changes apply immediately and mark the current schedule as out of date.',
   'settings.section.targets': 'Targets: tolerance and priority',
   'settings.weightsHelp':
-    'Outside-band weight: penalty for leaving the ±tolerance band (higher = more important). Centre weight: pull towards the exact target. Raise the centre weight to aim at the target instead of the band edge when stock is short.',
+    'Outside-band weight: penalty for leaving the ±tolerance band (higher = more important). Centre weight: pull towards the exact target. To aim at the exact target instead of the band edge, use the "Aim at exact target" checkbox next to Calculate.',
   'settings.row.row': 'Row',
   'settings.row.tolerance': 'Tolerance',
   'settings.row.weightOut': 'Outside-band weight',

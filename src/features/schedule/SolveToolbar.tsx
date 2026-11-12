@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, Button, Space, Tag, Tooltip, Typography } from 'antd';
+import { Alert, Button, Checkbox, Space, Tag, Tooltip, Typography } from 'antd';
 import { t } from '../../shared/i18n/t';
 import { fmtTonnes } from '../../shared/format';
 import { useAppStore } from '../../store';
@@ -39,6 +39,8 @@ export function SolveToolbar() {
   const { schedule, warnings } = useAppStore((s) => s.solution);
   const stale = useIsStale();
   const openSettings = useAppStore((s) => s.setSettingsOpen);
+  const aimExact = useAppStore((s) => s.settings.aimExactTarget);
+  const updateSettings = useAppStore((s) => s.updateSettings);
   const { solve, cancel, progress } = useSolve();
   const elapsed = useElapsed(progress);
 
@@ -75,6 +77,15 @@ export function SolveToolbar() {
           >
             {t('solve.calculate')}
           </Button>
+        </Tooltip>
+        <Tooltip title={t('solve.aimExactHelp')}>
+          <Checkbox
+            checked={aimExact}
+            disabled={progress !== null}
+            onChange={(e) => updateSettings({ aimExactTarget: e.target.checked })}
+          >
+            {t('solve.aimExact')}
+          </Checkbox>
         </Tooltip>
         {progress && (
           <>

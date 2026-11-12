@@ -26,6 +26,7 @@ export type SolverSettings = Pick<
   | 'rows'
   | 'wasteCostPerTonne'
   | 'earlyDayPreference'
+  | 'aimExactTarget'
   | 'releaseThreshold'
   | 'releaseEpsilon'
   | 'roundingStep'

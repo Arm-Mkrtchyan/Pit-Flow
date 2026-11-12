@@ -11,6 +11,7 @@ export const DEFAULT_SETTINGS: Settings = {
   oreCutoffEq: 0.25,
   wasteCostPerTonne: 1e-6,
   earlyDayPreference: 0.5,
+  aimExactTarget: false,
   releaseThreshold: 15000,
   releaseEpsilon: 1,
   roundingStep: 10,

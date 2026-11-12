@@ -36,8 +36,9 @@ export function scoreMatrix(input: SolverInput, x: number[][]): number {
       const expr = (m: number) =>
         row.basis === 'tonnage' ? tonnes - m * V : gradeTonnes - m * V * tonnes;
       if (row.kind === 'target') {
-        const under = Math.max(-expr(1 - st.tolerance), 0);
-        const over = Math.max(expr(1 + st.tolerance), 0);
+        const tol = settings.aimExactTarget ? 0 : st.tolerance;
+        const under = Math.max(-expr(1 - tol), 0);
+        const over = Math.max(expr(1 + tol), 0);
         total += (st.weightOut * (under + over) + st.weightIn * Math.abs(expr(1))) / norm;
       } else if (!row.hard) {
         total += (st.weightOut * Math.max(expr(1), 0)) / norm;
