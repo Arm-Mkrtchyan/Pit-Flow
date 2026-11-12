@@ -34,3 +34,7 @@ export const fmtDeviation = (v: number | null | undefined): string =>
 /** Generic number, up to 3 decimals. */
 export const fmtNumber = (v: number | null | undefined): string =>
   ok(v) ? plainFmt.format(v) : DASH;
+
+/** Format by row unit: t → tonnes, % → grade, g/t → impurity. */
+export const fmtByUnit = (v: number | null | undefined, unit: 't' | '%' | 'g/t'): string =>
+  unit === 't' ? fmtTonnes(v) : unit === '%' ? fmtGrade(v) : fmtGpt(v);

@@ -6,6 +6,7 @@ import { useAppStore } from '../../store';
 import type { ScheduleStatus } from '../../types/domain';
 import { useSolve, type SolveProgress } from './useSolve';
 import { warningText } from './warnings';
+import { ExportButtons } from './ExportButtons';
 
 const STATUS_COLOR: Record<ScheduleStatus, string> = {
   optimal: 'green',
@@ -86,6 +87,7 @@ export function SolveToolbar() {
           <>
             <Tag color={STATUS_COLOR[schedule.status]}>{t(`solve.status.${schedule.status}`)}</Tag>
             {stale && <Tag color="orange">{t('solve.stale')}</Tag>}
+            <ExportButtons />
             {summary && (
               <Typography.Text type="secondary">
                 {t('solve.summary', {

@@ -177,6 +177,64 @@ export const en = {
   'solve.warn.tooLarge':
     'Model too large to solve at once ({xVars} tonnage variables, {binaries} dependency binaries); solved day by day. Waste parents above the release threshold cannot be planned across days in this mode.',
 
+  // Results
+  'result.section': 'Results',
+  'result.achieved': 'Achieved {row}',
+  'result.target': 'Target',
+  'result.band': 'Band',
+  'result.balance': 'bal {value}',
+  'result.allocation': 'Allocation by block ({count})',
+  'result.info.eq': 'Cu-eq (ore, info)',
+  'result.info.as': 'As (ore, info)',
+  'result.info.pb': 'Pb (ore, info)',
+  'status.ok': 'within band',
+  'status.warn': 'within band, near edge',
+  'status.bad': 'outside band',
+  'status.na': 'n/a',
+
+  // Reasons (why a day misses a target)
+  'reason.noOre': 'No ore scheduled this day.',
+  'reason.notEnoughStock':
+    'Available unlocked stock {available} t is below the band minimum {min} t.',
+  'reason.tradeOffGrades': 'Tonnage traded off to keep grades in band.',
+  'reason.tradeOffPriority': 'Traded off against a higher-priority target.',
+  'reason.gradeTooLow':
+    'Highest-grade available block is {id} ({grade} %), below the band minimum {min} %.',
+  'reason.gradeTooHigh':
+    'Lowest-grade available block is {id} ({grade} %), above the band maximum {max} %.',
+  'reason.locked': '{count} blocks locked by dependency (parents: {parents}).',
+  'reason.lockedByWaste': 'Ore is waiting for waste stripping of {parents}.',
+  'reason.limitExceeded': '{value} exceeds the limit {cap}.',
+
+  // Day drawer
+  'drawer.title': 'Day plan — {date}',
+  'drawer.open': 'Open day plan for {date}',
+  'drawer.allocation': 'Extraction order',
+  'drawer.orderHint': 'Parents are taken before the blocks that depend on them.',
+  'drawer.tonnes': 'Tonnes',
+  'drawer.endBalance': 'Balance after',
+  'drawer.total': 'Total',
+  'drawer.cap': 'Limit',
+
+  // Export
+  'export.csv': 'Export CSV',
+  'export.xlsx': 'Export XLSX',
+  'export.failed': 'Export failed: {error}',
+  'export.staleHint': 'Inputs changed since this schedule was calculated.',
+  'export.row': 'Row',
+  'export.unit': 'Unit',
+  'export.target': 'target',
+  'export.achieved': 'achieved',
+  'export.deviation': 'deviation',
+  'export.status': 'Status',
+  'export.ok': 'OK',
+  'export.outside': 'Outside band',
+  'export.block': 'Block',
+  'export.class': 'Class',
+  'export.sheet.summary': 'Summary',
+  'export.sheet.allocation': 'Allocation (t)',
+  'export.sheet.balances': 'End balance (t)',
+
   'common.cancel': 'Cancel',
   'common.close': 'Close',
 } as const;
