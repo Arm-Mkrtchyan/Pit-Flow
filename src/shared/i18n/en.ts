@@ -6,6 +6,21 @@ export const en = {
   'layout.schedule': 'Schedule',
   'layout.calendar': 'Planning horizon',
 
+  // Pages
+  'page.home': 'Home',
+  'page.extraction': 'Extraction planning',
+  'page.drilling': 'Drilling planning',
+  'layout.drilling': 'Drilling',
+  'home.title': 'What would you like to do?',
+  'home.open': 'Open',
+  'home.extraction.desc': 'Day-by-day extraction schedule: daily tonnage and grade targets, waste stripping, block dependencies and actual extraction.',
+  'home.drilling.desc': 'Drilling duration of each block from its volume and the characteristics of the drilling equipment.',
+  'home.blocksShared': 'The block list is shared by both pages: {count} blocks loaded.',
+  'home.blocksSharedEmpty': 'The block list is shared by both pages. Upload it on either page.',
+  'drilling.equipment': 'Drilling equipment',
+  'drilling.uploadEquipment': 'Upload equipment list',
+  'drilling.comingSoon': 'Equipment upload and the drilling-duration calculation will be added in the next step.',
+
   // Fields
   'field.elevation': 'Elevation',
   'field.group': 'Group',

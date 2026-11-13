@@ -1,16 +1,14 @@
 import { useEffect } from 'react';
 import { App as AntApp, Spin } from 'antd';
-import { BlockList, BlockModal } from '../features/blocks';
-import { CalendarPanel } from '../features/calendar';
-import { ImportButton } from '../features/import';
-import { ActualsButton } from '../features/actuals';
-import { SchedulePanel } from '../features/schedule';
-import { SettingsDrawer } from '../features/settings';
 import { t } from '../shared/i18n/t';
 import { useAppStore } from '../store';
 import { useHydrated } from '../store/useHydrated';
 import { AppLayout } from './AppLayout';
 import styles from './AppLayout.module.css';
+import { DrillingPage } from './pages/DrillingPage';
+import { ExtractionPage } from './pages/ExtractionPage';
+import { HomePage } from './pages/HomePage';
+import { useCurrentPage } from './routes';
 
 function LoadErrorNotice() {
   const { notification } = AntApp.useApp();
@@ -35,6 +33,7 @@ function LoadErrorNotice() {
 
 export function App() {
   const hydrated = useHydrated();
+  const page = useCurrentPage();
   if (!hydrated) {
     return (
       <div className={styles.loading}>
@@ -47,19 +46,11 @@ export function App() {
   return (
     <>
       <LoadErrorNotice />
-      <AppLayout
-        left={
-          <div className={styles.leftPanel}>
-            <ImportButton />
-            <ActualsButton />
-            <BlockList />
-            <BlockModal />
-          </div>
-        }
-        center={<SchedulePanel />}
-        right={<CalendarPanel />}
-      />
-      <SettingsDrawer />
+      <AppLayout page={page}>
+        {page === 'home' && <HomePage />}
+        {page === 'extraction' && <ExtractionPage />}
+        {page === 'drilling' && <DrillingPage />}
+      </AppLayout>
     </>
   );
 }

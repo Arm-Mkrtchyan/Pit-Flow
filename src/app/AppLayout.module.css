@@ -50,3 +50,18 @@ body {
   margin-left: auto;
   align-self: center;
 }
+.titleLink,
+.titleLink:hover {
+  color: inherit;
+}
+.pageSwitch {
+  align-self: center;
+}
+.home {
+  overflow: auto;
+  padding: 48px 24px;
+}
+.homeInner {
+  max-width: 880px;
+  margin: 0 auto;
+}
