@@ -38,3 +38,15 @@ export const fmtNumber = (v: number | null | undefined): string =>
 /** Format by row unit: t → tonnes, % → grade, g/t → impurity. */
 export const fmtByUnit = (v: number | null | undefined, unit: 't' | '%' | 'g/t'): string =>
   unit === 't' ? fmtTonnes(v) : unit === '%' ? fmtGrade(v) : fmtGpt(v);
+
+const oneDecimalFmt = new Intl.NumberFormat(LOCALE, {
+  minimumFractionDigits: 1,
+  maximumFractionDigits: 1,
+});
+
+/** Whole number with thousands separators (volumes in m³, linear metres). */
+export const fmtInt = (v: number | null | undefined): string =>
+  ok(v) ? tonnesFmt.format(v) : DASH;
+/** Duration in days, 1 decimal. */
+export const fmtDays = (v: number | null | undefined): string =>
+  ok(v) ? oneDecimalFmt.format(v) : DASH;

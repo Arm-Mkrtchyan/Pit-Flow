@@ -1,5 +1,5 @@
 import { ActualsButton } from '../../features/actuals';
-import { CalendarPanel } from '../../features/calendar';
+import { PlanCalendarPanel } from '../../features/calendar';
 import { SchedulePanel } from '../../features/schedule';
 import { SettingsDrawer } from '../../features/settings';
 import { t } from '../../shared/i18n/t';
@@ -13,7 +13,7 @@ export function ExtractionPage() {
       <PageColumns
         left={<BlocksPanel extra={<ActualsButton />} />}
         center={<SchedulePanel />}
-        right={<CalendarPanel />}
+        right={<PlanCalendarPanel />}
         centerLabel={t('layout.schedule')}
         rightLabel={t('layout.calendar')}
       />

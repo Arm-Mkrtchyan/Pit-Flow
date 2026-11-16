@@ -43,6 +43,32 @@ export const FIELD_DEFS: FieldDef[] = [
     required: false,
     headers: ['участок', 'site', 'location', 'տեղամաս'],
   },
+  {
+    key: 'miningStart',
+    labelKey: 'field.miningStart',
+    required: false,
+    headers: [
+      'дата начала добычи',
+      'начало добычи',
+      'дата начала',
+      'mining start',
+      'start date',
+      'արդյունահանման սկիզբ',
+    ],
+  },
+  {
+    key: 'miningEnd',
+    labelKey: 'field.miningEnd',
+    required: false,
+    headers: [
+      'дата окончания добычи',
+      'окончание добычи',
+      'дата окончания',
+      'mining end',
+      'end date',
+      'արդյունահանման ավարտ',
+    ],
+  },
 ];
 
 /** Known columns that are deliberately not imported. */

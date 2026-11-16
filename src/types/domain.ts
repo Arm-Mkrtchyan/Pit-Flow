@@ -26,6 +26,9 @@ export interface Block {
   site?: string;
   /** Normalised site key used to match actuals, e.g. "cn1740-17". */
   siteKey?: string;
+  /** Planned mining period of this block (inclusive), from the block file. */
+  miningStart?: IsoDate;
+  miningEnd?: IsoDate;
 }
 
 export type BlockFieldKey =
@@ -40,7 +43,9 @@ export type BlockFieldKey =
   | 'pb'
   | 'eq'
   | 'density'
-  | 'site';
+  | 'site'
+  | 'miningStart'
+  | 'miningEnd';
 
 /** User-editable per-block state. */
 export interface BlockUserInput {
@@ -150,4 +155,55 @@ export interface AcceptedEntry {
   taken: Record<BlockId, number>;
   /** Full user inputs before the change (actuals also change grades). */
   beforeInputs?: Record<BlockId, BlockUserInput>;
+}
+
+// ---------------------------------------------------------------------------------------------
+// Drilling planning
+
+/** One drilling block = one Участок (siteKey, e.g. "cn1740-17"), or a block ID without a site. */
+export type DrillBlockKey = string;
+
+/** Rig performance at one position (pit code, e.g. "cn"; "*" = any position). */
+export interface DrillRigPosition {
+  /** Blasted rock per drilled linear metre, m³/lm. */
+  blastIndex: number;
+  /** Drilling rate, linear metres per hour. */
+  productivity: number;
+}
+
+export interface DrillRig {
+  id: string;
+  name: string;
+  model?: string;
+  /** Working hours per day; falls back to the drilling setting. */
+  hoursPerDay?: number;
+  byPosition: Record<string, DrillRigPosition>;
+}
+
+/** One rig row of a drilling block (a block can have several rigs). */
+export interface DrillAssignment {
+  rowId: string;
+  rigId: string | null;
+  /** Day this rig starts drilling the block (at shift start). */
+  start: IsoDate | null;
+  /** Linear metres already drilled by this row, typed by the user. */
+  drilledLm: number;
+}
+
+export interface DrillSettings {
+  /** Minutes to charge one borehole after drilling ends. */
+  loadMinutesPerHole: number;
+  /** Blast time of day, "HH:mm". */
+  blastTime: string;
+  /** Rigs start work at this time of day, "HH:mm". */
+  shiftStart: string;
+  /** Default working hours per day for rigs without their own value. */
+  hoursPerDay: number;
+}
+
+export interface DrillingState {
+  range: [IsoDate, IsoDate] | null;
+  rigs: DrillRig[];
+  assignments: Record<DrillBlockKey, DrillAssignment[]>;
+  settings: DrillSettings;
 }

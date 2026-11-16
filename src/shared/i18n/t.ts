@@ -44,7 +44,8 @@ export function t(key: I18nKey, params?: Record<string, string | number>): strin
 }
 
 /** Localised unit symbol. */
-export type UnitCode = 't' | '%' | 'g/t' | 'm³' | 't/m³' | 'm' | 's';
+export type UnitCode =
+  't' | '%' | 'g/t' | 'm³' | 't/m³' | 'm' | 's' | 'lm' | 'lm/h' | 'm³/lm' | 'min' | 'h' | 'd';
 const UNIT_KEYS: Record<UnitCode, I18nKey> = {
   t: 'unit.t',
   '%': 'unit.pct',
@@ -53,5 +54,11 @@ const UNIT_KEYS: Record<UnitCode, I18nKey> = {
   't/m³': 'unit.tm3',
   m: 'unit.m',
   s: 'unit.s',
+  lm: 'unit.lm',
+  'lm/h': 'unit.lmPerHour',
+  'm³/lm': 'unit.m3PerLm',
+  min: 'unit.min',
+  h: 'unit.h',
+  d: 'unit.d',
 };
 export const unit = (u: UnitCode): string => t(UNIT_KEYS[u]);

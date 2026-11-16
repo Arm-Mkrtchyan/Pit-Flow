@@ -1,4 +1,5 @@
 import type { BlocksSlice } from './slices/blocks';
+import type { DrillingSlice } from './slices/drilling';
 import type { HistorySlice } from './slices/history';
 import type { PlanSlice } from './slices/plan';
 import type { PrefsSlice } from './slices/prefs';
@@ -12,4 +13,5 @@ export type RootState = BlocksSlice &
   SolutionSlice &
   HistorySlice &
   PrefsSlice &
-  UiSlice;
+  UiSlice &
+  DrillingSlice;

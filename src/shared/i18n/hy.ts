@@ -15,13 +15,75 @@ export const hy: Record<I18nKey, string> = {
   'layout.drilling': 'Հորատում',
   'home.title': 'Ի՞նչ եք ցանկանում անել',
   'home.open': 'Բացել',
-  'home.extraction.desc': 'Արդյունահանման օրական ժամանակացույց՝ տոննաժի և պարունակությունների նպատակներ, մերկացում, բլոկների կախվածություններ և փաստացի արդյունահանում։',
-  'home.drilling.desc': 'Յուրաքանչյուր բլոկի հորատման տևողությունը՝ ըստ դրա ծավալի և հորատման սարքավորումների բնութագրերի։',
+  'home.extraction.desc':
+    'Արդյունահանման օրական ժամանակացույց՝ տոննաժի և պարունակությունների նպատակներ, մերկացում, բլոկների կախվածություններ և փաստացի արդյունահանում։',
+  'home.drilling.desc':
+    'Յուրաքանչյուր բլոկի հորատման տևողությունը՝ ըստ դրա ծավալի և հորատման սարքավորումների բնութագրերի։',
   'home.blocksShared': 'Բլոկների ցանկը ընդհանուր է երկու էջերի համար․ բեռնված է {count} բլոկ։',
-  'home.blocksSharedEmpty': 'Բլոկների ցանկը ընդհանուր է երկու էջերի համար։ Բեռնեք այն ցանկացած էջում։',
+  'home.blocksSharedEmpty':
+    'Բլոկների ցանկը ընդհանուր է երկու էջերի համար։ Բեռնեք այն ցանկացած էջում։',
   'drilling.equipment': 'Հորատման սարքավորումներ',
   'drilling.uploadEquipment': 'Բեռնել սարքավորումների ցանկը',
-  'drilling.comingSoon': 'Սարքավորումների բեռնումը և հորատման տևողության հաշվարկը կավելացվեն հաջորդ քայլում։',
+  'drilling.equipmentLoaded': 'Սարքավորումներ՝ {count} հաստոց',
+  'drilling.equipmentPreview': 'Սարքավորումների ցանկ — {name}',
+  'drilling.equipmentApply': 'Օգտագործել այս ցանկը',
+  'drilling.equipmentApplied': 'Սարքավորումների ցանկը բեռնված է՝ {count} հաստոց։',
+  'drilling.equipmentMissingColumns': 'Պարտադիր սյունակները չեն գտնվել՝ {fields}։',
+  'drilling.equipmentBadRows':
+    'Բաց թողնված տողեր (չկա անվանում, արտադրողականություն կամ պայթեցման ինդեքս)՝ {rows}։',
+  'drilling.equipmentReplace':
+    'Ընթացիկ սարքավորումների ցանկը կփոխարինվի։ Աղյուսակում ընտրված հաստոցները կպահպանվեն նույն անվանմամբ հաստոցների համար։',
+  'drilling.anyPosition': 'Ցանկացած',
+  'drilling.col.name': 'Անվանում',
+  'drilling.col.model': 'Մոդել',
+  'drilling.col.hours': 'Ժամ/օր',
+  'drilling.col.position': 'Դիրք',
+  'drilling.col.productivity': 'Արտադրողականություն',
+  'drilling.col.blastIndex': 'Պայթեցման ինդեքս',
+  'drilling.col.block': 'Բլոկ',
+  'drilling.col.volume': 'Ծավալ',
+  'drilling.col.rig': 'Հորատող հաստոց',
+  'drilling.col.drilled': 'Հորատված',
+  'drilling.col.planned': 'Հորատել',
+  'drilling.col.total': 'Ընդամենը',
+  'drilling.done': 'Հորատված է',
+  'drilling.afterPeriod': 'Ավարտվում է ժամանակահատվածից հետո',
+  'drilling.unfinished': 'Չի ավարտվել',
+  'drilling.addRig': '+ Ավելացնել հաստոց',
+  'drilling.removeRig': 'Հեռացնել այս հաստոցը',
+  'drilling.volumeMissing': 'Ծավալ կամ խտություն չկա՝ {ids}։ Այս տողերը հաշվի չեն առնվում։',
+  'drilling.selectRig': 'Ընտրեք հաստոց',
+  'drilling.noEquipment': 'Նախ բեռնեք սարքավորումները',
+  'drilling.issue.noRig': 'Հաստոց ընտրված չէ։',
+  'drilling.issue.unknownRig': 'Այս հաստոցը ընթացիկ սարքավորումների ցանկում չէ։',
+  'drilling.issue.noPosition': 'Այս հաստոցի համար {position} դիրքի արտադրողականություն չկա։',
+  'drilling.previewHint':
+    'Գնահատական, եթե բլոկը հորատեր միայն այս հաստոցը։ Սեղմեք օրվա վրա՝ հորատումը սկսելու համար։',
+  'drilling.setStart': 'Սկսել հորատումը {date}',
+  'drilling.clearStart': 'Հեռացնել հորատման սկիզբը {date}',
+  'drilling.conflict': 'Այս հաստոցը նույն օրը հորատում է այլ բլոկ։',
+  'drilling.blast': 'Պայթյուն',
+  'drilling.blastHint': 'Հորատումն ավարտվում է {date}-ին, ժամը {time}-ին։',
+  'drilling.noBlocks': 'Բլոկներ բեռնված չեն։ Բեռնեք բլոկների ցանկը՝ սկսելու համար։',
+  'drilling.settings': 'Պայթեցման աշխատանքներ',
+  'drilling.loadMinutes': 'Մեկ հորատանցքի լիցքավորման ժամանակը',
+  'drilling.loadMinutesHint':
+    'Հորատման ավարտից հետո մեկ հորատանցքը լիցքավորելու ժամանակը։ Նույն օրը պայթեցումը հնարավոր է, եթե հորատումն ավարտվում է ոչ ուշ, քան պայթեցման ժամը՝ հանած այս ժամանակը։',
+  'drilling.blastTime': 'Պայթեցման ժամը',
+  'drilling.blastTimeHint': 'Օրվա ժամը, երբ կատարվում են պայթեցումները։',
+  'drilling.shiftStart': 'Աշխատանքի սկիզբը',
+  'drilling.shiftStartHint':
+    'Հաստոցները սկսում են հորատել այս ժամին՝ սկզբի օրը և յուրաքանչյուր հաջորդ օրը։',
+  'drilling.hoursPerDay': 'Աշխատանքային ժամեր օրական',
+  'drilling.hoursPerDayHint':
+    'Այն հաստոցների համար, որոնց համար սարքավորումների ցանկում օրական ժամեր նշված չեն։',
+  'drilling.legend': 'Պայմանական նշաններ',
+  'drilling.legend.mining': 'Բլոկի արդյունահանման օրեր (բլոկների ցանկից)',
+  'drilling.legend.drilling': 'Հորատում, գ.մ. օրական',
+  'drilling.legend.conflict': 'Հաստոցն այդ օրը զբաղված է այլ բլոկում',
+  'drilling.legend.blast': 'Օրը, երբ բլոկը կարելի է պայթեցնել',
+  'drilling.legend.click':
+    'Սեղմեք հաստոցի տողի օրվա վրա՝ հորատումն այնտեղից սկսելու համար, կրկին սեղմելը հեռացնում է սկիզբը։ ▶ — տևողությունը օրերով։',
 
   // Fields
   'field.elevation': 'Բարձրության նիշ',
@@ -334,8 +396,14 @@ export const hy: Record<I18nKey, string> = {
 
   // Actuals (Excel) and site names
   'field.site': 'Տեղամաս (Участок)',
+  'field.miningStart': 'Արդյունահանման սկիզբ',
+  'field.miningEnd': 'Արդյունահանման ավարտ',
   'import.warn.siteUnparsed':
     '«{site}» տեղամասը չի ճանաչվել (սպասվում է, օրինակ, location_cn1740_mf_17)․ օգտագործվել է սովորական ID-ն։',
+  'import.warn.badDate':
+    'Հնարավոր չէ կարդալ «{value}» ամսաթիվը — արդյունահանման ժամանակահատվածը հաշվի չի առնվել։',
+  'import.warn.miningOrder':
+    'Արդյունահանման ավարտը ({end}) սկզբից ({start}) առաջ է — ժամանակահատվածը հաշվի չի առնվել։',
   'blockModal.fileValue': 'ֆայլում՝ {value}',
   'blockModal.actuals':
     'Փաստացի արդյունահանում մինչև {date}․ հանվել է {tonnes} տ, մնացորդի պարունակությունները վերահաշվարկվել են։',
@@ -390,6 +458,12 @@ export const hy: Record<I18nKey, string> = {
   'unit.tm3': 'տ/մ³',
   'unit.m': 'մ',
   'unit.s': 'վ',
+  'unit.lm': 'գ.մ.',
+  'unit.lmPerHour': 'գ.մ./ժ',
+  'unit.m3PerLm': 'մ³/գ.մ.',
+  'unit.min': 'ր',
+  'unit.h': 'ժ',
+  'unit.d': 'օր',
 
   // Language
   'language.label': 'Լեզու',

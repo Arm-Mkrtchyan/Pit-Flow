@@ -1,8 +1,10 @@
+import { defaultDrilling } from '../features/drilling/defaults';
+
 /**
  * Persisted-state migrations. Bump PERSIST_VERSION whenever the persisted shape changes and
  * add a step `from → from + 1`. Steps run in order from the stored version to the current one.
  */
-export const PERSIST_VERSION = 4;
+export const PERSIST_VERSION = 5;
 
 type Step = (state: Record<string, unknown>) => Record<string, unknown>;
 
@@ -14,6 +16,9 @@ const STEPS: Record<number, Step> = {
   // v3 → v4: optional fields only (block site/siteKey, recalculated grades and actuals on
   // user inputs, history kind/beforeInputs). Existing data is valid as is.
   3: (s) => s,
+  // v4 → v5: drilling planning (rigs, rig rows per block, settings). Blocks may carry optional
+  // mining dates; existing blocks are valid without them.
+  4: (s) => ({ ...s, drilling: defaultDrilling() }),
 };
 
 export function migrate(persisted: unknown, fromVersion: number): unknown {

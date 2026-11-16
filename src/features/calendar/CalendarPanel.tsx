@@ -2,14 +2,26 @@ import { Button, DatePicker, Space, Typography } from 'antd';
 import type { Dayjs } from 'dayjs';
 import { t } from '../../shared/i18n/t';
 import { useAppStore } from '../../store';
+import type { IsoDate } from '../../types/domain';
 import { enumerateDays, fromIso, MAX_HORIZON_DAYS, nextDaysRange, toIso } from './dateRange';
 
 const PRESETS = [7, 14, 30] as const;
 const DISPLAY = 'DD.MM.YYYY';
 
-export function CalendarPanel() {
+interface CalendarPanelProps {
+  range: [IsoDate, IsoDate] | null;
+  setRange: (range: [IsoDate, IsoDate] | null) => void;
+}
+
+/** Extraction planning horizon (plan range). */
+export function PlanCalendarPanel() {
   const range = useAppStore((s) => s.plan.range);
   const setRange = useAppStore((s) => s.setRange);
+  return <CalendarPanel range={range} setRange={setRange} />;
+}
+
+/** Date-range picker with presets; the caller owns the range. */
+export function CalendarPanel({ range, setRange }: CalendarPanelProps) {
   const days = enumerateDays(range).length;
 
   const value: [Dayjs, Dayjs] | null = range ? [fromIso(range[0]), fromIso(range[1])] : null;

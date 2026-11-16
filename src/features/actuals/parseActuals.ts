@@ -1,4 +1,5 @@
 import type { IsoDate } from '../../types/domain';
+import { cellToIsoDate } from '../../shared/utils/dates';
 import { parseNumber } from '../../shared/utils/numbers';
 import {
   ACTUAL_GRADE_FIELDS,
@@ -125,7 +126,7 @@ function tryParseSheet(XLSX: XLSXModule, ws: Sheet, sheetName: string): ParsedAc
       continue;
     }
     if (kind !== ACTUAL_VALUE) continue;
-    const date = toIsoDate(XLSX, value(r, dateCol));
+    const date = cellToIsoDate(value(r, dateCol));
     if (!date) continue;
     if (!firstDate || date < firstDate) firstDate = date;
     if (!lastDate || date > lastDate) lastDate = date;
@@ -156,23 +157,5 @@ function tryParseSheet(XLSX: XLSXModule, ws: Sheet, sheetName: string): ParsedAc
 
 function cellValue(v: unknown): string | number | null {
   if (typeof v === 'number' || typeof v === 'string') return v;
-  return null;
-}
-
-/** Excel serial date, Date, or "dd.mm.yyyy"/"yyyy-mm-dd" text → ISO date (no time-zone shifts). */
-function toIsoDate(XLSX: XLSXModule, v: unknown): IsoDate | null {
-  const pad = (n: number) => String(n).padStart(2, '0');
-  if (typeof v === 'number' && v > 0) {
-    const d = XLSX.SSF.parse_date_code(v);
-    return d ? `${d.y}-${pad(d.m)}-${pad(d.d)}` : null;
-  }
-  if (v instanceof Date) return `${v.getFullYear()}-${pad(v.getMonth() + 1)}-${pad(v.getDate())}`;
-  if (typeof v === 'string') {
-    const s = v.trim();
-    let m = /^(\d{1,2})[./](\d{1,2})[./](\d{4})$/.exec(s);
-    if (m) return `${m[3]}-${pad(Number(m[2]))}-${pad(Number(m[1]))}`;
-    m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s);
-    if (m) return `${m[1]}-${m[2]}-${m[3]}`;
-  }
   return null;
 }

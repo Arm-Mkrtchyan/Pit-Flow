@@ -5,6 +5,8 @@ import { backupRaw, idbStorage } from './idbStorage';
 import { migrate, PERSIST_VERSION } from './migrations';
 import { persistedSchema } from './schema';
 import { createBlocksSlice } from './slices/blocks';
+import { createDrillingSlice } from './slices/drilling';
+import { DEFAULT_DRILL_SETTINGS } from '../features/drilling/defaults';
 import { createHistorySlice } from './slices/history';
 import { createPlanSlice } from './slices/plan';
 import { createPrefsSlice } from './slices/prefs';
@@ -24,7 +26,7 @@ export const STORAGE_KEY = 'pitflow-state';
 /** Persisted subset: inputs, settings, last solution and history. UI state is not persisted. */
 type Persisted = Pick<
   RootState,
-  'blocks' | 'userInputs' | 'plan' | 'settings' | 'solution' | 'history' | 'language'
+  'blocks' | 'userInputs' | 'plan' | 'settings' | 'solution' | 'history' | 'language' | 'drilling'
 >;
 
 const partialize = (s: RootState): Persisted => ({
@@ -35,6 +37,7 @@ const partialize = (s: RootState): Persisted => ({
   solution: s.solution,
   history: s.history,
   language: s.language,
+  drilling: s.drilling,
 });
 
 export const useAppStore = create<RootState>()(
@@ -47,6 +50,7 @@ export const useAppStore = create<RootState>()(
       ...createHistorySlice(...a),
       ...createPrefsSlice(...a),
       ...createUiSlice(...a),
+      ...createDrillingSlice(...a),
     }),
     {
       name: STORAGE_KEY,
@@ -74,6 +78,10 @@ export const useAppStore = create<RootState>()(
             // Fill settings added later with defaults (in addition to migrations).
             settings: { ...DEFAULT_SETTINGS, ...data.settings } as RootState['settings'],
             plan: { ...current.plan, ...data.plan } as RootState['plan'],
+            drilling: {
+              ...data.drilling,
+              settings: { ...DEFAULT_DRILL_SETTINGS, ...data.drilling.settings },
+            },
           };
         }
         const message = parsed.error.issues

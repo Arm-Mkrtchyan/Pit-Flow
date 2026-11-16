@@ -42,20 +42,22 @@ export function AppLayout({ page, children }: AppLayoutProps) {
 }
 
 interface PageColumnsProps {
-  left: ReactNode;
+  left?: ReactNode;
   center: ReactNode;
   right?: ReactNode;
   centerLabel: string;
   rightLabel?: string;
 }
 
-/** Block list on the left, page content in the centre, optional right panel. */
+/** Optional block list on the left, page content in the centre, optional right panel. */
 export function PageColumns({ left, center, right, centerLabel, rightLabel }: PageColumnsProps) {
   return (
     <Layout>
-      <Sider width={340} theme="light" className={styles.sider} aria-label={t('layout.blocks')}>
-        {left}
-      </Sider>
+      {left !== undefined && (
+        <Sider width={340} theme="light" className={styles.sider} aria-label={t('layout.blocks')}>
+          {left}
+        </Sider>
+      )}
       <Content className={styles.content} aria-label={centerLabel}>
         {center}
       </Content>

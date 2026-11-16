@@ -15,13 +15,74 @@ export const ru: Record<I18nKey, string> = {
   'layout.drilling': 'Бурение',
   'home.title': 'Что вы хотите сделать?',
   'home.open': 'Открыть',
-  'home.extraction.desc': 'Посуточный график добычи: целевые тоннаж и содержания, вскрыша, зависимости блоков и фактическая добыча.',
-  'home.drilling.desc': 'Продолжительность бурения каждого блока по его объёму и характеристикам бурового оборудования.',
+  'home.extraction.desc':
+    'Посуточный график добычи: целевые тоннаж и содержания, вскрыша, зависимости блоков и фактическая добыча.',
+  'home.drilling.desc':
+    'Продолжительность бурения каждого блока по его объёму и характеристикам бурового оборудования.',
   'home.blocksShared': 'Список блоков общий для обеих страниц: загружено блоков — {count}.',
   'home.blocksSharedEmpty': 'Список блоков общий для обеих страниц. Загрузите его на любой из них.',
   'drilling.equipment': 'Буровое оборудование',
   'drilling.uploadEquipment': 'Загрузить список оборудования',
-  'drilling.comingSoon': 'Загрузка оборудования и расчёт продолжительности бурения будут добавлены на следующем шаге.',
+  'drilling.equipmentLoaded': 'Оборудование: станков — {count}',
+  'drilling.equipmentPreview': 'Список оборудования — {name}',
+  'drilling.equipmentApply': 'Использовать этот список',
+  'drilling.equipmentApplied': 'Список оборудования загружен: станков — {count}.',
+  'drilling.equipmentMissingColumns': 'Не найдены обязательные столбцы: {fields}.',
+  'drilling.equipmentBadRows':
+    'Пропущены строки (нет названия, производительности или индекса взрывания): {rows}.',
+  'drilling.equipmentReplace':
+    'Текущий список оборудования будет заменён. Выбор станков в таблице сохранится для станков с тем же названием.',
+  'drilling.anyPosition': 'Любая',
+  'drilling.col.name': 'Название',
+  'drilling.col.model': 'Модель',
+  'drilling.col.hours': 'Часов в сутки',
+  'drilling.col.position': 'Позиция',
+  'drilling.col.productivity': 'Производительность',
+  'drilling.col.blastIndex': 'Индекс взрывания',
+  'drilling.col.block': 'Блок',
+  'drilling.col.volume': 'Объём',
+  'drilling.col.rig': 'Буровой станок',
+  'drilling.col.drilled': 'Пробурено',
+  'drilling.col.planned': 'Бурить',
+  'drilling.col.total': 'Всего',
+  'drilling.done': 'Пробурен',
+  'drilling.afterPeriod': 'Заканчивается после периода',
+  'drilling.unfinished': 'Не завершено',
+  'drilling.addRig': '+ Добавить станок',
+  'drilling.removeRig': 'Удалить этот станок',
+  'drilling.volumeMissing': 'Нет объёма или плотности для: {ids}. Эти строки не учитываются.',
+  'drilling.selectRig': 'Выберите станок',
+  'drilling.noEquipment': 'Сначала загрузите оборудование',
+  'drilling.issue.noRig': 'Станок не выбран.',
+  'drilling.issue.unknownRig': 'Этого станка нет в текущем списке оборудования.',
+  'drilling.issue.noPosition': 'Для этого станка нет производительности для позиции {position}.',
+  'drilling.previewHint':
+    'Оценка, если бы блок бурил только этот станок. Нажмите на день, чтобы начать бурение.',
+  'drilling.setStart': 'Начать бурение {date}',
+  'drilling.clearStart': 'Убрать начало бурения {date}',
+  'drilling.conflict': 'Этот станок в тот же день бурит другой блок.',
+  'drilling.blast': 'Взрыв',
+  'drilling.blastHint': 'Бурение заканчивается {date} в {time}.',
+  'drilling.noBlocks': 'Блоки не загружены. Загрузите список блоков, чтобы начать.',
+  'drilling.settings': 'Взрывные работы',
+  'drilling.loadMinutes': 'Время заряжания одной скважины',
+  'drilling.loadMinutesHint':
+    'Время на зарядку одной скважины после окончания бурения. Взрыв в тот же день возможен, если бурение заканчивается не позже времени взрыва минус это время.',
+  'drilling.blastTime': 'Время взрыва',
+  'drilling.blastTimeHint': 'Время суток, когда производятся взрывы.',
+  'drilling.shiftStart': 'Начало работы',
+  'drilling.shiftStartHint':
+    'Станки начинают бурение в это время в день начала и в каждый следующий день.',
+  'drilling.hoursPerDay': 'Рабочих часов в сутки',
+  'drilling.hoursPerDayHint':
+    'Для станков, у которых в списке оборудования не указаны часы в сутки.',
+  'drilling.legend': 'Обозначения',
+  'drilling.legend.mining': 'Дни добычи блока (из списка блоков)',
+  'drilling.legend.drilling': 'Бурение, п.м. в сутки',
+  'drilling.legend.conflict': 'Станок в этот день занят на другом блоке',
+  'drilling.legend.blast': 'День, когда блок можно взорвать',
+  'drilling.legend.click':
+    'Нажмите на день в строке станка, чтобы начать бурение; повторное нажатие убирает начало. ▶ — продолжительность в сутках.',
 
   // Fields
   'field.elevation': 'Высотная отметка',
@@ -331,8 +392,13 @@ export const ru: Record<I18nKey, string> = {
 
   // Actuals (Excel) and site names
   'field.site': 'Участок',
+  'field.miningStart': 'Начало добычи',
+  'field.miningEnd': 'Окончание добычи',
   'import.warn.siteUnparsed':
     'Участок «{site}» не распознан (ожидается, например, location_cn1740_mf_17); использован обычный ID.',
+  'import.warn.badDate': 'Не удалось прочитать дату «{value}» — период добычи не учтён.',
+  'import.warn.miningOrder':
+    'Окончание добычи {end} раньше начала {start} — период добычи не учтён.',
   'blockModal.fileValue': 'в файле: {value}',
   'blockModal.actuals':
     'Фактическая добыча до {date}: списано {tonnes} т; содержания пересчитаны для оставшейся массы.',
@@ -388,6 +454,12 @@ export const ru: Record<I18nKey, string> = {
   'unit.tm3': 'т/м³',
   'unit.m': 'м',
   'unit.s': 'с',
+  'unit.lm': 'п.м.',
+  'unit.lmPerHour': 'п.м./ч',
+  'unit.m3PerLm': 'м³/п.м.',
+  'unit.min': 'мин',
+  'unit.h': 'ч',
+  'unit.d': 'сут',
 
   // Language
   'language.label': 'Язык',

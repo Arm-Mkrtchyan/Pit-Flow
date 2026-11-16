@@ -1,15 +1,25 @@
-import { DrillingPanel } from '../../features/drilling';
+import { Space } from 'antd';
+import { DrillingSidePanel, DrillingTable, EquipmentButton } from '../../features/drilling';
+import { ImportButton } from '../../features/import';
 import { t } from '../../shared/i18n/t';
 import { PageColumns } from '../AppLayout';
-import { BlocksPanel } from './BlocksPanel';
 
 /** Планирование бурения: drilling duration per block from its volume and the drilling equipment. */
 export function DrillingPage() {
   return (
     <PageColumns
-      left={<BlocksPanel />}
-      center={<DrillingPanel />}
+      center={
+        <Space direction="vertical" style={{ width: '100%' }} size="middle">
+          <Space wrap>
+            <ImportButton />
+            <EquipmentButton />
+          </Space>
+          <DrillingTable />
+        </Space>
+      }
+      right={<DrillingSidePanel />}
       centerLabel={t('layout.drilling')}
+      rightLabel={t('layout.calendar')}
     />
   );
 }

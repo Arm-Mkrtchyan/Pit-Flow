@@ -19,6 +19,8 @@ const fieldKey = z.enum([
   'eq',
   'density',
   'site',
+  'miningStart',
+  'miningEnd',
 ]);
 
 const block = z.object({
@@ -37,6 +39,8 @@ const block = z.object({
   sourceRow: z.number().int(),
   site: z.string().optional(),
   siteKey: z.string().optional(),
+  miningStart: isoDate.optional(),
+  miningEnd: isoDate.optional(),
 });
 
 const gradeField = z.enum(['cu', 'mo', 'as', 'pb', 'eq']);
@@ -103,6 +107,41 @@ const acceptedEntry = z.object({
   beforeInputs: z.record(z.string(), userInput).optional(),
 });
 
+const clock = z.string().regex(/^\d{1,2}:\d{2}$/);
+
+const drilling = z.object({
+  range: z.tuple([isoDate, isoDate]).nullable(),
+  rigs: z.array(
+    z.object({
+      id: z.string().min(1),
+      name: z.string().min(1),
+      model: z.string().optional(),
+      hoursPerDay: finite.positive().max(24).optional(),
+      byPosition: z.record(
+        z.string(),
+        z.object({ blastIndex: finite.positive(), productivity: finite.positive() }),
+      ),
+    }),
+  ),
+  assignments: z.record(
+    z.string(),
+    z.array(
+      z.object({
+        rowId: z.string().min(1),
+        rigId: z.string().nullable(),
+        start: isoDate.nullable(),
+        drilledLm: finite.min(0),
+      }),
+    ),
+  ),
+  settings: z.object({
+    loadMinutesPerHole: finite.min(0),
+    blastTime: clock,
+    shiftStart: clock,
+    hoursPerDay: finite.positive().max(24),
+  }),
+});
+
 export const persistedSchema = z.object({
   blocks: z.array(block),
   userInputs: z.record(z.string(), userInput),
@@ -118,6 +157,7 @@ export const persistedSchema = z.object({
   }),
   history: z.array(acceptedEntry),
   language: z.enum(['en', 'ru', 'hy']),
+  drilling,
 });
 
 export type PersistedState = z.infer<typeof persistedSchema>;
