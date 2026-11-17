@@ -17,6 +17,7 @@ body {
 }
 .content {
   overflow: auto;
+  /* = CONTENT_PADDING in shared/layout.ts (sticky table headers rely on it) */
   padding: 16px;
   min-width: 0;
 }

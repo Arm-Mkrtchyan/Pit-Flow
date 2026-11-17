@@ -10,6 +10,7 @@ import type { RowIssue } from './calc';
 import { isMiningDay } from './drillBlocks';
 import { conflictKey, useDrillingTable, type DrillTableRow } from './useDrillingTable';
 import styles from './DrillingTable.module.css';
+import { STICKY_HEADER } from '../../shared/layout';
 
 const DAY_COL_WIDTH = 78;
 const FIXED_WIDTH = 140 + 100 + 220 + 100 + 95 + 95;
@@ -264,7 +265,7 @@ export function DrillingTable() {
       dataSource={rows}
       columns={columns}
       scroll={{ x: FIXED_WIDTH + days.length * DAY_COL_WIDTH }}
-      sticky
+      sticky={STICKY_HEADER}
     />
   );
 }

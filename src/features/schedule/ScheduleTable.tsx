@@ -16,6 +16,7 @@ import { TargetCell } from './TargetCell';
 import { resolveTarget } from './targets';
 import { useScheduleResults } from './useScheduleResults';
 import styles from './ScheduleTable.module.css';
+import { STICKY_HEADER } from '../../shared/layout';
 
 const DAY_COL_WIDTH = 104;
 const LABEL_WIDTH = 230;
@@ -249,7 +250,7 @@ export function ScheduleTable() {
         dataSource={rows}
         columns={columns}
         scroll={{ x: LABEL_WIDTH + days.length * DAY_COL_WIDTH }}
-        sticky
+        sticky={STICKY_HEADER}
       />
       <DayAllocationDrawer date={drawerDate} onClose={() => setDrawerDate(null)} />
     </>
