@@ -7,16 +7,10 @@ body {
 }
 .header {
   display: flex;
-  align-items: baseline;
-  gap: 12px;
+  align-items: center;
+  gap: 16px;
   padding-inline: 20px;
-}
-.title {
-  margin: 0 !important;
-  color: #fff !important;
-}
-.subtitle {
-  color: rgba(255, 255, 255, 0.65) !important;
+  border-bottom: 1px solid rgba(5, 5, 5, 0.06);
 }
 .sider {
   border-inline: 1px solid rgba(5, 5, 5, 0.06);
@@ -48,14 +42,15 @@ body {
 }
 .headerRight {
   margin-left: auto;
-  align-self: center;
 }
-.titleLink,
-.titleLink:hover {
-  color: inherit;
+.titleLink {
+  display: inline-flex;
+  align-items: center;
 }
-.pageSwitch {
-  align-self: center;
+.logo {
+  display: block;
+  height: 40px;
+  width: auto;
 }
 .home {
   overflow: auto;

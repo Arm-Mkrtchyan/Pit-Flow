@@ -7,6 +7,6 @@ export const theme: ThemeConfig = {
     fontSize: 13,
   },
   components: {
-    Layout: { headerBg: '#2b2522', siderBg: '#fafafa', bodyBg: '#ffffff' },
+    Layout: { headerBg: '#ffffff', siderBg: '#fafafa', bodyBg: '#ffffff' },
   },
 };

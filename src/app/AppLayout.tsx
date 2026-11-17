@@ -4,6 +4,7 @@ import { t } from '../shared/i18n/t';
 import { LanguageSwitch } from './LanguageSwitch';
 import { PAGES, navigate, pageHref, type PageId } from './routes';
 import styles from './AppLayout.module.css';
+import logoUrl from '../assets/pit-flow-logo-transparent.webp';
 
 const { Header, Sider, Content } = Layout;
 
@@ -17,16 +18,13 @@ export function AppLayout({ page, children }: AppLayoutProps) {
   return (
     <Layout className={styles.root}>
       <Header className={styles.header}>
-        <Typography.Title level={4} className={styles.title}>
-          <a href={pageHref('home')} className={styles.titleLink} title={t('page.home')}>
-            {t('app.title')}
-          </a>
-        </Typography.Title>
+        <a href={pageHref('home')} className={styles.titleLink} title={t('page.home')}>
+          <img src={logoUrl} alt={t('app.title')} className={styles.logo} />
+        </a>
         {page === 'home' ? (
-          <Typography.Text className={styles.subtitle}>{t('app.subtitle')}</Typography.Text>
+          <Typography.Text type="secondary">{t('app.subtitle')}</Typography.Text>
         ) : (
           <Segmented<PageId>
-            className={styles.pageSwitch}
             value={page}
             onChange={navigate}
             options={PAGES.map((p) => ({ value: p.id, label: t(p.titleKey) }))}
