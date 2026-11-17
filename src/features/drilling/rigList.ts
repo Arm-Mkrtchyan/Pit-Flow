@@ -26,12 +26,24 @@ function groups(text: string): Array<{ letters: string; numbers: number[] }> {
 }
 
 /**
- * Model of a rig, from its name without the trailing unit number ("DM 50 - 2" → "DM 50"): a
- * model matches if one of its letter groups starts with the rig's letters and, when the rig
- * names a number, lists that number ("DM 50" → DM-45-50, "D60" → DM-60/L8, "СБШ" → СБШ-250).
+ * Rigs that drill like a model their name does not mention: rig name (without the unit number)
+ * → model name. D65 has no productivity card of its own and uses the DM-60/L8 one.
+ */
+const MODEL_ALIASES: Array<[RegExp, RegExp]> = [[/^d ?65$/i, /dm-?60/i]];
+
+/**
+ * Model of a rig, from its name without the trailing unit number ("DM 50 - 2" → "DM 50"): an
+ * alias if one applies, else a model matches if one of its letter groups starts with the rig's
+ * letters and, when the rig names a number, lists that number ("DM 50" → DM-45-50,
+ * "D60" → DM-60/L8, "СБШ" → СБШ-250).
  */
 export function matchModel(name: string, models: readonly DrillModel[]): string | null {
   const base = clean(name).replace(/\s*-\s*\d+\s*$/, '');
+  const alias = MODEL_ALIASES.find(([rigRe]) => rigRe.test(base));
+  if (alias) {
+    const aliased = models.find((m) => alias[1].test(m.name));
+    if (aliased) return aliased.id;
+  }
   const [rig] = groups(base);
   if (!rig) return null;
   const number = rig.numbers[0];

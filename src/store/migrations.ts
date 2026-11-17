@@ -1,12 +1,13 @@
-import type { Block, DrillAssignment, DrillModel } from '../types/domain';
+import type { Block, DrillAssignment, DrillModel, DrillUnit } from '../types/domain';
 import { defaultDrilling, defaultModels, defaultRigs } from '../features/drilling/defaults';
 import { fromLegacyBlocks } from '../features/drilling/drillSource';
+import { matchModel } from '../features/drilling/rigList';
 
 /**
  * Persisted-state migrations. Bump PERSIST_VERSION whenever the persisted shape changes and
  * add a step `from → from + 1`. Steps run in order from the stored version to the current one.
  */
-export const PERSIST_VERSION = 10;
+export const PERSIST_VERSION = 11;
 
 type Step = (state: Record<string, unknown>) => Record<string, unknown>;
 
@@ -71,6 +72,17 @@ const STEPS: Record<number, Step> = {
       ),
     );
     return { ...s, drilling: { ...d, models, rigs, assignments } };
+  },
+  // v10 → v11: D65 uses the DM-60/L8 productivity. Rigs without a model are matched again by
+  // name; a model the user chose is kept.
+  10: (s) => {
+    const d = s.drilling as Record<string, unknown>;
+    // Persisted v10 models and rigs were validated when they were stored.
+    const models = (d.models ?? []) as DrillModel[];
+    const rigs = ((d.rigs ?? []) as DrillUnit[]).map((r) =>
+      r.modelId === null ? { ...r, modelId: matchModel(r.name, models) } : r,
+    );
+    return { ...s, drilling: { ...d, rigs } };
   },
 };
 
