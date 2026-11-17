@@ -1,7 +1,8 @@
 import type { DrillAssignment, DrillingState, DrillSettings } from '../../types/domain';
 
 export const DEFAULT_DRILL_SETTINGS: DrillSettings = {
-  loadMinutesPerHole: 15,
+  loadMinutesPerHole: 5,
+  installMinutes: 60,
   blastTime: '16:00',
   shiftStart: '08:00',
   hoursPerDay: 24,

@@ -146,6 +146,7 @@ const drilling = z.object({
   ),
   settings: z.object({
     loadMinutesPerHole: finite.min(0),
+    installMinutes: finite.min(0),
     blastTime: clock,
     shiftStart: clock,
     hoursPerDay: finite.positive().max(24),

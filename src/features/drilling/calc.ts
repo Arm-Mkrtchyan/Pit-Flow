@@ -18,7 +18,8 @@ import type { DrillBlock } from './drillBlocks';
  * Started rigs drill R together (each within its daily working window) until R is used up;
  * rig i drills Vᵢ ⇒ planned metres pᵢ = Vᵢ / Iᵢ, total metres = dᵢ + pᵢ.
  * With no rig started yet, each rig shows a preview as if it drilled R alone.
- * Blast day: finish time T of the block; T ≤ blastTime − loadMinutes → same day, else next day.
+ * Blast day: finish time T of the block; T ≤ blastTime − loadMinutes − installMinutes → same day,
+ * else next day.
  */
 
 export type RowIssue = 'noRig' | 'unknownRig' | 'noPosition';
@@ -171,7 +172,8 @@ export function calcDrillBlock(
   const finishDay = Math.floor(finishT / DAY);
   const finish: Finish = { date: dayNumberToIso(finishDay), minutes: finishT - finishDay * DAY };
   const blast = clockToMinutes(settings.blastTime) ?? 16 * 60;
-  const sameDay = finish.minutes <= blast - settings.loadMinutesPerHole + EPS;
+  const prep = settings.loadMinutesPerHole + settings.installMinutes;
+  const sameDay = finish.minutes <= blast - prep + EPS;
   return {
     ...base,
     finish,

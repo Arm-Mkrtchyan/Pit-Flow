@@ -6,7 +6,7 @@ import { fromLegacyBlocks } from '../features/drilling/drillSource';
  * Persisted-state migrations. Bump PERSIST_VERSION whenever the persisted shape changes and
  * add a step `from → from + 1`. Steps run in order from the stored version to the current one.
  */
-export const PERSIST_VERSION = 7;
+export const PERSIST_VERSION = 8;
 
 type Step = (state: Record<string, unknown>) => Record<string, unknown>;
 
@@ -34,6 +34,17 @@ const STEPS: Record<number, Step> = {
     // Persisted v6 drilling blocks were validated as Block rows when they were stored.
     const old = Array.isArray(d.blocks) ? (d.blocks as Block[]) : [];
     return { ...s, drilling: { ...d, blocks: fromLegacyBlocks(old) } };
+  },
+  // v7 → v8: installation duration added (default 60 min). Load time default is
+  // now 5 min; a value still at the old default 15 becomes 5, a value set by the user is kept.
+  7: (s) => {
+    const d = s.drilling as Record<string, unknown>;
+    const settings = d.settings as Record<string, unknown>;
+    const load = settings.loadMinutesPerHole === 15 ? 5 : settings.loadMinutesPerHole;
+    return {
+      ...s,
+      drilling: { ...d, settings: { ...settings, loadMinutesPerHole: load, installMinutes: 60 } },
+    };
   },
 };
 

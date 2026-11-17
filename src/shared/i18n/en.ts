@@ -73,7 +73,10 @@ export const en = {
   'drilling.settings': 'Blasting',
   'drilling.loadMinutes': 'Load time per borehole',
   'drilling.loadMinutesHint':
-    'Time to charge one borehole after drilling ends. Blasting the same day is possible if drilling ends no later than blast time minus this time.',
+    'Time to charge one borehole after drilling ends. Blasting the same day is possible if drilling ends no later than blast time minus load time and installation duration.',
+  'drilling.installMinutes': 'Installation duration',
+  'drilling.installMinutesHint':
+    'Time to assemble the explosive charge after loading, before the blast. Counted together with the load time when deciding whether the block can be blasted the same day.',
   'drilling.blastTime': 'Blast time',
   'drilling.blastTimeHint': 'Time of day when blasts are made.',
   'drilling.shiftStart': 'Work starts at',

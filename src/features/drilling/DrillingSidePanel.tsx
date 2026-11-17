@@ -55,6 +55,16 @@ export function DrillingSidePanel() {
             onChange={(v) => v !== null && update({ loadMinutesPerHole: v })}
           />
         </Form.Item>
+        <Form.Item label={t('drilling.installMinutes')} tooltip={t('drilling.installMinutesHint')}>
+          <InputNumber<number>
+            min={0}
+            max={600}
+            style={{ width: '100%' }}
+            suffix={unit('min')}
+            value={settings.installMinutes}
+            onChange={(v) => v !== null && update({ installMinutes: v })}
+          />
+        </Form.Item>
         <Form.Item label={t('drilling.blastTime')} tooltip={t('drilling.blastTimeHint')}>
           <TimePicker
             format={CLOCK}

@@ -17,7 +17,12 @@ const COLUMNS = {
 type Column = keyof typeof COLUMNS;
 const REQUIRED: Column[] = ['location', 'start', 'elevation', 'volume'];
 
-const normalize = (h: string) => h.replace(/^\uFEFF/, '').trim().toLowerCase().replace(/\s+/g, ' ');
+const normalize = (h: string) =>
+  h
+    .replace(/^\uFEFF/, '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, ' ');
 
 export interface DrillImportResult {
   blocks: DrillSourceBlock[];

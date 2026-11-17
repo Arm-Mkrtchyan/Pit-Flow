@@ -193,6 +193,8 @@ export interface DrillAssignment {
 export interface DrillSettings {
   /** Minutes to charge one borehole after drilling ends. */
   loadMinutesPerHole: number;
+  /** Minutes to assemble the explosive charge (blast network) after loading, before the blast. */
+  installMinutes: number;
   /** Blast time of day, "HH:mm". */
   blastTime: string;
   /** Rigs start work at this time of day, "HH:mm". */
