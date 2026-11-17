@@ -21,8 +21,7 @@ export const conflictKey = (rigId: string, date: IsoDate) => `${rigId}|${date}`;
 
 /** Drilling blocks, their calculated rig rows, the day columns and rig double-bookings. */
 export function useDrillingTable() {
-  const blocks = useAppStore((s) => s.blocks);
-  const { range, rigs, assignments, settings } = useAppStore((s) => s.drilling);
+  const { blocks, range, rigs, assignments, settings } = useAppStore((s) => s.drilling);
 
   const drillBlocks = useMemo(() => buildDrillBlocks(blocks), [blocks]);
   const rigsById = useMemo(() => new Map<string, DrillRig>(rigs.map((r) => [r.id, r])), [rigs]);

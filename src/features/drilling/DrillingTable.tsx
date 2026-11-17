@@ -50,7 +50,13 @@ export function DrillingTable() {
           const late = r.result.finish && rangeEnd && r.result.finish.date > rangeEnd;
           return (
             <div className={styles.blockCell}>
-              <Tooltip title={r.block.site}>
+              <Tooltip
+                title={
+                  r.block.materials.length > 0
+                    ? `${r.block.site} · ${r.block.materials.join(', ')}`
+                    : r.block.site
+                }
+              >
                 <Typography.Text strong>{r.block.name}</Typography.Text>
               </Tooltip>
               {r.result.remainingVolume <= 0 && r.block.volume > 0 && (
@@ -77,14 +83,7 @@ export function DrillingTable() {
         align: 'right',
         fixed: 'left',
         onCell: spanBlock,
-        render: (_: unknown, r) =>
-          r.block.volumeMissing.length > 0 ? (
-            <Tooltip title={t('drilling.volumeMissing', { ids: r.block.volumeMissing.join(', ') })}>
-              <Typography.Text type="warning">{fmtInt(r.block.volume)} ⚠</Typography.Text>
-            </Tooltip>
-          ) : (
-            fmtInt(r.block.volume)
-          ),
+        render: (_: unknown, r) => fmtInt(r.block.volume),
       },
       {
         key: 'rig',

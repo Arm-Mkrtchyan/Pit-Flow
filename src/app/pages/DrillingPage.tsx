@@ -1,6 +1,10 @@
 import { Space } from 'antd';
-import { DrillingSidePanel, DrillingTable, EquipmentButton } from '../../features/drilling';
-import { ImportButton } from '../../features/import';
+import {
+  DrillImportButton,
+  DrillingSidePanel,
+  DrillingTable,
+  EquipmentButton,
+} from '../../features/drilling';
 import { t } from '../../shared/i18n/t';
 import { PageColumns } from '../AppLayout';
 
@@ -11,7 +15,7 @@ export function DrillingPage() {
       center={
         <Space direction="vertical" style={{ width: '100%' }} size="middle">
           <Space wrap>
-            <ImportButton />
+            <DrillImportButton />
             <EquipmentButton />
           </Space>
           <DrillingTable />

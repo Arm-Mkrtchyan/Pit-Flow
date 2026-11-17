@@ -8,7 +8,7 @@ import { useImport } from './useImport';
 
 const ACCEPT = '.csv,.txt,.xlsx,.xlsm,.xls';
 
-/** Upload button plus the modals of the import flow. */
+/** Upload button plus the modals of the extraction block import. */
 export function ImportButton() {
   const { step, handleFile, confirmMapping, chooseMode, close } = useImport();
   const existing = useAppStore((s) => s.blocks.length);

@@ -201,7 +201,27 @@ export interface DrillSettings {
   hoursPerDay: number;
 }
 
+/**
+ * One blast location of the drilling page, from the production schedule file: all rows of one
+ * Mining Location (every cell, material and period) summed up.
+ */
+export interface DrillSourceBlock {
+  /** Matches the extraction site key where possible ("cn1740-24"); otherwise the lower-case name. */
+  key: DrillBlockKey;
+  /** Mining Location exactly as in the file, e.g. "location_cn1740_mf_24". */
+  location: string;
+  elevation: number;
+  /** Σ Volume of the location's rows in the file, m³. */
+  volume: number;
+  /** Materials of the rows, in file order (MF, WD, DUMP …). */
+  materials: string[];
+  /** Days with scheduled mining, sorted ascending. */
+  miningDays: IsoDate[];
+}
+
 export interface DrillingState {
+  /** Block list of the drilling page; separate from the extraction block list. */
+  blocks: DrillSourceBlock[];
   range: [IsoDate, IsoDate] | null;
   rigs: DrillRig[];
   assignments: Record<DrillBlockKey, DrillAssignment[]>;

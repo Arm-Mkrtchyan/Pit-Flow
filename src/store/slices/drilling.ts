@@ -5,6 +5,7 @@ import type {
   DrillingState,
   DrillRig,
   DrillSettings,
+  DrillSourceBlock,
   IsoDate,
 } from '../../types/domain';
 import { defaultDrilling, firstRow } from '../../features/drilling/defaults';
@@ -12,6 +13,8 @@ import type { RootState } from '../types';
 
 export interface DrillingSlice {
   drilling: DrillingState;
+  /** Replace the drilling block list; rig rows of blocks that are gone are dropped. */
+  setDrillBlocks: (blocks: DrillSourceBlock[]) => void;
   setDrillRange: (range: [IsoDate, IsoDate] | null) => void;
   /** Replace the equipment list. Rows keep their rig ID; unknown rigs are flagged in the table. */
   setRigs: (rigs: DrillRig[]) => void;
@@ -22,8 +25,6 @@ export interface DrillingSlice {
   toggleStart: (key: DrillBlockKey, rowId: string, date: IsoDate) => void;
   setDrilledLm: (key: DrillBlockKey, rowId: string, lm: number) => void;
   setDrillSettings: (patch: Partial<DrillSettings>) => void;
-  /** Drop rig rows of drilling blocks that no longer exist (after a block re-import). */
-  pruneDrillAssignments: (keys: ReadonlySet<DrillBlockKey>) => void;
 }
 
 const rowsOf = (s: RootState, key: DrillBlockKey): DrillAssignment[] =>
@@ -50,6 +51,15 @@ export const createDrillingSlice: StateCreator<RootState, [], [], DrillingSlice>
 
   return {
     drilling: defaultDrilling(),
+
+    setDrillBlocks: (blocks) =>
+      set((s) => {
+        const keys = new Set(blocks.map((b) => b.key));
+        const assignments = Object.fromEntries(
+          Object.entries(s.drilling.assignments).filter(([k]) => keys.has(k)),
+        );
+        return { drilling: { ...s.drilling, blocks, assignments } };
+      }),
 
     setDrillRange: (range) => set((s) => ({ drilling: { ...s.drilling, range } })),
 
@@ -79,13 +89,5 @@ export const createDrillingSlice: StateCreator<RootState, [], [], DrillingSlice>
       set((s) => ({
         drilling: { ...s.drilling, settings: { ...s.drilling.settings, ...patch } },
       })),
-
-    pruneDrillAssignments: (keys) =>
-      set((s) => {
-        const entries = Object.entries(s.drilling.assignments);
-        const kept = entries.filter(([k]) => keys.has(k));
-        if (kept.length === entries.length) return {};
-        return { drilling: { ...s.drilling, assignments: Object.fromEntries(kept) } };
-      }),
   };
 };

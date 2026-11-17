@@ -109,7 +109,17 @@ const acceptedEntry = z.object({
 
 const clock = z.string().regex(/^\d{1,2}:\d{2}$/);
 
+const drillSourceBlock = z.object({
+  key: z.string().min(1),
+  location: z.string().min(1),
+  elevation: finite,
+  volume: finite.min(0),
+  materials: z.array(z.string()),
+  miningDays: z.array(isoDate),
+});
+
 const drilling = z.object({
+  blocks: z.array(drillSourceBlock),
   range: z.tuple([isoDate, isoDate]).nullable(),
   rigs: z.array(
     z.object({

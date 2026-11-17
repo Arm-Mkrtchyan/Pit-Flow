@@ -21,7 +21,10 @@ export type ImportStep =
   | ({ kind: 'reimport'; result: MappedResult } & Ctx)
   | ({ kind: 'summary'; result: MappedResult; report?: MergeReport; mode?: ReimportMode } & Ctx);
 
-/** Drives the import flow: read → (map columns) → validate → (replace/merge) → summary. */
+/**
+ * Drives the extraction block import: read → (map columns) → validate → (replace/merge) → summary.
+ * The drilling page has its own import (production schedule, `features/drilling`).
+ */
 export function useImport() {
   const [step, setStep] = useState<ImportStep>({ kind: 'idle' });
   const { message } = App.useApp();

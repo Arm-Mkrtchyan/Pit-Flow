@@ -8,6 +8,7 @@ export const DEFAULT_DRILL_SETTINGS: DrillSettings = {
 };
 
 export const defaultDrilling = (): DrillingState => ({
+  blocks: [],
   range: null,
   rigs: [],
   assignments: {},

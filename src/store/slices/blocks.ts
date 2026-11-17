@@ -1,7 +1,6 @@
 import type { StateCreator } from 'zustand';
 import type { Block, BlockId, BlockUserInput } from '../../types/domain';
 import { findCycleIfSet, graphFromInputs } from '../../features/blocks/dependencyGraph';
-import { drillBlockKey } from '../../features/drilling/drillBlocks';
 import type { RootState } from '../types';
 
 export type SetDependsOnResult = { ok: true } | { ok: false; cycle: BlockId[] };
@@ -21,11 +20,8 @@ export const createBlocksSlice: StateCreator<RootState, [], [], BlocksSlice> = (
   blocks: [],
   userInputs: {},
 
-  setBlocks: (blocks, userInputs) => {
-    set((s) => ({ blocks, userInputs, solution: { ...s.solution, stale: true } }));
-    // Rig rows of drilling blocks that are gone are dropped; the others are kept.
-    get().pruneDrillAssignments(new Set(blocks.map(drillBlockKey)));
-  },
+  setBlocks: (blocks, userInputs) =>
+    set((s) => ({ blocks, userInputs, solution: { ...s.solution, stale: true } })),
 
   setRemaining: (id, remaining) =>
     set((s) => {

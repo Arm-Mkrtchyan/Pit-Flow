@@ -1,4 +1,4 @@
-import { Alert, Button, Card, Col, Layout, Row, Typography } from 'antd';
+import { Button, Card, Col, Layout, Row, Typography } from 'antd';
 import { t } from '../../shared/i18n/t';
 import type { I18nKey } from '../../shared/i18n/en';
 import { useAppStore } from '../../store';
@@ -12,7 +12,10 @@ const DESCRIPTION: Record<(typeof PAGES)[number]['id'], I18nKey> = {
 
 /** Start page: choose which work to do. */
 export function HomePage() {
-  const blockCount = useAppStore((s) => s.blocks.length);
+  const counts = {
+    extraction: useAppStore((s) => s.blocks.length),
+    drilling: useAppStore((s) => s.drilling.blocks.length),
+  };
   return (
     <Layout.Content className={styles.home}>
       <div className={styles.homeInner}>
@@ -27,21 +30,16 @@ export function HomePage() {
                 style={{ height: '100%' }}
               >
                 <Typography.Paragraph type="secondary">{t(DESCRIPTION[p.id])}</Typography.Paragraph>
+                <Typography.Paragraph>
+                  {counts[p.id] > 0
+                    ? t('home.blocksLoaded', { count: counts[p.id] })
+                    : t('home.noBlocks')}
+                </Typography.Paragraph>
                 <Button type="primary">{t('home.open')}</Button>
               </Card>
             </Col>
           ))}
         </Row>
-        <Alert
-          style={{ marginTop: 24 }}
-          type="info"
-          showIcon
-          message={
-            blockCount > 0
-              ? t('home.blocksShared', { count: blockCount })
-              : t('home.blocksSharedEmpty')
-          }
-        />
       </div>
     </Layout.Content>
   );
