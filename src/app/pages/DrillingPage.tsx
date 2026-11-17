@@ -1,5 +1,6 @@
 import { Space } from 'antd';
 import {
+  DrillExportButton,
   DrillImportButton,
   DrillingSidePanel,
   DrillingTable,
@@ -17,6 +18,7 @@ export function DrillingPage() {
           <Space wrap>
             <DrillImportButton />
             <EquipmentButton />
+            <DrillExportButton />
           </Space>
           <DrillingTable />
         </Space>
