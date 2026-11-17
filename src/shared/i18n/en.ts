@@ -4,6 +4,8 @@ export const en = {
   'app.subtitle': 'Mine block scheduler',
   'layout.blocks': 'Blocks',
   'layout.schedule': 'Schedule',
+  'layout.hidePanel': 'Hide panel',
+  'layout.showPanel': 'Show panel',
   'layout.calendar': 'Planning horizon',
 
   // Pages

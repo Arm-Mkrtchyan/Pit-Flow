@@ -14,8 +14,6 @@ body {
 }
 .sider {
   border-inline: 1px solid rgba(5, 5, 5, 0.06);
-  overflow: auto;
-  padding: 12px;
 }
 .content {
   overflow: auto;
@@ -26,6 +24,27 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 0;
+  overflow: auto;
+  padding: 12px;
+}
+.sider:global(.ant-layout-sider-collapsed) :global(.ant-layout-sider-children) {
+  padding: 12px 0;
+  align-items: center;
+  overflow: hidden;
+}
+.panelToggle {
+  align-self: flex-start;
+  flex-shrink: 0;
+  width: 28px !important;
+  height: 28px !important;
+  padding: 0 !important;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8px;
+}
+.sider:global(.ant-layout-sider-collapsed) .panelToggle {
+  align-self: center;
 }
 .leftPanel {
   display: flex;

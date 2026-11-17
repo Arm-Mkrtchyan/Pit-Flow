@@ -6,6 +6,8 @@ export const hy: Record<I18nKey, string> = {
   'app.subtitle': 'Բացահանքի բլոկների արդյունահանման պլանավորում',
   'layout.blocks': 'Բլոկներ',
   'layout.schedule': 'Ժամանակացույց',
+  'layout.hidePanel': 'Թաքցնել վահանակը',
+  'layout.showPanel': 'Ցույց տալ վահանակը',
   'layout.calendar': 'Պլանավորման ժամանակահատված',
 
   // Pages

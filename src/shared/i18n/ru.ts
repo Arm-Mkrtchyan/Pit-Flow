@@ -6,6 +6,8 @@ export const ru: Record<I18nKey, string> = {
   'app.subtitle': 'Планирование отработки блоков карьера',
   'layout.blocks': 'Блоки',
   'layout.schedule': 'График',
+  'layout.hidePanel': 'Скрыть панель',
+  'layout.showPanel': 'Показать панель',
   'layout.calendar': 'Период планирования',
 
   // Pages
