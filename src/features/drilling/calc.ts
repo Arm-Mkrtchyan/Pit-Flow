@@ -22,7 +22,7 @@ import type { DrillBlock } from './drillBlocks';
  * else next day.
  */
 
-export type RowIssue = 'noRig' | 'unknownRig' | 'noPosition';
+export type RowIssue = 'noRig' | 'unknownRig' | 'noModel' | 'noPosition';
 
 export interface Finish {
   date: IsoDate;
@@ -76,7 +76,15 @@ export function calcDrillBlock(
     const rig = r.rigId !== null ? rigsById.get(r.rigId) : undefined;
     const perf = rig ? rigPerformance(rig, block.position) : null;
     const issue: RowIssue | null =
-      r.rigId === null ? 'noRig' : !rig ? 'unknownRig' : !perf ? 'noPosition' : null;
+      r.rigId === null
+        ? 'noRig'
+        : !rig
+          ? 'unknownRig'
+          : rig.model === undefined
+            ? 'noModel'
+            : !perf
+              ? 'noPosition'
+              : null;
     return {
       rowId: r.rowId,
       rigId: r.rigId,

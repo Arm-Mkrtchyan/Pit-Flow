@@ -3,12 +3,14 @@ import type {
   DrillAssignment,
   DrillBlockKey,
   DrillingState,
-  DrillRig,
+  DrillModel,
   DrillSettings,
   DrillSourceBlock,
+  DrillUnit,
   IsoDate,
 } from '../../types/domain';
 import { defaultDrilling, firstRow } from '../../features/drilling/defaults';
+import { matchModel } from '../../features/drilling/rigList';
 import type { RootState } from '../types';
 
 export interface DrillingSlice {
@@ -16,8 +18,11 @@ export interface DrillingSlice {
   /** Replace the drilling block list; rig rows of blocks that are gone are dropped. */
   setDrillBlocks: (blocks: DrillSourceBlock[]) => void;
   setDrillRange: (range: [IsoDate, IsoDate] | null) => void;
-  /** Replace the equipment list. Rows keep their rig ID; unknown rigs are flagged in the table. */
-  setRigs: (rigs: DrillRig[]) => void;
+  /** Replace the working rig list. Rows keep their rig ID; unknown rigs are flagged in the table. */
+  setRigs: (rigs: DrillUnit[]) => void;
+  /** Replace the productivity models. Rigs whose model is gone are matched again by name. */
+  setModels: (models: DrillModel[]) => void;
+  setRigModel: (rigId: string, modelId: string | null) => void;
   addRigRow: (key: DrillBlockKey) => void;
   removeRigRow: (key: DrillBlockKey, rowId: string) => void;
   setRowRig: (key: DrillBlockKey, rowId: string, rigId: string | null) => void;
@@ -64,6 +69,25 @@ export const createDrillingSlice: StateCreator<RootState, [], [], DrillingSlice>
     setDrillRange: (range) => set((s) => ({ drilling: { ...s.drilling, range } })),
 
     setRigs: (rigs) => set((s) => ({ drilling: { ...s.drilling, rigs } })),
+
+    setModels: (models) =>
+      set((s) => {
+        const ids = new Set(models.map((m) => m.id));
+        const rigs = s.drilling.rigs.map((r) =>
+          r.modelId !== null && ids.has(r.modelId)
+            ? r
+            : { ...r, modelId: matchModel(r.name, models) },
+        );
+        return { drilling: { ...s.drilling, models, rigs } };
+      }),
+
+    setRigModel: (rigId, modelId) =>
+      set((s) => ({
+        drilling: {
+          ...s.drilling,
+          rigs: s.drilling.rigs.map((r) => (r.id === rigId ? { ...r, modelId } : r)),
+        },
+      })),
 
     addRigRow: (key) =>
       updateRows(key, (rows) => [

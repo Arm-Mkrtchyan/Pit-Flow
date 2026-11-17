@@ -4,7 +4,8 @@ import {
   DrillImportButton,
   DrillingSidePanel,
   DrillingTable,
-  EquipmentButton,
+  ProductivityButton,
+  RigListButton,
 } from '../../features/drilling';
 import { t } from '../../shared/i18n/t';
 import { PageColumns } from '../AppLayout';
@@ -17,7 +18,8 @@ export function DrillingPage() {
         <Space direction="vertical" style={{ width: '100%' }} size="middle">
           <Space wrap>
             <DrillImportButton />
-            <EquipmentButton />
+            <RigListButton />
+            <ProductivityButton />
             <DrillExportButton />
           </Space>
           <DrillingTable />

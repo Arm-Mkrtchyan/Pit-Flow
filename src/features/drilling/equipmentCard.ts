@@ -1,4 +1,4 @@
-import type { DrillRig } from '../../types/domain';
+import type { DrillModel } from '../../types/domain';
 import type { Cell, Grid } from '../import';
 
 /*
@@ -79,8 +79,8 @@ export function rigDailyLm(c: RigCard): number {
   return perShift * c.shiftsPerDay;
 }
 
-/** Rig of the equipment list: works all shifts, productivity as an hourly average. */
-export function rigFromCard(c: RigCard): DrillRig {
+/** Productivity model: works all shifts, productivity as an hourly average. */
+export function modelFromCard(c: RigCard): DrillModel {
   const hoursPerDay = Math.min((c.shiftMinutes * c.shiftsPerDay) / 60, 24);
   return {
     id: c.model.trim().toLowerCase().replace(/\s+/g, ' '),

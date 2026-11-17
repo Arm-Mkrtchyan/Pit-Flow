@@ -171,9 +171,28 @@ export interface DrillRigPosition {
   productivity: number;
 }
 
+/** Productivity of one rig model (from the productivity workbook). */
+export interface DrillModel {
+  id: string;
+  name: string;
+  /** Working hours per day; falls back to the drilling setting. */
+  hoursPerDay?: number;
+  byPosition: Record<string, DrillRigPosition>;
+}
+
+/** One working rig of the equipment list, e.g. "СБШ - 2", and the model it drills like. */
+export interface DrillUnit {
+  id: string;
+  name: string;
+  /** Productivity model; null when none matches (the rig then cannot be planned). */
+  modelId: string | null;
+}
+
+/** A working rig joined with its model's productivity (derived, not persisted). */
 export interface DrillRig {
   id: string;
   name: string;
+  /** Model name; undefined when the rig has no productivity model. */
   model?: string;
   /** Working hours per day; falls back to the drilling setting. */
   hoursPerDay?: number;
@@ -225,7 +244,10 @@ export interface DrillingState {
   /** Block list of the drilling page; separate from the extraction block list. */
   blocks: DrillSourceBlock[];
   range: [IsoDate, IsoDate] | null;
-  rigs: DrillRig[];
+  /** Productivity per rig model. */
+  models: DrillModel[];
+  /** Working rigs offered in the table. */
+  rigs: DrillUnit[];
   assignments: Record<DrillBlockKey, DrillAssignment[]>;
   settings: DrillSettings;
 }

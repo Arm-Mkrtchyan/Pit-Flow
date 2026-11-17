@@ -1,5 +1,6 @@
 export { DrillingTable } from './DrillingTable';
 export { DrillingSidePanel } from './DrillingSidePanel';
-export { EquipmentButton } from './EquipmentButton';
+export { ProductivityButton } from './ProductivityButton';
+export { RigListButton } from './RigListButton';
 export { DrillImportButton } from './DrillImportButton';
 export { DrillExportButton } from './DrillExportButton';

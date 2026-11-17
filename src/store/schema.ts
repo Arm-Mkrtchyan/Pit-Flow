@@ -125,7 +125,13 @@ const drilling = z.object({
     z.object({
       id: z.string().min(1),
       name: z.string().min(1),
-      model: z.string().optional(),
+      modelId: z.string().nullable(),
+    }),
+  ),
+  models: z.array(
+    z.object({
+      id: z.string().min(1),
+      name: z.string().min(1),
       hoursPerDay: finite.positive().max(24).optional(),
       byPosition: z.record(
         z.string(),

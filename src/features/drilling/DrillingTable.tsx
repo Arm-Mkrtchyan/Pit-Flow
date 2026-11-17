@@ -18,6 +18,7 @@ const FIXED_WIDTH = 140 + 100 + 220 + 100 + 95 + 95;
 const ISSUE_KEY = {
   noRig: 'drilling.issue.noRig',
   unknownRig: 'drilling.issue.unknownRig',
+  noModel: 'drilling.issue.noModel',
   noPosition: 'drilling.issue.noPosition',
 } as const satisfies Record<RowIssue, string>;
 

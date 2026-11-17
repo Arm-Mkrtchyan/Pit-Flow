@@ -1,12 +1,12 @@
-import type { Block } from '../types/domain';
-import { defaultDrilling, defaultRigs } from '../features/drilling/defaults';
+import type { Block, DrillAssignment, DrillModel } from '../types/domain';
+import { defaultDrilling, defaultModels, defaultRigs } from '../features/drilling/defaults';
 import { fromLegacyBlocks } from '../features/drilling/drillSource';
 
 /**
  * Persisted-state migrations. Bump PERSIST_VERSION whenever the persisted shape changes and
  * add a step `from → from + 1`. Steps run in order from the stored version to the current one.
  */
-export const PERSIST_VERSION = 9;
+export const PERSIST_VERSION = 10;
 
 type Step = (state: Record<string, unknown>) => Record<string, unknown>;
 
@@ -50,8 +50,27 @@ const STEPS: Record<number, Step> = {
   // uploaded is kept.
   8: (s) => {
     const d = s.drilling as Record<string, unknown>;
-    const rigs = Array.isArray(d.rigs) && d.rigs.length > 0 ? d.rigs : defaultRigs();
+    const rigs = Array.isArray(d.rigs) && d.rigs.length > 0 ? d.rigs : defaultModels();
     return { ...s, drilling: { ...d, rigs } };
+  },
+  // v9 → v10: productivity per model and the working rig list are separate. The old list was
+  // productivity data, so it becomes the models; the rigs are the default working list. Table
+  // rows that pointed at a model are cleared (their rig is now chosen from the working list).
+  9: (s) => {
+    const d = s.drilling as Record<string, unknown>;
+    // Persisted v9 rigs were validated with the model shape when they were stored.
+    const models = Array.isArray(d.rigs) ? (d.rigs as DrillModel[]) : defaultModels();
+    const rigs = defaultRigs(models);
+    const ids = new Set(rigs.map((r) => r.id));
+    const assignments = Object.fromEntries(
+      Object.entries((d.assignments ?? {}) as Record<string, DrillAssignment[]>).map(
+        ([k, rows]) => [
+          k,
+          rows.map((r) => (r.rigId !== null && !ids.has(r.rigId) ? { ...r, rigId: null } : r)),
+        ],
+      ),
+    );
+    return { ...s, drilling: { ...d, models, rigs, assignments } };
   },
 };
 

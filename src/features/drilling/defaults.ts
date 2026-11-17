@@ -1,5 +1,12 @@
-import type { DrillAssignment, DrillingState, DrillRig, DrillSettings } from '../../types/domain';
-import { rigFromCard, type RigCard } from './equipmentCard';
+import type {
+  DrillAssignment,
+  DrillingState,
+  DrillModel,
+  DrillSettings,
+  DrillUnit,
+} from '../../types/domain';
+import { modelFromCard, type RigCard } from './equipmentCard';
+import { matchModel, rigIdOf } from './rigList';
 
 export const DEFAULT_DRILL_SETTINGS: DrillSettings = {
   loadMinutesPerHole: 5,
@@ -22,8 +29,8 @@ const COMMON = {
 } as const;
 
 /**
- * Approved drilling equipment (fixtures/drilling.equipments.xlsx), the default list until the
- * user uploads another. To update it, change these values or upload the revised workbook.
+ * Approved productivity per rig model (fixtures/drilling.equipments.xlsx), the default until
+ * the user uploads another. To update it, change these values or upload the revised workbook.
  */
 export const DEFAULT_RIG_CARDS: readonly RigCard[] = [
   {
@@ -55,11 +62,34 @@ export const DEFAULT_RIG_CARDS: readonly RigCard[] = [
   },
 ];
 
-export const defaultRigs = (): DrillRig[] => DEFAULT_RIG_CARDS.map(rigFromCard);
+export const defaultModels = (): DrillModel[] => DEFAULT_RIG_CARDS.map(modelFromCard);
+
+/** Working rigs (fixtures/drilling.equipment.list.csv), the default rig list. */
+export const DEFAULT_RIG_NAMES: readonly string[] = [
+  'СБШ - 2',
+  'СБШ - 3',
+  'СБШ - 4',
+  'СБШ - 9',
+  'DM 45 - 1',
+  'DM 50 - 2',
+  'DM 50 - 3',
+  'D60 - 1',
+  'L8 - 1',
+  'D65 - 1',
+];
+
+/** The default rigs, each matched to one of `models` by name. */
+export const defaultRigs = (models: readonly DrillModel[] = defaultModels()): DrillUnit[] =>
+  DEFAULT_RIG_NAMES.map((name) => ({
+    id: rigIdOf(name),
+    name,
+    modelId: matchModel(name, models),
+  }));
 
 export const defaultDrilling = (): DrillingState => ({
   blocks: [],
   range: null,
+  models: defaultModels(),
   rigs: defaultRigs(),
   assignments: {},
   settings: { ...DEFAULT_DRILL_SETTINGS },

@@ -5,6 +5,7 @@ import { enumerateDays } from '../calendar';
 import { calcDrillBlock, type BlockResult, type RowResult } from './calc';
 import { firstRow } from './defaults';
 import { buildDrillBlocks, type DrillBlock } from './drillBlocks';
+import { resolveRigs } from './rigList';
 
 export interface DrillTableRow {
   key: string;
@@ -21,7 +22,15 @@ export const conflictKey = (rigId: string, date: IsoDate) => `${rigId}|${date}`;
 
 /** Drilling blocks, their calculated rig rows, the day columns and rig double-bookings. */
 export function useDrillingTable() {
-  const { blocks, range, rigs, assignments, settings } = useAppStore((s) => s.drilling);
+  const {
+    blocks,
+    range,
+    rigs: units,
+    models,
+    assignments,
+    settings,
+  } = useAppStore((s) => s.drilling);
+  const rigs = useMemo(() => resolveRigs(units, models), [units, models]);
 
   const drillBlocks = useMemo(() => buildDrillBlocks(blocks), [blocks]);
   const rigsById = useMemo(() => new Map<string, DrillRig>(rigs.map((r) => [r.id, r])), [rigs]);

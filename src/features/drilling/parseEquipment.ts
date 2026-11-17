@@ -1,11 +1,11 @@
-import type { DrillRig } from '../../types/domain';
+import type { DrillModel } from '../../types/domain';
 import { parseNumber, parseString } from '../../shared/utils/numbers';
 import type { ParsedFile } from '../import';
 import { isBlankRow } from '../import';
 
 /**
- * Provisional equipment list format (to be adapted to the real sample), one row per rig and
- * position:
+ * Flat productivity format (alternative to the approved workbook), one row per model and
+ * position (the model is "Модель", or "Название" when there is no model column):
  *   Название | Модель | Позиция | Производительность (п.м./ч) | Индекс взрывания (м³/п.м.) | Часы в сутки
  * Позиция is the pit code from the Участок name (CN, SS, …); empty, "*" or "все" = any position.
  */
@@ -26,7 +26,7 @@ export type EquipmentIssue =
   { kind: 'missingColumns'; fields: EquipmentField[] } | { kind: 'badRow'; row: number };
 
 export interface ParsedEquipment {
-  rigs: DrillRig[];
+  models: DrillModel[];
   issues: EquipmentIssue[];
 }
 
@@ -45,10 +45,10 @@ export function parseEquipment(file: ParsedFile): ParsedEquipment {
   });
   const missing = REQUIRED.filter((f) => cols[f] === undefined);
   if (missing.length > 0)
-    return { rigs: [], issues: [{ kind: 'missingColumns', fields: missing }] };
+    return { models: [], issues: [{ kind: 'missingColumns', fields: missing }] };
 
   const issues: EquipmentIssue[] = [];
-  const byId = new Map<string, DrillRig>();
+  const byId = new Map<string, DrillModel>();
   file.rows.forEach((row, i) => {
     if (isBlankRow(row)) return;
     const cell = (f: EquipmentField) => {
@@ -69,15 +69,14 @@ export function parseEquipment(file: ParsedFile): ParsedEquipment {
       issues.push({ kind: 'badRow', row: file.headerRowNumber + 1 + i });
       return;
     }
-    const id = name.toLowerCase().replace(/\s+/g, ' ');
-    const rig = byId.get(id) ?? { id, name, byPosition: {} };
-    const model = parseString(cell('model'));
-    if (model && !rig.model) rig.model = model;
+    const modelName = parseString(cell('model')) ?? name;
+    const id = modelName.toLowerCase().replace(/\s+/g, ' ');
+    const rig = byId.get(id) ?? { id, name: modelName, byPosition: {} };
     if (hours !== undefined && hours > 0 && hours <= 24) rig.hoursPerDay = hours;
     const rawPos = parseString(cell('position')) ?? '';
     const position = ANY_POSITION.test(rawPos) ? '*' : rawPos.toLowerCase();
     rig.byPosition[position] = { blastIndex, productivity };
     byId.set(id, rig);
   });
-  return { rigs: [...byId.values()], issues };
+  return { models: [...byId.values()], issues };
 }
