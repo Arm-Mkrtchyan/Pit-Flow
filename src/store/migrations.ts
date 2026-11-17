@@ -1,12 +1,12 @@
 import type { Block } from '../types/domain';
-import { defaultDrilling } from '../features/drilling/defaults';
+import { defaultDrilling, defaultRigs } from '../features/drilling/defaults';
 import { fromLegacyBlocks } from '../features/drilling/drillSource';
 
 /**
  * Persisted-state migrations. Bump PERSIST_VERSION whenever the persisted shape changes and
  * add a step `from → from + 1`. Steps run in order from the stored version to the current one.
  */
-export const PERSIST_VERSION = 8;
+export const PERSIST_VERSION = 9;
 
 type Step = (state: Record<string, unknown>) => Record<string, unknown>;
 
@@ -45,6 +45,13 @@ const STEPS: Record<number, Step> = {
       ...s,
       drilling: { ...d, settings: { ...settings, loadMinutesPerHole: load, installMinutes: 60 } },
     };
+  },
+  // v8 → v9: the approved equipment list is the default. An empty list gets it; a list the user
+  // uploaded is kept.
+  8: (s) => {
+    const d = s.drilling as Record<string, unknown>;
+    const rigs = Array.isArray(d.rigs) && d.rigs.length > 0 ? d.rigs : defaultRigs();
+    return { ...s, drilling: { ...d, rigs } };
   },
 };
 

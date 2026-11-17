@@ -1,15 +1,37 @@
 import { useState } from 'react';
-import { Alert, App, Button, Modal, Table, Tag, Upload } from 'antd';
+import { Alert, App, Button, Modal, Popconfirm, Space, Table, Tag, Upload } from 'antd';
 import { t, unit } from '../../shared/i18n/t';
 import { fmtNumber } from '../../shared/format';
 import { useAppStore } from '../../store';
 import type { DrillRig } from '../../types/domain';
-import { readBlockFile } from '../import';
+import { readBlockFile, type ParsedFile } from '../import';
+import { defaultRigs } from './defaults';
+import { parseEquipmentCards, rigFromCard, type CardIssue } from './equipmentCard';
 import { parseEquipment, type ParsedEquipment } from './parseEquipment';
 
 const ACCEPT = '.csv,.txt,.xlsx,.xlsm,.xls';
 
 const positionLabel = (p: string) => (p === '*' ? t('drilling.anyPosition') : p.toUpperCase());
+
+interface Preview {
+  name: string;
+  parsed: ParsedEquipment;
+  cardIssues: CardIssue[];
+}
+
+/** The approved workbook (parameter cards per model) or, failing that, the flat list format. */
+function parseEquipmentFile(file: ParsedFile): Omit<Preview, 'name'> {
+  const grid = [
+    ...Array.from({ length: file.headerRowNumber - 1 }, () => []),
+    file.headers,
+    ...file.rows,
+  ];
+  const cards = parseEquipmentCards(grid);
+  if (cards) {
+    return { parsed: { rigs: cards.cards.map(rigFromCard), issues: [] }, cardIssues: cards.issues };
+  }
+  return { parsed: parseEquipment(file), cardIssues: [] };
+}
 
 /** Upload the drilling equipment list, preview it, then replace the current list. */
 export function EquipmentButton() {
@@ -17,13 +39,13 @@ export function EquipmentButton() {
   const setRigs = useAppStore((s) => s.setRigs);
   const rigCount = useAppStore((s) => s.drilling.rigs.length);
   const [loading, setLoading] = useState(false);
-  const [preview, setPreview] = useState<{ name: string; parsed: ParsedEquipment } | null>(null);
+  const [preview, setPreview] = useState<Preview | null>(null);
 
   const handle = async (file: File) => {
     setLoading(true);
     try {
       const { file: parsedFile } = await readBlockFile(file.name, await file.arrayBuffer());
-      setPreview({ name: file.name, parsed: parseEquipment(parsedFile) });
+      setPreview({ name: file.name, ...parseEquipmentFile(parsedFile) });
     } catch (e) {
       const error = e instanceof Error ? e.message : String(e);
       void message.error(t('import.failed', { name: file.name, error }));
@@ -36,7 +58,7 @@ export function EquipmentButton() {
   const badRows = preview?.parsed.issues.flatMap((i) => (i.kind === 'badRow' ? [i.row] : [])) ?? [];
 
   return (
-    <>
+    <Space size={4}>
       <Upload
         accept={ACCEPT}
         showUploadList={false}
@@ -51,6 +73,17 @@ export function EquipmentButton() {
             : t('drilling.uploadEquipment')}
         </Button>
       </Upload>
+      <Popconfirm
+        title={t('drilling.equipmentResetConfirm')}
+        okText={t('drilling.equipmentReset')}
+        cancelText={t('common.cancel')}
+        onConfirm={() => {
+          setRigs(defaultRigs());
+          void message.success(t('drilling.equipmentResetDone'));
+        }}
+      >
+        <Button type="link">{t('drilling.equipmentReset')}</Button>
+      </Popconfirm>
       {preview && (
         <Modal
           open
@@ -85,6 +118,18 @@ export function EquipmentButton() {
               message={t('drilling.equipmentBadRows', { rows: badRows.slice(0, 20).join(', ') })}
             />
           )}
+          {preview.cardIssues.map((i) => (
+            <Alert
+              key={i.model}
+              type="warning"
+              showIcon
+              style={{ marginBottom: 12 }}
+              message={t('drilling.equipmentBadCard', {
+                model: i.model,
+                fields: i.fields.join(', '),
+              })}
+            />
+          ))}
           {rigCount > 0 && preview.parsed.rigs.length > 0 && (
             <Alert
               type="info"
@@ -119,6 +164,6 @@ export function EquipmentButton() {
           />
         </Modal>
       )}
-    </>
+    </Space>
   );
 }
