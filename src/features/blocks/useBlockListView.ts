@@ -19,6 +19,8 @@ export interface BlockView {
   cls: BlockClass;
   remaining: number;
   exhausted: boolean;
+  /** All parent blocks. */
+  dependsOn: BlockId[];
   /** Parents that still hold stock (block cannot be used yet). */
   lockedBy: BlockId[];
 }
@@ -44,6 +46,7 @@ export function buildBlockViews(
       cls: classifyBlock(block, oreCutoffEq),
       remaining,
       exhausted: remaining <= EPS,
+      dependsOn: input?.dependsOn ?? [],
       lockedBy,
     };
   });

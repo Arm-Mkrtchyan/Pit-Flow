@@ -189,6 +189,17 @@ export const hy: Record<I18nKey, string> = {
   'blocks.locked': 'Արգելափակված',
   'blocks.lockedBy': 'Սպասում է՝ {parents}',
   'blocks.exhausted': 'Սպառված',
+  'blocks.dep.mode': 'Սահմանել կախվածություններ',
+  'blocks.dep.done': 'Պատրաստ է',
+  'blocks.dep.hint':
+    'Սեղմեք բլոկի վրա, ապա այն բլոկի վրա, որից այն կախված է (ծնող)։ Esc՝ ավարտելու համար։',
+  'blocks.dep.selected':
+    'Ընտրված է {id}․ սեղմեք ծնող բլոկի վրա։ Ներկայիս ծնողի վրա սեղմելը հեռացնում է կախվածությունը․ Esc՝ չեղարկել։',
+  'blocks.dep.dependsOn': 'կախված է {parents}-ից',
+  'blocks.dep.parentTag': 'Ծնող',
+  'blocks.dep.set': '{child}-ն այժմ կախված է {parent}-ից։',
+  'blocks.dep.replaced': '{child}-ն այժմ կախված է {parent}-ից (նախկինում՝ {old})։',
+  'blocks.dep.removed': '{child}-ն այլևս կախված չէ {parent}-ից։',
   'blocks.listLabel': 'Բլոկների ցանկ։ Սլաքներով տեղաշարժվեք, Enter-ով բացեք։',
 
   // Import

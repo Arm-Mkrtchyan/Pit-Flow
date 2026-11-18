@@ -26,7 +26,7 @@ export function PasteBlocksTarget({ children }: { children: ReactNode }) {
   const [active, setActive] = useState(false);
 
   const onPaste = (e: ClipboardEvent<HTMLDivElement>) => {
-    if (isEditable(e.target)) return;
+    if (isEditable(e.target) || useAppStore.getState().depEditing) return;
     e.preventDefault();
     const text = e.clipboardData.getData('text/plain');
     if (text.trim() === '') {
@@ -42,7 +42,8 @@ export function PasteBlocksTarget({ children }: { children: ReactNode }) {
   };
 
   // The empty-list placeholder has its own highlight; this one is for a loaded list.
-  const highlight = active && hasBlocks;
+  const depEditing = useAppStore((s) => s.depEditing);
+  const highlight = active && hasBlocks && !depEditing;
 
   return (
     <>

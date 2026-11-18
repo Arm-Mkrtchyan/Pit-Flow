@@ -186,6 +186,16 @@ export const en = {
   'blocks.locked': 'Locked',
   'blocks.lockedBy': 'Waiting for: {parents}',
   'blocks.exhausted': 'Exhausted',
+  'blocks.dep.mode': 'Set dependencies',
+  'blocks.dep.done': 'Done',
+  'blocks.dep.hint': 'Click a block, then the block it depends on (its parent). Esc to finish.',
+  'blocks.dep.selected':
+    '{id} selected: click its parent block. Clicking its current parent removes the dependency; Esc cancels.',
+  'blocks.dep.dependsOn': 'depends on {parents}',
+  'blocks.dep.parentTag': 'Parent',
+  'blocks.dep.set': '{child} now depends on {parent}.',
+  'blocks.dep.replaced': '{child} now depends on {parent} (was {old}).',
+  'blocks.dep.removed': '{child} no longer depends on {parent}.',
   'blocks.listLabel': 'Block list. Use arrow keys to move and Enter to open.',
 
   // Import

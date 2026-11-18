@@ -1,6 +1,8 @@
 import { useState, type ReactNode } from 'react';
 import { Button, Layout, Segmented, Tooltip, Typography } from 'antd';
 import { t } from '../shared/i18n/t';
+import { dimmedStyle, useInert } from '../shared/ui/useInert';
+import { useAppStore } from '../store';
 import { LanguageSwitch } from './LanguageSwitch';
 import { PAGES, navigate, pageHref, type PageId } from './routes';
 import styles from './AppLayout.module.css';
@@ -15,9 +17,12 @@ interface AppLayoutProps {
 
 /** Header (app title → home, page switch, language) above the current page. */
 export function AppLayout({ page, children }: AppLayoutProps) {
+  // Dependency mode of the block list disables everything else.
+  const dim = useAppStore((s) => s.depEditing);
+  const headerRef = useInert<HTMLElement>(dim);
   return (
     <Layout className={styles.root}>
-      <Header className={styles.header}>
+      <Header ref={headerRef} className={styles.header} style={dimmedStyle(dim)}>
         <a href={pageHref('home')} className={styles.titleLink} title={t('page.home')}>
           <img src={logoUrl} alt={t('app.title')} className={styles.logo} />
         </a>
@@ -53,6 +58,9 @@ interface PageColumnsProps {
  */
 export function PageColumns({ left, center, right, centerLabel, rightLabel }: PageColumnsProps) {
   const [rightCollapsed, setRightCollapsed] = useState(false);
+  const dim = useAppStore((s) => s.depEditing);
+  const contentRef = useInert<HTMLElement>(dim);
+  const rightRef = useInert<HTMLDivElement>(dim);
   return (
     <Layout>
       {left !== undefined && (
@@ -60,11 +68,18 @@ export function PageColumns({ left, center, right, centerLabel, rightLabel }: Pa
           {left}
         </Sider>
       )}
-      <Content className={styles.content} aria-label={centerLabel}>
+      <Content
+        ref={contentRef}
+        className={styles.content}
+        style={dimmedStyle(dim)}
+        aria-label={centerLabel}
+      >
         {center}
       </Content>
       {right !== undefined && (
         <Sider
+          ref={rightRef}
+          style={dimmedStyle(dim)}
           width={300}
           theme="light"
           className={styles.sider}

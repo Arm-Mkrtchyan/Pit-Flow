@@ -188,6 +188,17 @@ export const ru: Record<I18nKey, string> = {
   'blocks.locked': 'Заблокирован',
   'blocks.lockedBy': 'Ожидает: {parents}',
   'blocks.exhausted': 'Отработан',
+  'blocks.dep.mode': 'Задать зависимости',
+  'blocks.dep.done': 'Готово',
+  'blocks.dep.hint':
+    'Щёлкните блок, затем блок, от которого он зависит (родительский). Esc — завершить.',
+  'blocks.dep.selected':
+    'Выбран {id}: щёлкните родительский блок. Щелчок по текущему родителю удаляет зависимость; Esc — отмена.',
+  'blocks.dep.dependsOn': 'зависит от {parents}',
+  'blocks.dep.parentTag': 'Родитель',
+  'blocks.dep.set': '{child} теперь зависит от {parent}.',
+  'blocks.dep.replaced': '{child} теперь зависит от {parent} (было {old}).',
+  'blocks.dep.removed': '{child} больше не зависит от {parent}.',
   'blocks.listLabel': 'Список блоков. Стрелки — перемещение, Enter — открыть.',
 
   // Import
