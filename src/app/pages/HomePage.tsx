@@ -8,11 +8,13 @@ import styles from '../AppLayout.module.css';
 const DESCRIPTION: Record<(typeof PAGES)[number]['id'], I18nKey> = {
   extraction: 'home.extraction.desc',
   drilling: 'home.drilling.desc',
+  resources: 'home.resources.desc',
 };
 
 /** Start page: choose which work to do. */
 export function HomePage() {
-  const counts = {
+  /** Loaded blocks per page; the resource page keeps no data between visits. */
+  const counts: Partial<Record<(typeof PAGES)[number]['id'], number>> = {
     extraction: useAppStore((s) => s.blocks.length),
     drilling: useAppStore((s) => s.drilling.blocks.length),
   };
@@ -30,11 +32,13 @@ export function HomePage() {
                 style={{ height: '100%' }}
               >
                 <Typography.Paragraph type="secondary">{t(DESCRIPTION[p.id])}</Typography.Paragraph>
-                <Typography.Paragraph>
-                  {counts[p.id] > 0
-                    ? t('home.blocksLoaded', { count: counts[p.id] })
-                    : t('home.noBlocks')}
-                </Typography.Paragraph>
+                {counts[p.id] !== undefined && (
+                  <Typography.Paragraph>
+                    {(counts[p.id] ?? 0) > 0
+                      ? t('home.blocksLoaded', { count: counts[p.id] ?? 0 })
+                      : t('home.noBlocks')}
+                  </Typography.Paragraph>
+                )}
                 <Button type="primary">{t('home.open')}</Button>
               </Card>
             </Col>

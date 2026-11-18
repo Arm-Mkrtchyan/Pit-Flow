@@ -12,6 +12,8 @@ export interface ActualRow {
   name: string;
   /** Sum of the shift columns, tonnes. */
   tonnes: number;
+  /** Ore sent from the block to stockpiles (OSP… shift columns), tonnes. */
+  stockpileTonnes: number;
   grades: Partial<Record<ActualGradeField, number>>;
 }
 

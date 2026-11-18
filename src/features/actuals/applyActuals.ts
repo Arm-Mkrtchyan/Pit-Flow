@@ -34,6 +34,8 @@ export function aggregateActuals(
   let rowsUsed = 0;
   let rowsAfter = 0;
   for (const r of rows) {
+    // Rows with only stockpile tonnes don't deplete blocks here (only the shift columns do).
+    if (r.tonnes <= 0) continue;
     if (r.date >= before) {
       rowsAfter++;
       continue;

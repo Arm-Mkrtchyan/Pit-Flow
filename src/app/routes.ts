@@ -2,20 +2,22 @@ import { useSyncExternalStore } from 'react';
 import type { I18nKey } from '../shared/i18n/en';
 
 /**
- * Minimal hash router (no dependency): #/ · #/extraction · #/drilling.
+ * Minimal hash router (no dependency): #/ · #/extraction · #/drilling · #/resources.
  * The page lives in the URL, not in persisted state, so back/forward, bookmarks and reload work.
  */
-export type PageId = 'home' | 'extraction' | 'drilling';
+export type PageId = 'home' | 'extraction' | 'drilling' | 'resources';
 
 export const PAGES: ReadonlyArray<{ id: Exclude<PageId, 'home'>; titleKey: I18nKey }> = [
   { id: 'extraction', titleKey: 'page.extraction' },
   { id: 'drilling', titleKey: 'page.drilling' },
+  { id: 'resources', titleKey: 'page.resources' },
 ];
 
 const HASH: Record<PageId, string> = {
   home: '#/',
   extraction: '#/extraction',
   drilling: '#/drilling',
+  resources: '#/resources',
 };
 
 export function pageHref(page: PageId): string {
@@ -24,7 +26,7 @@ export function pageHref(page: PageId): string {
 
 function pageFromHash(hash: string): PageId {
   const path = hash.replace(/^#\/?/, '').split(/[/?]/)[0] ?? '';
-  return path === 'extraction' || path === 'drilling' ? path : 'home';
+  return path === 'extraction' || path === 'drilling' || path === 'resources' ? path : 'home';
 }
 
 function subscribe(onChange: () => void): () => void {

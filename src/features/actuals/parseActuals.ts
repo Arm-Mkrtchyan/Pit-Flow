@@ -12,6 +12,7 @@ import {
  * Reads the ore-extraction table ("Добыча Руды") of a plan/actual workbook.
  * Header cells are located by their labels, not fixed columns:
  *   Ամսաթիվ (date) · Բլոկի № (block) · Հանքաքարի Հանույթ տոննա (tonnes, one sub-column per shift)
+ *   Հանքաքարի Պահեստ (OSP…) տոննա (ore sent to a stockpile, one sub-column per shift)
  *   Պարունակություն % (grades; sub-columns Cu, Mo, As, Pb)
  * The plan/actual column is found by its values (Պլան / Փաստ). Only Փաստ rows are used.
  */
@@ -23,6 +24,8 @@ const SHEET_NAME = /добыча\s*руды/i;
 const DATE_LABEL = /ամսաթիվ/i;
 const BLOCK_LABEL = /բլոկ/i;
 const TONNES_LABEL = /հանքաքարի\s*հանույթ/i;
+/** Ore sent from the block to a stockpile (OSP8, OSP9, …), one sub-column per shift. */
+const STOCKPILE_LABEL = /հանքաքարի\s*պահեստ/i;
 const GRADES_LABEL = /պարունակություն/i;
 const ACTUAL_VALUE = 'փաստ';
 const PLAN_VALUE = 'պլան';
@@ -82,6 +85,13 @@ function tryParseSheet(XLSX: XLSXModule, ws: Sheet, sheetName: string): ParsedAc
   if (dateCol === null || blockCol === null || tonnesCol === null) return null;
   const [t0, t1] = span(headerRow, tonnesCol);
   const shiftCols = Array.from({ length: t1 - t0 + 1 }, (_, i) => t0 + i);
+  const stockpileCols: number[] = [];
+  for (let c = range.s.c; c <= range.e.c; c++) {
+    if (!STOCKPILE_LABEL.test(norm(value(headerRow, c)))) continue;
+    const [s0, s1] = span(headerRow, c);
+    for (let k = s0; k <= s1; k++) stockpileCols.push(k);
+    c = s1;
+  }
 
   // Sub-header row: first row below the header with a value in the first shift column.
   let subRow = headerRow + 1;
@@ -132,15 +142,18 @@ function tryParseSheet(XLSX: XLSXModule, ws: Sheet, sheetName: string): ParsedAc
     if (!lastDate || date > lastDate) lastDate = date;
     const nameRaw = value(r, blockCol);
     const name = nameRaw === undefined || nameRaw === null ? '' : String(nameRaw).trim();
-    const tonnes = shiftCols.reduce((s, c) => {
-      const v = parseNumber(cellValue(value(r, c)));
-      return s + (v !== undefined && Number.isFinite(v) && v > 0 ? v : 0);
-    }, 0);
+    const sumCols = (cols: readonly number[]) =>
+      cols.reduce((s, c) => {
+        const v = parseNumber(cellValue(value(r, c)));
+        return s + (v !== undefined && Number.isFinite(v) && v > 0 ? v : 0);
+      }, 0);
+    const tonnes = sumCols(shiftCols);
+    const stockpileTonnes = sumCols(stockpileCols);
     if (!name) {
-      if (tonnes > 0) skipped.noName++;
+      if (tonnes + stockpileTonnes > 0) skipped.noName++;
       continue;
     }
-    if (tonnes <= 0) {
+    if (tonnes + stockpileTonnes <= 0) {
       skipped.noTonnes++;
       continue;
     }
@@ -150,7 +163,7 @@ function tryParseSheet(XLSX: XLSXModule, ws: Sheet, sheetName: string): ParsedAc
       const v = c === undefined ? undefined : parseNumber(cellValue(value(r, c)));
       if (v !== undefined && Number.isFinite(v) && v >= 0) grades[f] = v;
     }
-    rows.push({ row: r + 1, date, name, tonnes, grades });
+    rows.push({ row: r + 1, date, name, tonnes, stockpileTonnes, grades });
   }
   return { sheetName, rows, skipped, firstDate, lastDate, shiftCount: shiftCols.length };
 }

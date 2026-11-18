@@ -1,3 +1,4 @@
 export { ActualsButton } from './ActualsButton';
-export { parseActualsWorkbook } from './parseActuals';
+export { ActualsFormatError, parseActualsWorkbook } from './parseActuals';
+export type { ActualRow, ParsedActuals } from './types';
 export { aggregateActuals, applyActuals } from './applyActuals';

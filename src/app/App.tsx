@@ -8,6 +8,7 @@ import styles from './AppLayout.module.css';
 import { DrillingPage } from './pages/DrillingPage';
 import { ExtractionPage } from './pages/ExtractionPage';
 import { HomePage } from './pages/HomePage';
+import { ResourcesPage } from './pages/ResourcesPage';
 import { useCurrentPage } from './routes';
 
 function LoadErrorNotice() {
@@ -50,6 +51,7 @@ export function App() {
         {page === 'home' && <HomePage />}
         {page === 'extraction' && <ExtractionPage />}
         {page === 'drilling' && <DrillingPage />}
+        {page === 'resources' && <ResourcesPage />}
       </AppLayout>
     </>
   );
