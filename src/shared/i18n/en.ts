@@ -198,6 +198,8 @@ export const en = {
     'Click here, then paste rows copied from Excel or a CSV file (Ctrl+V / ⌘V), including the header row.',
   'import.paste.ready': 'Ready: press Ctrl+V / ⌘V to paste the rows with the header row.',
   'import.paste.label': 'Paste area for block data copied from Excel or CSV',
+  'import.paste.more':
+    "Ctrl+V / ⌘V pastes blocks copied from Excel or CSV; you'll choose to replace or merge.",
   'import.paste.noText': 'The clipboard has no text to import.',
   'import.mapping.title': 'Map columns',
   'import.mapping.intro':

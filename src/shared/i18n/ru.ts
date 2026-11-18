@@ -200,6 +200,8 @@ export const ru: Record<I18nKey, string> = {
     'Щёлкните здесь и вставьте строки, скопированные из Excel или CSV-файла (Ctrl+V / ⌘V), вместе со строкой заголовков.',
   'import.paste.ready': 'Готово: нажмите Ctrl+V / ⌘V, чтобы вставить строки со строкой заголовков.',
   'import.paste.label': 'Область вставки данных блоков, скопированных из Excel или CSV',
+  'import.paste.more':
+    'Ctrl+V / ⌘V вставляет блоки, скопированные из Excel или CSV; затем выберите замену или объединение.',
   'import.paste.noText': 'В буфере обмена нет текста для импорта.',
   'import.mapping.title': 'Сопоставление столбцов',
   'import.mapping.intro':

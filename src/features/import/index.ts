@@ -1,4 +1,5 @@
 export { ImportButton } from './ImportButton';
+export { PasteBlocksTarget } from './PasteBlocksTarget';
 export { PasteBlocksZone } from './PasteBlocksZone';
 export { readBlockFile } from './readFile';
 export { mapRows } from './mapRows';

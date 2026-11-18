@@ -202,6 +202,8 @@ export const hy: Record<I18nKey, string> = {
   'import.paste.ready':
     'Պատրաստ է․ սեղմեք Ctrl+V / ⌘V՝ տողերը վերնագրերի տողի հետ տեղադրելու համար։',
   'import.paste.label': 'Excel-ից կամ CSV-ից պատճենված բլոկների տվյալների տեղադրման դաշտ',
+  'import.paste.more':
+    'Ctrl+V / ⌘V-ով տեղադրվում են Excel-ից կամ CSV-ից պատճենված բլոկները․ հետո ընտրեք փոխարինել կամ միավորել։',
   'import.paste.noText': 'Սեղմատախտակում ներմուծելու տեքստ չկա։',
   'import.mapping.title': 'Սյունակների համապատասխանեցում',
   'import.mapping.intro':
