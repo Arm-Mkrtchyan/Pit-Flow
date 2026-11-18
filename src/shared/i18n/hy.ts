@@ -196,6 +196,13 @@ export const hy: Record<I18nKey, string> = {
   'import.reading': '{name} ֆայլի ընթերցում…',
   'import.failed': 'Չհաջողվեց կարդալ {name}․ {error}',
   'import.empty': 'Ֆայլը դատարկ է։',
+  'import.paste.name': 'Տեղադրված տվյալներ',
+  'import.paste.hint':
+    'Սեղմեք այստեղ, ապա տեղադրեք Excel-ից կամ CSV ֆայլից պատճենված տողերը (Ctrl+V / ⌘V)՝ վերնագրերի տողի հետ միասին։',
+  'import.paste.ready':
+    'Պատրաստ է․ սեղմեք Ctrl+V / ⌘V՝ տողերը վերնագրերի տողի հետ տեղադրելու համար։',
+  'import.paste.label': 'Excel-ից կամ CSV-ից պատճենված բլոկների տվյալների տեղադրման դաշտ',
+  'import.paste.noText': 'Սեղմատախտակում ներմուծելու տեքստ չկա։',
   'import.mapping.title': 'Սյունակների համապատասխանեցում',
   'import.mapping.intro':
     '{name} ֆայլում որոշ պարտադիր սյունակներ չեն ճանաչվել։ Նշեք, թե ֆայլի որ սյունակում է յուրաքանչյուր դաշտը։',

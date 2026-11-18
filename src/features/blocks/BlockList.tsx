@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState, type KeyboardEvent } from 'react';
+import { useCallback, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
 import { Empty, Input, Segmented, Select, Space, Typography } from 'antd';
 import VirtualList, { type ListRef } from 'rc-virtual-list';
 import { t } from '../../shared/i18n/t';
@@ -17,7 +17,8 @@ import styles from './BlockList.module.css';
 
 const VIRTUAL_ABOVE = 300;
 
-export function BlockList() {
+/** `empty` replaces the default placeholder shown while no blocks are loaded. */
+export function BlockList({ empty }: { empty?: ReactNode } = {}) {
   const blocks = useAppStore((s) => s.blocks);
   const inputs = useAppStore((s) => s.userInputs);
   const cutoff = useAppStore((s) => s.settings.oreCutoffEq);
@@ -154,7 +155,7 @@ export function BlockList() {
         onKeyDown={onKeyDown}
       >
         {blocks.length === 0 ? (
-          <Empty description={t('blocks.empty')} />
+          (empty ?? <Empty description={t('blocks.empty')} />)
         ) : rows.length === 0 ? (
           <Empty description={t('blocks.noMatch')} />
         ) : (

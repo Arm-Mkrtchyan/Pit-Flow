@@ -193,6 +193,12 @@ export const en = {
   'import.reading': 'Reading {name}…',
   'import.failed': 'Could not read {name}: {error}',
   'import.empty': 'The file is empty.',
+  'import.paste.name': 'Pasted data',
+  'import.paste.hint':
+    'Click here, then paste rows copied from Excel or a CSV file (Ctrl+V / ⌘V), including the header row.',
+  'import.paste.ready': 'Ready: press Ctrl+V / ⌘V to paste the rows with the header row.',
+  'import.paste.label': 'Paste area for block data copied from Excel or CSV',
+  'import.paste.noText': 'The clipboard has no text to import.',
   'import.mapping.title': 'Map columns',
   'import.mapping.intro':
     'Some required columns were not recognised in {name}. Choose which file column holds each field.',

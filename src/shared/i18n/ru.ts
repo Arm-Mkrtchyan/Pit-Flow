@@ -195,6 +195,12 @@ export const ru: Record<I18nKey, string> = {
   'import.reading': 'Чтение {name}…',
   'import.failed': 'Не удалось прочитать {name}: {error}',
   'import.empty': 'Файл пуст.',
+  'import.paste.name': 'Вставленные данные',
+  'import.paste.hint':
+    'Щёлкните здесь и вставьте строки, скопированные из Excel или CSV-файла (Ctrl+V / ⌘V), вместе со строкой заголовков.',
+  'import.paste.ready': 'Готово: нажмите Ctrl+V / ⌘V, чтобы вставить строки со строкой заголовков.',
+  'import.paste.label': 'Область вставки данных блоков, скопированных из Excel или CSV',
+  'import.paste.noText': 'В буфере обмена нет текста для импорта.',
   'import.mapping.title': 'Сопоставление столбцов',
   'import.mapping.intro':
     'В файле {name} не распознаны некоторые обязательные столбцы. Укажите, в каком столбце файла находится каждое поле.',

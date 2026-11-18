@@ -1,4 +1,5 @@
 export { ImportButton } from './ImportButton';
+export { PasteBlocksZone } from './PasteBlocksZone';
 export { readBlockFile } from './readFile';
 export { mapRows } from './mapRows';
 export { autoMapColumns, FIELD_DEFS } from './columns';
