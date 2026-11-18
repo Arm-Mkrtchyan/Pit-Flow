@@ -47,7 +47,14 @@ export function hasContinuity(b: Blk, minDaily: number): boolean {
 }
 
 export interface BuiltModel {
+  /** Full objective (single-phase). */
   lp: string;
+  /** Phase 1: tonnage only (ore tonnage outside its band, early days first; continuity). */
+  lpPrimary: string;
+  /** Phase 2: full objective with the phase-1 value as a cap. */
+  lpFinal: (primaryCap: number) => string;
+  /** Primary objective terms, to evaluate a phase-1 solution. */
+  primaryTerms: Term[];
   /** x variable name for [blockIndex][dayIndex], or null when the block has no stock. */
   xName: (string | null)[][];
   stats: { rows: number; columns: number; binaries: number };
@@ -148,8 +155,10 @@ export function buildModel(input: SolverInput): BuiltModel {
         lp.addConstraint([...terms(1 - tol), [1, u]], '>=', rhs(1 - tol), 'lo');
         lp.addConstraint([...terms(1 + tol), [-1, o]], '<=', rhs(1 + tol), 'hi');
         lp.addConstraint([...terms(1), [-1, p], [1, n]], '=', rhs(1), 'ctr');
-        lp.addObjective(u, st.weightOut / norm);
-        lp.addObjective(o, st.weightOut / norm);
+        // Tonnage outside its band is the primary goal; grades and the band centre come second.
+        const primary = row.basis === 'tonnage';
+        lp.addObjective(u, st.weightOut / norm, primary);
+        lp.addObjective(o, st.weightOut / norm, primary);
         lp.addObjective(p, st.weightIn / norm);
         lp.addObjective(n, st.weightIn / norm);
       } else if (row.hard) {
@@ -157,7 +166,7 @@ export function buildModel(input: SolverInput): BuiltModel {
       } else {
         const o = `o_${tag}`;
         lp.addConstraint([...terms(1), [-1, o]], '<=', rhs(1), 'lim');
-        lp.addObjective(o, st.weightOut / norm);
+        lp.addObjective(o, st.weightOut / norm, row.basis === 'tonnage');
       }
     }
   }
@@ -229,7 +238,7 @@ export function buildModel(input: SolverInput): BuiltModel {
       ];
       if (zd) lp.addConstraint([...terms, [-m, zd]], '>=', 0, 'cont');
       else lp.addConstraint(terms, '>=', m, 'cont');
-      lp.addObjective(short, (shortWeight * dayWeight(d)) / refTonnes('ore', d));
+      lp.addObjective(short, (shortWeight * dayWeight(d)) / refTonnes('ore', d), true);
     }
   });
 
@@ -307,5 +316,12 @@ export function buildModel(input: SolverInput): BuiltModel {
     }
   });
 
-  return { lp: lp.toString(), xName, stats: lp.stats };
+  return {
+    lp: lp.toString(),
+    lpPrimary: lp.toString('primary'),
+    lpFinal: (cap) => lp.toString('full', cap),
+    primaryTerms: lp.primaryTerms,
+    xName,
+    stats: lp.stats,
+  };
 }

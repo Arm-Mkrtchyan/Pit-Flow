@@ -1,12 +1,19 @@
 import type { SolverInput, SolverRowSpec } from '../../types/solver';
 import { CONTINUITY_PENALTY, STOCK_EPS, dayMin, hasContinuity, isOff } from './buildModel';
 
+export interface MatrixScore {
+  /** Tonnage terms (phase 1 of the solve): ore tonnage outside its band, continuity. */
+  primary: number;
+  /** Full objective. */
+  total: number;
+}
+
 /**
  * Objective value of a [block][day] tonnage matrix, using the same penalties as buildModel
- * (band slacks, centre deviation, waste cost, early-day weighting, continuity). Lower is better.
- * Used to compare a time-limited MIP against the rolling-horizon heuristic.
+ * (band slacks, centre deviation, waste cost, early-day weighting, continuity). Lower is better;
+ * compare `primary` first. Used to compare a time-limited MIP against the rolling horizon.
  */
-export function scoreMatrix(input: SolverInput, x: number[][]): number {
+export function scoreMatrix(input: SolverInput, x: number[][]): MatrixScore {
   const { days, blocks, rows, targets, settings } = input;
   const D = days.length;
   const dayWeight = (d: number) =>
@@ -18,6 +25,7 @@ export function scoreMatrix(input: SolverInput, x: number[][]): number {
   };
 
   let total = 0;
+  let primary = 0;
   for (const row of rows) {
     const st = settings.rows[row.key];
     for (let d = 0; d < D; d++) {
@@ -40,9 +48,13 @@ export function scoreMatrix(input: SolverInput, x: number[][]): number {
         const tol = settings.aimExactTarget ? 0 : st.tolerance;
         const under = Math.max(-expr(1 - tol), 0);
         const over = Math.max(expr(1 + tol), 0);
-        total += (st.weightOut * (under + over) + st.weightIn * Math.abs(expr(1))) / norm;
+        const out = (st.weightOut * (under + over)) / norm;
+        total += out + (st.weightIn * Math.abs(expr(1))) / norm;
+        if (row.basis === 'tonnage') primary += out;
       } else if (!row.hard) {
-        total += (st.weightOut * Math.max(expr(1), 0)) / norm;
+        const out = (st.weightOut * Math.max(expr(1), 0)) / norm;
+        total += out;
+        if (row.basis === 'tonnage') primary += out;
       }
     }
   }
@@ -61,7 +73,9 @@ export function scoreMatrix(input: SolverInput, x: number[][]): number {
       const finished = cum >= b.remaining - STOCK_EPS;
       if (!started || finished || isOff(b, days[d])) continue;
       const short = Math.max(dayMin(b, days[d], settings.minDailyTonnes) - v, 0);
-      total += (shortWeight * dayWeight(d) * short) / refTonnes('ore', d);
+      const pen = (shortWeight * dayWeight(d) * short) / refTonnes('ore', d);
+      total += pen;
+      primary += pen;
     }
   });
 
@@ -69,5 +83,5 @@ export function scoreMatrix(input: SolverInput, x: number[][]): number {
     if (b.cls === 'waste')
       total += settings.wasteCostPerTonne * (x[i] ?? []).reduce((s, v) => s + v, 0);
   });
-  return total;
+  return { primary, total };
 }

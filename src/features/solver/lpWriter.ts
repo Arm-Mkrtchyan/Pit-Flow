@@ -23,16 +23,25 @@ function expr(terms: readonly Term[]): string {
 
 export class LpBuilder {
   private readonly objective = new Map<string, number>();
+  /** Objective part that is optimised first (tonnage); see `toString`. */
+  private readonly primary = new Map<string, number>();
   private readonly constraints: string[] = [];
   private readonly binaries: string[] = [];
   private readonly upper = new Map<string, number>();
   private readonly variables = new Set<string>();
   private rowCount = 0;
 
-  addObjective(variable: string, coef: number): void {
+  /** Adds `coef·variable` to the objective; `primary` terms are also optimised on their own first. */
+  addObjective(variable: string, coef: number, primary = false): void {
     if (coef === 0) return;
     this.variables.add(variable);
     this.objective.set(variable, (this.objective.get(variable) ?? 0) + coef);
+    if (primary) this.primary.set(variable, (this.primary.get(variable) ?? 0) + coef);
+  }
+
+  /** The primary objective terms (to evaluate a solution of the primary phase). */
+  get primaryTerms(): Term[] {
+    return [...this.primary.entries()].map(([v, c]) => [c, v]);
   }
 
   /** Adds `Σ terms sense rhs`. Terms with zero coefficient are dropped; empty rows are skipped. */
@@ -58,10 +67,19 @@ export class LpBuilder {
     return { rows: this.rowCount, columns: this.variables.size, binaries: this.binaries.length };
   }
 
-  toString(): string {
-    const objTerms: Term[] = [...this.objective.entries()].map(([v, c]) => [c, v]);
+  /**
+   * LP text. `primary`: minimise only the primary terms. `full` (default): minimise the whole
+   * objective; with `primaryCap`, the primary terms may not exceed it (lexicographic 2nd phase).
+   */
+  toString(phase: 'primary' | 'full' = 'full', primaryCap?: number): string {
+    const source = phase === 'primary' ? this.primary : this.objective;
+    const objTerms: Term[] = [...source.entries()].map(([v, c]) => [c, v]);
     const out = ['Minimize', ` obj: ${objTerms.length > 0 ? expr(objTerms) : '0'}`, 'Subject To'];
     out.push(...this.constraints);
+    const prim = this.primaryTerms;
+    if (phase === 'full' && primaryCap !== undefined && prim.length > 0) {
+      out.push(` primcap: ${expr(prim)} <= ${num(primaryCap)}`);
+    }
     if (this.upper.size > 0) {
       out.push('Bounds');
       for (const [v, ub] of this.upper) out.push(` 0 <= ${v} <= ${num(ub)}`);
