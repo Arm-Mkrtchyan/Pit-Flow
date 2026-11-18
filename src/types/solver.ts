@@ -1,5 +1,6 @@
 import type {
   Block,
+  DayOverride,
   BlockClass,
   BlockId,
   IsoDate,
@@ -15,6 +16,10 @@ export interface SolverBlock extends Pick<Block, 'id' | 'cu' | 'mo' | 'as' | 'pb
   dependsOn: BlockId[];
   /** Hard daily limit, t/day (x[b,d] ≤ dailyMax). Missing = no limit. */
   dailyMax?: number;
+  /** Planner exceptions by date: not worked (`off`) or a lower limit (`max`) that date. */
+  dayOverrides?: Record<IsoDate, DayOverride>;
+  /** Already being worked before the first day of this model (rolling horizon carries it). */
+  started?: boolean;
 }
 
 /** The parts of a RowDescriptor the model builder needs (keeps the solver UI-free). */
@@ -30,6 +35,7 @@ export type SolverSettings = Pick<
   | 'earlyDayPreference'
   | 'aimExactTarget'
   | 'releaseThreshold'
+  | 'minDailyTonnes'
   | 'releaseEpsilon'
   | 'roundingStep'
   | 'timeLimitSec'

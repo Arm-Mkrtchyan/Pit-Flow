@@ -264,6 +264,16 @@ export const en = {
     'Volume × density = {expected} t differs from weight {weight} t by {diff} %',
 
   // Block modal
+  'dayException.title': 'Block {id} · {date}',
+  'dayException.open': 'Exceptions for block {id} on {date}',
+  'dayException.planned': 'Planned that date',
+  'dayException.normal': 'As planned (no exception)',
+  'dayException.limit': 'Limit for this date',
+  'dayException.off': 'Do not work this block this date',
+  'dayException.offShort': 'off',
+  'dayException.hint':
+    'A started block is worked every day until exhausted (at least {min} t per day). A date switched off here is skipped without breaking that rule. Changes apply on the next solve.',
+  'dayException.others': 'Other exceptions of this block',
   'blockModal.title': 'Block {id}',
   'blockModal.properties': 'Properties from file',
   'blockModal.id': 'Block ID',
@@ -441,6 +451,9 @@ export const en = {
   'settings.oreCutoff': 'Ore cutoff (Cu-eq)',
   'settings.oreCutoffHelp':
     'Blocks below this Cu-eq are waste: stripped only, never counted as production.',
+  'settings.minDaily': 'Minimum per working day',
+  'settings.minDailyHelp':
+    'Continuity: once a block is started it is worked every day until exhausted, taking at least this much per day (the finishing day may take less). Dates switched off in the schedule table are skipped. 0 turns the rule off.',
   'settings.release': 'Dependency release threshold',
   'settings.releaseHelp':
     "A child block may be used on the day its parent is finished only if the parent's start-of-day balance was below this.",

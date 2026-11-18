@@ -63,6 +63,16 @@ const GENERAL: NumField[] = [
     suffix: 't',
   },
   {
+    key: 'minDailyTonnes',
+    label: 'settings.minDaily',
+    help: 'settings.minDailyHelp',
+    min: 0,
+    max: 1e7,
+    step: 100,
+    thousands: true,
+    suffix: 't',
+  },
+  {
     key: 'amberThreshold',
     label: 'settings.amber',
     help: 'settings.amberHelp',

@@ -78,12 +78,9 @@ export const createHistorySlice: StateCreator<RootState, [], [], HistorySlice> =
     for (const [id, remaining] of Object.entries(entry.before)) {
       const input = userInputs[id];
       const full = entry.beforeInputs?.[id];
-      // Actuals entries restore the whole input (stock and grades); keep current dependencies
-      // and daily limit, which actuals never change.
-      if (input)
-        userInputs[id] = full
-          ? withDailyMax({ ...full, dependsOn: input.dependsOn }, input.dailyMax)
-          : { ...input, remaining };
+      // Actuals entries restore the whole input (stock and grades); keep the current planner
+      // settings (dependencies, daily limit, date exceptions), which actuals never change.
+      if (input) userInputs[id] = full ? withPlannerSettings(full, input) : { ...input, remaining };
     }
     set({
       userInputs,
@@ -114,8 +111,14 @@ export const createHistorySlice: StateCreator<RootState, [], [], HistorySlice> =
   },
 });
 
-function withDailyMax(input: BlockUserInput, dailyMax: number | undefined): BlockUserInput {
-  const out: BlockUserInput = { ...input, dailyMax };
-  if (dailyMax === undefined) delete out.dailyMax;
+function withPlannerSettings(restored: BlockUserInput, current: BlockUserInput): BlockUserInput {
+  const out: BlockUserInput = {
+    ...restored,
+    dependsOn: current.dependsOn,
+    dailyMax: current.dailyMax,
+    dayOverrides: current.dayOverrides,
+  };
+  if (out.dailyMax === undefined) delete out.dailyMax;
+  if (out.dayOverrides === undefined) delete out.dayOverrides;
   return out;
 }

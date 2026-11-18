@@ -49,6 +49,9 @@ const userInput = z.object({
   remaining: finite.min(0),
   dependsOn: z.array(z.string()),
   dailyMax: finite.positive().optional(),
+  dayOverrides: z
+    .record(isoDate, z.object({ off: z.boolean().optional(), max: finite.positive().optional() }))
+    .optional(),
   grades: z.record(gradeField, finite.min(0)).optional(),
   actuals: z.object({ before: isoDate, tonnes: finite, overrun: finite }).optional(),
 });
@@ -66,6 +69,7 @@ export const settingsSchema = z.object({
   earlyDayPreference: finite.min(0),
   aimExactTarget: z.boolean(),
   releaseThreshold: finite.min(0),
+  minDailyTonnes: finite.min(0),
   releaseEpsilon: finite.min(0),
   roundingStep: z.union([z.literal(1), z.literal(10), z.literal(100)]),
   timeLimitSec: finite.positive(),

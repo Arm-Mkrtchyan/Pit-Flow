@@ -1,5 +1,12 @@
 import type { StateCreator } from 'zustand';
-import type { Block, BlockId, BlockUserInput, GradeField } from '../../types/domain';
+import type {
+  Block,
+  BlockId,
+  BlockUserInput,
+  DayOverride,
+  GradeField,
+  IsoDate,
+} from '../../types/domain';
 import { findCycleIfSet, graphFromInputs } from '../../features/blocks/dependencyGraph';
 import type { RootState } from '../types';
 
@@ -18,6 +25,8 @@ export interface BlocksSlice {
   setRemaining: (id: BlockId, remaining: number) => void;
   /** Set the daily productivity limit in t/day; null (or ≤ 0) removes it. */
   setDailyMax: (id: BlockId, dailyMax: number | null) => void;
+  /** Set or clear (null) the exception of a block on one date. */
+  setDayOverride: (id: BlockId, date: IsoDate, override: DayOverride | null) => void;
   /**
    * Set the current grades of a block. A missing value, or one equal to the file value, means the
    * file value; only differing values are stored.
@@ -56,6 +65,30 @@ export const createBlocksSlice: StateCreator<RootState, [], [], BlocksSlice> = (
       if (next === input.dailyMax) return {};
       const updated: BlockUserInput = { ...input, dailyMax: next };
       if (next === undefined) delete updated.dailyMax;
+      return {
+        userInputs: { ...s.userInputs, [id]: updated },
+        solution: { ...s.solution, stale: true },
+      };
+    }),
+
+  setDayOverride: (id, date, override) =>
+    set((s) => {
+      const input = s.userInputs[id];
+      if (!input) return {};
+      const clean: DayOverride | null = override?.off
+        ? { off: true }
+        : override?.max !== undefined && Number.isFinite(override.max) && override.max > 0
+          ? { max: override.max }
+          : null;
+      const prev = input.dayOverrides?.[date];
+      if (prev?.off === clean?.off && prev?.max === clean?.max) return {};
+      const dayOverrides = Object.fromEntries(
+        Object.entries({ ...input.dayOverrides, [date]: clean }).filter(
+          (e): e is [IsoDate, DayOverride] => e[1] !== null,
+        ),
+      );
+      const updated: BlockUserInput = { ...input, dayOverrides };
+      if (Object.keys(dayOverrides).length === 0) delete updated.dayOverrides;
       return {
         userInputs: { ...s.userInputs, [id]: updated },
         solution: { ...s.solution, stale: true },

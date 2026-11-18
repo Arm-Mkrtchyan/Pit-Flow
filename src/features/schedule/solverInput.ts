@@ -38,6 +38,7 @@ export function buildSolverInput(
         remaining: input?.remaining ?? b.weight,
         dependsOn: input?.dependsOn ?? [],
         dailyMax: input?.dailyMax,
+        dayOverrides: input?.dayOverrides,
       };
     }),
     rows: ROW_DESCRIPTORS.map(({ key, kind, basis, pool, hard, blockField }) => ({
@@ -55,6 +56,7 @@ export function buildSolverInput(
       earlyDayPreference: settings.earlyDayPreference,
       aimExactTarget: settings.aimExactTarget,
       releaseThreshold: settings.releaseThreshold,
+      minDailyTonnes: settings.minDailyTonnes,
       releaseEpsilon: settings.releaseEpsilon,
       roundingStep: settings.roundingStep,
       timeLimitSec: settings.timeLimitSec,

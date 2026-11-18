@@ -8,6 +8,7 @@ import type { BlockClass, BlockId, IsoDate, RowDescriptor, RowUnit } from '../..
 import { enumerateDays, fromIso } from '../calendar';
 import { ApplyAllPopover } from './ApplyAllPopover';
 import { DayAllocationDrawer } from './DayAllocationDrawer';
+import { DayExceptionModal, type DayExceptionTarget } from './DayExceptionModal';
 import { ResultCell } from './ResultCell';
 import { useStatusColors } from './useStatusColors';
 import { INFO_ROWS } from './resultRows';
@@ -44,6 +45,8 @@ export function ScheduleTable() {
   const colors = useStatusColors();
   const [showAlloc, setShowAlloc] = useState(true);
   const [drawerDate, setDrawerDate] = useState<IsoDate | null>(null);
+  const [exception, setException] = useState<DayExceptionTarget | null>(null);
+  const userInputs = useAppStore((s) => s.userInputs);
 
   const days = useMemo(() => enumerateDays(range), [range]);
 
@@ -195,6 +198,27 @@ export function ScheduleTable() {
           if (row.kind === 'result' && result) {
             return { style: { background: colors[result.rows[row.desc.key].status] } };
           }
+          if (row.kind === 'alloc') {
+            const open = () =>
+              setException({
+                blockId: row.blockId,
+                date,
+                planned: allocByBlock.get(row.blockId)?.byDate.get(date)?.tonnes ?? 0,
+              });
+            return {
+              className: styles.allocCell,
+              role: 'button',
+              tabIndex: 0,
+              'aria-label': t('dayException.open', { id: row.blockId, date: dateLabel }),
+              onClick: open,
+              onKeyDown: (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  open();
+                }
+              },
+            };
+          }
           return {};
         },
         render: (_: unknown, row: TableRow) => {
@@ -222,10 +246,21 @@ export function ScheduleTable() {
               ) : null;
             case 'alloc': {
               const a = allocByBlock.get(row.blockId)?.byDate.get(date);
-              return a ? (
+              const o = userInputs[row.blockId]?.dayOverrides?.[date];
+              const mark = o?.off ? (
+                <Tag color="default" bordered={false} className={styles.exceptionTag}>
+                  {t('dayException.offShort')}
+                </Tag>
+              ) : o?.max !== undefined ? (
+                <Tag color="orange" bordered={false} className={styles.exceptionTag}>
+                  ≤ {fmtTonnes(o.max)}
+                </Tag>
+              ) : null;
+              return a || mark ? (
                 <div className={styles.alloc}>
-                  <span>{fmtTonnes(a.tonnes)}</span>
-                  <small>{t('result.balance', { value: fmtTonnes(a.end) })}</small>
+                  {a && <span>{fmtTonnes(a.tonnes)}</span>}
+                  {a && <small>{t('result.balance', { value: fmtTonnes(a.end) })}</small>}
+                  {mark}
                 </div>
               ) : null;
             }
@@ -236,7 +271,7 @@ export function ScheduleTable() {
       };
     });
     return [label, ...dayCols];
-  }, [days, targets, results, allocByBlock, colors, onCommit, applyToAll, showAlloc]);
+  }, [days, targets, results, allocByBlock, colors, onCommit, applyToAll, showAlloc, userInputs]);
 
   if (days.length === 0) return <Empty description={t('schedule.empty')} />;
 
@@ -253,6 +288,7 @@ export function ScheduleTable() {
         sticky={STICKY_HEADER}
       />
       <DayAllocationDrawer date={drawerDate} onClose={() => setDrawerDate(null)} />
+      <DayExceptionModal target={exception} onClose={() => setException(null)} />
     </>
   );
 }

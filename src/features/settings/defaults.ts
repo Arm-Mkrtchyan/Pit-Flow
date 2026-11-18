@@ -13,6 +13,7 @@ export const DEFAULT_SETTINGS: Settings = {
   earlyDayPreference: 0.5,
   aimExactTarget: false,
   releaseThreshold: 15000,
+  minDailyTonnes: 1000,
   releaseEpsilon: 1,
   roundingStep: 10,
   timeLimitSec: 30,

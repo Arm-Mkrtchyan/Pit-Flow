@@ -1,5 +1,6 @@
 import type { Schedule } from '../../types/domain';
 import type { SolverInput } from '../../types/solver';
+import { STOCK_EPS, dayMin, hasContinuity, isOff, dayCap } from './buildModel';
 
 /**
  * Check a schedule against the hard rules (stock, waste capacity, dependencies).
@@ -35,8 +36,11 @@ export function validateSchedule(input: SolverInput, schedule: Schedule): string
       if (w > cap + tol) issues.push(`${date}: waste ${w} t > capacity ${cap} t`);
     }
     for (const a of day.allocations) {
-      const cap = byId.get(a.blockId)?.dailyMax;
-      if (cap !== undefined && a.tonnes > cap + 1e-6)
+      const blk = byId.get(a.blockId);
+      if (blk && isOff(blk, date))
+        issues.push(`${date}: ${a.blockId} is off but takes ${a.tonnes} t`);
+      const cap = blk ? dayCap(blk, date) : Infinity;
+      if (a.tonnes > cap + 1e-6)
         issues.push(`${date}: ${a.blockId} takes ${a.tonnes} t > daily limit ${cap} t`);
       for (const pid of byId.get(a.blockId)?.dependsOn ?? []) {
         const p = byId.get(pid);
@@ -54,5 +58,19 @@ export function validateSchedule(input: SolverInput, schedule: Schedule): string
       }
     }
   });
+  // Continuity: a started block is worked every date (except off dates) until exhausted.
+  for (const b of input.blocks) {
+    if (!hasContinuity(b, input.settings.minDailyTonnes)) continue;
+    let started = b.started === true;
+    input.days.forEach((date, d) => {
+      const v = taken.get(b.id)?.[d] ?? 0;
+      if (v > STOCK_EPS) started = true;
+      const finished = cum(b.id, d) >= b.remaining - STOCK_EPS;
+      if (!started || finished || isOff(b, date)) return;
+      const m = dayMin(b, date, input.settings.minDailyTonnes);
+      if (v < m - tol)
+        issues.push(`${date}: ${b.id} in progress but takes ${v} t < minimum ${m} t`);
+    });
+  }
   return issues;
 }

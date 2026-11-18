@@ -1,6 +1,6 @@
 import type { Schedule } from '../../types/domain';
 import type { SolverInput, SolverPhase, SolverWarning } from '../../types/solver';
-import { buildModel, estimateSize } from './buildModel';
+import { STOCK_EPS, buildModel, estimateSize } from './buildModel';
 import { scoreMatrix } from './evaluate';
 import { primalOf, readMatrix, toSchedule } from './parseSolution';
 
@@ -47,6 +47,8 @@ function solveRolling(highs: HighsLike, input: SolverInput, progress: ProgressFn
   const D = input.days.length;
   const raw = input.blocks.map(() => new Array<number>(D).fill(0));
   const remaining = input.blocks.map((b) => b.remaining);
+  // Continuity carries over: a block worked on an earlier day must keep going.
+  const started = input.blocks.map((b) => b.started === true);
   const perDay = Math.max(2, input.settings.timeLimitSec / Math.max(D, 1));
 
   for (let d = 0; d < D; d++) {
@@ -54,7 +56,11 @@ function solveRolling(highs: HighsLike, input: SolverInput, progress: ProgressFn
     const dayInput: SolverInput = {
       ...input,
       days: [input.days[d] ?? ''],
-      blocks: input.blocks.map((b, i) => ({ ...b, remaining: remaining[i] ?? 0 })),
+      blocks: input.blocks.map((b, i) => ({
+        ...b,
+        remaining: remaining[i] ?? 0,
+        started: started[i] ?? false,
+      })),
       targets: Object.fromEntries(
         Object.entries(input.targets).map(([k, v]) => [k, [v[d] ?? 0]]),
       ) as SolverInput['targets'],
@@ -67,6 +73,7 @@ function solveRolling(highs: HighsLike, input: SolverInput, progress: ProgressFn
       const r = raw[i];
       if (r) r[d] = v;
       remaining[i] = Math.max((remaining[i] ?? 0) - v, 0);
+      if (v > STOCK_EPS) started[i] = true;
     });
   }
   return raw;

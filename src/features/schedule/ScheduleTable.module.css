@@ -67,3 +67,17 @@
   text-decoration: underline;
   outline: none;
 }
+.allocCell {
+  cursor: pointer;
+}
+.allocCell:hover,
+.allocCell:focus-visible {
+  background: rgba(0, 0, 0, 0.04) !important;
+  outline: none;
+}
+.exceptionTag {
+  margin-inline-end: 0;
+  font-size: 11px;
+  line-height: 16px;
+  padding-inline: 4px;
+}

@@ -55,10 +55,22 @@ export interface BlockUserInput {
   dependsOn: BlockId[];
   /** Productivity limit: at most this many tonnes per day from the block. Missing = no limit. */
   dailyMax?: number;
+  /**
+   * Planner exceptions per date (set from the schedule table): the block is not worked that
+   * date (`off`), or at most `max` t that date. A switched-off date does not break continuity.
+   */
+  dayOverrides?: Record<IsoDate, DayOverride>;
   /** Grades of the remaining material, recalculated from actual extraction (mass balance). */
   grades?: Partial<Record<GradeField, number>>;
   /** Actual extraction applied to this block (from the actuals Excel). */
   actuals?: { before: IsoDate; tonnes: number; overrun: number };
+}
+
+/** Exception for one block on one date. */
+export interface DayOverride {
+  off?: boolean;
+  /** Upper limit for that date, t. */
+  max?: number;
 }
 
 export type GradeField = 'cu' | 'mo' | 'as' | 'pb' | 'eq';
@@ -114,6 +126,11 @@ export interface Settings {
    */
   aimExactTarget: boolean;
   releaseThreshold: number;
+  /**
+   * Continuity: a started block is worked every day until exhausted, taking at least this
+   * many tonnes per working day (the finishing day may take less). 0 turns the rule off.
+   */
+  minDailyTonnes: number;
   releaseEpsilon: number;
   roundingStep: 1 | 10 | 100;
   timeLimitSec: number;

@@ -1,6 +1,6 @@
 import type { Allocation, Schedule, ScheduleDay, ScheduleStatus } from '../../types/domain';
 import type { SolverInput } from '../../types/solver';
-import { STOCK_EPS } from './buildModel';
+import { STOCK_EPS, dayCap } from './buildModel';
 import { roundAllocations } from './rounding';
 
 /** Primal value of a HiGHS column result, if it carries one. */
@@ -52,7 +52,7 @@ export function toSchedule(
     raw,
     stock,
     input.settings.roundingStep,
-    input.blocks.map((b) => b.dailyMax),
+    input.blocks.map((b) => input.days.map((date) => dayCap(b, date))),
   );
   const depth = depths(input);
   const balance = [...stock];
