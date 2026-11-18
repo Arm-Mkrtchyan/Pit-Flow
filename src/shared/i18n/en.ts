@@ -467,7 +467,9 @@ export const en = {
     'Site "{site}" is not in a recognised form (e.g. location_cn1740_mf_17); the classic ID was used.',
   'import.warn.badDate': 'Unreadable date "{value}" — mining period ignored.',
   'import.warn.miningOrder': 'Mining end {end} is before start {start} — mining period ignored.',
-  'blockModal.fileValue': 'file: {value}',
+  'blockModal.resetToFile': 'Reset to file value ({value})',
+  'blockModal.gradesHint':
+    'Grades of the remaining material can be edited; an empty field uses the file value. Re-applying actuals recalculates them from the file values.',
   'blockModal.actuals':
     'Actual extraction before {date}: {tonnes} t subtracted; grades recalculated for the remaining material.',
   'blockModal.actualsOverrun':

@@ -21,8 +21,12 @@ import { effectiveBlock } from '../../shared/utils/effectiveBlock';
 import { formatThousands, parseThousands } from '../../shared/ui/numberInput';
 import { useAppStore } from '../../store';
 import { fromIso } from '../calendar';
-import type { Block, BlockId, BlockUserInput } from '../../types/domain';
+import type { Block, BlockId, BlockUserInput, GradeField } from '../../types/domain';
 import { childrenOf, findCycleIfSet, formatChain, graphFromInputs } from './dependencyGraph';
+
+const GRADE_FIELDS: readonly GradeField[] = ['cu', 'mo', 'eq', 'as', 'pb'];
+/** Draft grade values; null = empty field (falls back to the file value). */
+type GradeDraft = Record<GradeField, number | null>;
 
 /** Container: renders the modal for the block selected in the store, if any. */
 export function BlockModal() {
@@ -41,9 +45,21 @@ function BlockModalContent({ block, input }: { block: Block; input: BlockUserInp
   const openBlock = useAppStore((s) => s.openBlock);
   const setRemaining = useAppStore((s) => s.setRemaining);
   const setDependsOn = useAppStore((s) => s.setDependsOn);
+  const setGrades = useAppStore((s) => s.setGrades);
 
   const [remaining, setRemainingDraft] = useState<number | null>(input.remaining);
   const [parent, setParent] = useState<BlockId | undefined>(input.dependsOn[0]);
+  // Current grades of the remaining material (file values, or recalculated from actuals / edited).
+  const [grades, setGradesDraft] = useState<GradeDraft>(() => {
+    const current = effectiveBlock(block, input);
+    return {
+      cu: current.cu,
+      mo: current.mo,
+      eq: current.eq,
+      as: current.as ?? null,
+      pb: current.pb ?? null,
+    };
+  });
 
   const graph = useMemo(() => graphFromInputs(userInputs), [userInputs]);
   const cycle = useMemo(
@@ -68,25 +84,48 @@ function BlockModalContent({ block, input }: { block: Block; input: BlockUserInp
     [blocks, block.id, userInputs],
   );
 
-  // Current grades of the remaining material (recalculated from actuals when available).
-  const current = effectiveBlock(block, input);
+  // An empty grade field means the file value.
+  const current: Block = {
+    ...block,
+    cu: grades.cu ?? block.cu,
+    mo: grades.mo ?? block.mo,
+    eq: grades.eq ?? block.eq,
+    as: grades.as ?? block.as,
+    pb: grades.pb ?? block.pb,
+  };
   const cls = classifyBlock(current, settings.oreCutoffEq);
-  /** Current grade, with the original file value alongside when it was recalculated. */
-  const grade = (f: 'cu' | 'mo' | 'eq' | 'as' | 'pb', fmt: (v: number) => string, u: string) => {
-    const v = current[f];
+  /** Editable grade, with a link back to the file value when it differs. */
+  const gradeInput = (f: GradeField) => {
+    const pct = f === 'cu' || f === 'mo' || f === 'eq';
+    const fmt = pct ? fmtGrade : fmtGpt;
+    const u = pct ? unit('%') : unit('g/t');
     const fileV = block[f];
-    if (v === undefined) return '—';
-    const changed = input.grades?.[f] !== undefined && fileV !== undefined && fmt(fileV) !== fmt(v);
+    const v = grades[f];
+    const differs = fileV !== undefined && v !== null && fmt(v) !== fmt(fileV);
     return (
-      <>
-        {fmt(v)} {u}
-        {changed && (
-          <Typography.Text type="secondary">
-            {' '}
-            ({t('blockModal.fileValue', { value: `${fmt(fileV)} ${u}` })})
-          </Typography.Text>
+      <Space direction="vertical" size={0}>
+        <InputNumber<number>
+          size="small"
+          style={{ width: 150 }}
+          min={0}
+          step={pct ? 0.01 : 1}
+          precision={pct ? 4 : 2}
+          value={v}
+          placeholder={fileV === undefined ? undefined : fmt(fileV)}
+          addonAfter={u}
+          onChange={(x) => setGradesDraft((d) => ({ ...d, [f]: x }))}
+          onPressEnter={save}
+          aria-label={t(`field.${f}`)}
+        />
+        {differs && (
+          <Typography.Link
+            style={{ fontSize: 12 }}
+            onClick={() => setGradesDraft((d) => ({ ...d, [f]: fileV }))}
+          >
+            {t('blockModal.resetToFile', { value: `${fmt(fileV)} ${u}` })}
+          </Typography.Link>
         )}
-      </>
+      </Space>
     );
   };
   const parentRemaining = parent ? (userInputs[parent]?.remaining ?? 0) : 0;
@@ -99,6 +138,12 @@ function BlockModalContent({ block, input }: { block: Block; input: BlockUserInp
     const result = setDependsOn(block.id, parent ? [parent] : []);
     if (!result.ok) return; // cycle shown inline; should not happen since canSave checked it
     setRemaining(block.id, remaining);
+    const edited: Partial<Record<GradeField, number>> = {};
+    for (const f of GRADE_FIELDS) {
+      const v = grades[f];
+      if (v !== null) edited[f] = v;
+    }
+    setGrades(block.id, edited);
     close();
   };
 
@@ -142,30 +187,27 @@ function BlockModalContent({ block, input }: { block: Block; input: BlockUserInp
             {block.site}
           </Descriptions.Item>
         )}
-        <Descriptions.Item label={t('field.cu')}>
-          {grade('cu', fmtGrade, unit('%'))}
-        </Descriptions.Item>
-        <Descriptions.Item label={t('field.mo')}>
-          {grade('mo', fmtGrade, unit('%'))}
-        </Descriptions.Item>
+        <Descriptions.Item label={t('field.cu')}>{gradeInput('cu')}</Descriptions.Item>
+        <Descriptions.Item label={t('field.mo')}>{gradeInput('mo')}</Descriptions.Item>
         <Descriptions.Item label={t('field.eq')} span={2}>
-          {grade('eq', fmtGrade, unit('%'))}{' '}
-          <Typography.Text type="secondary">
-            (
-            {t('blockModal.classHint', {
-              eq: fmtGrade(current.eq),
-              cutoff: fmtGrade(settings.oreCutoffEq),
-            })}
-            )
-          </Typography.Text>
+          <Space wrap>
+            {gradeInput('eq')}
+            <Typography.Text type="secondary">
+              (
+              {t('blockModal.classHint', {
+                eq: fmtGrade(current.eq),
+                cutoff: fmtGrade(settings.oreCutoffEq),
+              })}
+              )
+            </Typography.Text>
+          </Space>
         </Descriptions.Item>
-        <Descriptions.Item label={t('field.as')}>
-          {grade('as', fmtGpt, unit('g/t'))}
-        </Descriptions.Item>
-        <Descriptions.Item label={t('field.pb')}>
-          {grade('pb', fmtGpt, unit('g/t'))}
-        </Descriptions.Item>
+        <Descriptions.Item label={t('field.as')}>{gradeInput('as')}</Descriptions.Item>
+        <Descriptions.Item label={t('field.pb')}>{gradeInput('pb')}</Descriptions.Item>
       </Descriptions>
+      <Typography.Text type="secondary" style={{ display: 'block', marginTop: 4, fontSize: 12 }}>
+        {t('blockModal.gradesHint')}
+      </Typography.Text>
       {input.actuals && (
         <Alert
           style={{ marginTop: 12 }}

@@ -474,7 +474,9 @@ export const ru: Record<I18nKey, string> = {
   'import.warn.badDate': 'Не удалось прочитать дату «{value}» — период добычи не учтён.',
   'import.warn.miningOrder':
     'Окончание добычи {end} раньше начала {start} — период добычи не учтён.',
-  'blockModal.fileValue': 'в файле: {value}',
+  'blockModal.resetToFile': 'Вернуть значение из файла ({value})',
+  'blockModal.gradesHint':
+    'Содержания оставшегося материала можно изменить; пустое поле означает значение из файла. Повторное применение фактических данных пересчитает их от значений файла.',
   'blockModal.actuals':
     'Фактическая добыча до {date}: списано {tonnes} т; содержания пересчитаны для оставшейся массы.',
   'blockModal.actualsOverrun':
