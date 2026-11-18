@@ -275,6 +275,10 @@ export const ru: Record<I18nKey, string> = {
   'blockModal.sourceRow': 'Строка файла',
   'blockModal.remaining': 'Остаток (т)',
   'blockModal.remainingHint': 'От 0 до исходной массы {weight} т.',
+  'blockModal.dailyMax': 'Суточный лимит (т/сут)',
+  'blockModal.dailyMaxHint':
+    'При планировании из этого блока берётся не более указанного количества тонн в сутки. Пусто — без ограничения.',
+  'blockModal.dailyMaxNone': 'Без ограничения',
   'blockModal.setFull': 'Полный',
   'blockModal.setZero': 'Отработан',
   'blockModal.dependency': 'Зависит от',
@@ -551,6 +555,7 @@ export const ru: Record<I18nKey, string> = {
   'unit.min': 'мин',
   'unit.h': 'ч',
   'unit.d': 'сут',
+  'unit.tPerDay': 'т/сут',
 
   // Language
   'language.label': 'Язык',

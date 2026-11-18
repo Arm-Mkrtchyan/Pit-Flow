@@ -13,6 +13,8 @@ export interface SolverBlock extends Pick<Block, 'id' | 'cu' | 'mo' | 'as' | 'pb
   cls: BlockClass;
   remaining: number;
   dependsOn: BlockId[];
+  /** Hard daily limit, t/day (x[b,d] ≤ dailyMax). Missing = no limit. */
+  dailyMax?: number;
 }
 
 /** The parts of a RowDescriptor the model builder needs (keeps the solver UI-free). */

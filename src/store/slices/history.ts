@@ -78,9 +78,12 @@ export const createHistorySlice: StateCreator<RootState, [], [], HistorySlice> =
     for (const [id, remaining] of Object.entries(entry.before)) {
       const input = userInputs[id];
       const full = entry.beforeInputs?.[id];
-      // Actuals entries restore the whole input (stock and grades); keep current dependencies.
+      // Actuals entries restore the whole input (stock and grades); keep current dependencies
+      // and daily limit, which actuals never change.
       if (input)
-        userInputs[id] = full ? { ...full, dependsOn: input.dependsOn } : { ...input, remaining };
+        userInputs[id] = full
+          ? withDailyMax({ ...full, dependsOn: input.dependsOn }, input.dailyMax)
+          : { ...input, remaining };
     }
     set({
       userInputs,
@@ -110,3 +113,9 @@ export const createHistorySlice: StateCreator<RootState, [], [], HistorySlice> =
     return entry;
   },
 });
+
+function withDailyMax(input: BlockUserInput, dailyMax: number | undefined): BlockUserInput {
+  const out: BlockUserInput = { ...input, dailyMax };
+  if (dailyMax === undefined) delete out.dailyMax;
+  return out;
+}

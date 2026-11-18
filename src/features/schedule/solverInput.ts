@@ -37,6 +37,7 @@ export function buildSolverInput(
         cls: classifyBlock(b, settings.oreCutoffEq),
         remaining: input?.remaining ?? b.weight,
         dependsOn: input?.dependsOn ?? [],
+        dailyMax: input?.dailyMax,
       };
     }),
     rows: ROW_DESCRIPTORS.map(({ key, kind, basis, pool, hard, blockField }) => ({

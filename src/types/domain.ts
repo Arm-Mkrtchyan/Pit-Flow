@@ -53,6 +53,8 @@ export interface BlockUserInput {
   remaining: number;
   /** Parent blocks (AND semantics). Single-select in UI for now. */
   dependsOn: BlockId[];
+  /** Productivity limit: at most this many tonnes per day from the block. Missing = no limit. */
+  dailyMax?: number;
   /** Grades of the remaining material, recalculated from actual extraction (mass balance). */
   grades?: Partial<Record<GradeField, number>>;
   /** Actual extraction applied to this block (from the actuals Excel). */

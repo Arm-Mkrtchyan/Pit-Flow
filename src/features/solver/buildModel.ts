@@ -6,6 +6,7 @@ import { LpBuilder, type Term } from './lpWriter';
  *
  *   x[b,d] ≥ 0           tonnes from block b on day d
  *   Σ_d x[b,d] ≤ S_b      stock
+ *   x[b,d] ≤ C_b          daily productivity limit of the block (hard, when set)
  *   target rows (soft band ±τ, normalised slacks) and limit rows (hard or soft upper bound),
  *   grade rows linearised against the pool's actual daily tonnage
  *   dependency gates with binaries open[p,d]
@@ -57,6 +58,16 @@ export function buildModel(input: SolverInput): BuiltModel {
       if (v) terms.push([1, v]);
     }
     lp.addConstraint(terms, '<=', b.remaining, 'stock');
+  });
+
+  // Daily productivity limit: x[b,d] ≤ C_b (a bound, not a row). Only binding below the stock.
+  blocks.forEach((b, i) => {
+    const cap = b.dailyMax;
+    if (cap === undefined || !(cap > 0) || cap >= b.remaining) return;
+    for (let d = 0; d < D; d++) {
+      const v = x(i, d);
+      if (v) lp.addUpperBound(v, cap);
+    }
   });
 
   // Reference tonnage per pool/day for normalising grade slacks: the pool's tonnage target.

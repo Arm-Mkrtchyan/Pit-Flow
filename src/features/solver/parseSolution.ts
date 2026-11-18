@@ -48,7 +48,12 @@ export function toSchedule(
   mipGap?: number,
 ): Schedule {
   const stock = input.blocks.map((b) => b.remaining);
-  const rounded = roundAllocations(raw, stock, input.settings.roundingStep);
+  const rounded = roundAllocations(
+    raw,
+    stock,
+    input.settings.roundingStep,
+    input.blocks.map((b) => b.dailyMax),
+  );
   const depth = depths(input);
   const balance = [...stock];
 

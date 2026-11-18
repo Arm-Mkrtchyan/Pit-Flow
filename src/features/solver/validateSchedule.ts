@@ -35,6 +35,9 @@ export function validateSchedule(input: SolverInput, schedule: Schedule): string
       if (w > cap + tol) issues.push(`${date}: waste ${w} t > capacity ${cap} t`);
     }
     for (const a of day.allocations) {
+      const cap = byId.get(a.blockId)?.dailyMax;
+      if (cap !== undefined && a.tonnes > cap + 1e-6)
+        issues.push(`${date}: ${a.blockId} takes ${a.tonnes} t > daily limit ${cap} t`);
       for (const pid of byId.get(a.blockId)?.dependsOn ?? []) {
         const p = byId.get(pid);
         if (!p || p.remaining <= 1e-6) continue;

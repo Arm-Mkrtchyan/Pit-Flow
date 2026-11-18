@@ -48,6 +48,7 @@ const gradeField = z.enum(['cu', 'mo', 'as', 'pb', 'eq']);
 const userInput = z.object({
   remaining: finite.min(0),
   dependsOn: z.array(z.string()),
+  dailyMax: finite.positive().optional(),
   grades: z.record(gradeField, finite.min(0)).optional(),
   actuals: z.object({ before: isoDate, tonnes: finite, overrun: finite }).optional(),
 });

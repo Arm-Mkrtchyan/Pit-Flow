@@ -7,7 +7,7 @@ import { matchModel } from '../features/drilling/rigList';
  * Persisted-state migrations. Bump PERSIST_VERSION whenever the persisted shape changes and
  * add a step `from → from + 1`. Steps run in order from the stored version to the current one.
  */
-export const PERSIST_VERSION = 11;
+export const PERSIST_VERSION = 12;
 
 type Step = (state: Record<string, unknown>) => Record<string, unknown>;
 
@@ -84,6 +84,9 @@ const STEPS: Record<number, Step> = {
     );
     return { ...s, drilling: { ...d, rigs } };
   },
+  // v11 → v12: optional daily productivity limit per block (userInputs[id].dailyMax). Existing
+  // data is valid as is (no limit).
+  11: (s) => s,
 };
 
 export function migrate(persisted: unknown, fromVersion: number): unknown {

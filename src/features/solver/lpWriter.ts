@@ -25,6 +25,7 @@ export class LpBuilder {
   private readonly objective = new Map<string, number>();
   private readonly constraints: string[] = [];
   private readonly binaries: string[] = [];
+  private readonly upper = new Map<string, number>();
   private readonly variables = new Set<string>();
   private rowCount = 0;
 
@@ -42,6 +43,12 @@ export class LpBuilder {
     this.constraints.push(` ${label}${this.rowCount++}: ${expr(nz)} ${sense} ${num(rhs)}`);
   }
 
+  /** Upper bound on a continuous variable (lower bound stays 0); the tighter bound wins. */
+  addUpperBound(variable: string, ub: number): void {
+    this.variables.add(variable);
+    this.upper.set(variable, Math.min(ub, this.upper.get(variable) ?? Infinity));
+  }
+
   addBinary(variable: string): void {
     this.variables.add(variable);
     this.binaries.push(variable);
@@ -55,6 +62,10 @@ export class LpBuilder {
     const objTerms: Term[] = [...this.objective.entries()].map(([v, c]) => [c, v]);
     const out = ['Minimize', ` obj: ${objTerms.length > 0 ? expr(objTerms) : '0'}`, 'Subject To'];
     out.push(...this.constraints);
+    if (this.upper.size > 0) {
+      out.push('Bounds');
+      for (const [v, ub] of this.upper) out.push(` 0 <= ${v} <= ${num(ub)}`);
+    }
     if (this.binaries.length > 0) {
       out.push('Binary');
       for (let i = 0; i < this.binaries.length; i += TERMS_PER_LINE) {

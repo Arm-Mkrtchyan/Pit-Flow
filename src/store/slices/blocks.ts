@@ -16,6 +16,8 @@ export interface BlocksSlice {
   setBlocks: (blocks: Block[], userInputs: Record<BlockId, BlockUserInput>) => void;
   /** Set remaining stock, clamped to [0, weight]. */
   setRemaining: (id: BlockId, remaining: number) => void;
+  /** Set the daily productivity limit in t/day; null (or ≤ 0) removes it. */
+  setDailyMax: (id: BlockId, dailyMax: number | null) => void;
   /**
    * Set the current grades of a block. A missing value, or one equal to the file value, means the
    * file value; only differing values are stored.
@@ -41,6 +43,21 @@ export const createBlocksSlice: StateCreator<RootState, [], [], BlocksSlice> = (
       if (clamped === input.remaining) return {};
       return {
         userInputs: { ...s.userInputs, [id]: { ...input, remaining: clamped } },
+        solution: { ...s.solution, stale: true },
+      };
+    }),
+
+  setDailyMax: (id, dailyMax) =>
+    set((s) => {
+      const input = s.userInputs[id];
+      if (!input) return {};
+      const next =
+        dailyMax !== null && Number.isFinite(dailyMax) && dailyMax > 0 ? dailyMax : undefined;
+      if (next === input.dailyMax) return {};
+      const updated: BlockUserInput = { ...input, dailyMax: next };
+      if (next === undefined) delete updated.dailyMax;
+      return {
+        userInputs: { ...s.userInputs, [id]: updated },
         solution: { ...s.solution, stale: true },
       };
     }),

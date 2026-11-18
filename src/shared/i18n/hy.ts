@@ -277,6 +277,10 @@ export const hy: Record<I18nKey, string> = {
   'blockModal.sourceRow': 'Ֆայլի տող',
   'blockModal.remaining': 'Մնացորդ (տ)',
   'blockModal.remainingHint': '0-ից մինչև սկզբնական զանգվածը՝ {weight} տ։',
+  'blockModal.dailyMax': 'Օրական սահմանաչափ (տ/օր)',
+  'blockModal.dailyMaxHint':
+    'Պլանավորման ժամանակ այս բլոկից օրական վերցվում է ոչ ավելի, քան նշված տոննան։ Դատարկ՝ առանց սահմանափակման։',
+  'blockModal.dailyMaxNone': 'Առանց սահմանափակման',
   'blockModal.setFull': 'Ամբողջը',
   'blockModal.setZero': 'Սպառված',
   'blockModal.dependency': 'Կախված է',
@@ -556,6 +560,7 @@ export const hy: Record<I18nKey, string> = {
   'unit.min': 'ր',
   'unit.h': 'ժ',
   'unit.d': 'օր',
+  'unit.tPerDay': 'տ/օր',
 
   // Language
   'language.label': 'Լեզու',

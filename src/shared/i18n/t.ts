@@ -58,7 +58,8 @@ export type UnitCode =
   | 'm³/lm'
   | 'min'
   | 'h'
-  | 'd';
+  | 'd'
+  | 't/d';
 const UNIT_KEYS: Record<UnitCode, I18nKey> = {
   t: 'unit.t',
   '%': 'unit.pct',
@@ -74,5 +75,6 @@ const UNIT_KEYS: Record<UnitCode, I18nKey> = {
   min: 'unit.min',
   h: 'unit.h',
   d: 'unit.d',
+  't/d': 'unit.tPerDay',
 };
 export const unit = (u: UnitCode): string => t(UNIT_KEYS[u]);

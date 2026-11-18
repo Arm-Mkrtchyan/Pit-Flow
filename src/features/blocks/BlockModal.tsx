@@ -46,8 +46,10 @@ function BlockModalContent({ block, input }: { block: Block; input: BlockUserInp
   const setRemaining = useAppStore((s) => s.setRemaining);
   const setDependsOn = useAppStore((s) => s.setDependsOn);
   const setGrades = useAppStore((s) => s.setGrades);
+  const setDailyMax = useAppStore((s) => s.setDailyMax);
 
   const [remaining, setRemainingDraft] = useState<number | null>(input.remaining);
+  const [dailyMax, setDailyMaxDraft] = useState<number | null>(input.dailyMax ?? null);
   const [parent, setParent] = useState<BlockId | undefined>(input.dependsOn[0]);
   // Current grades of the remaining material (file values, or recalculated from actuals / edited).
   const [grades, setGradesDraft] = useState<GradeDraft>(() => {
@@ -130,7 +132,8 @@ function BlockModalContent({ block, input }: { block: Block; input: BlockUserInp
   };
   const parentRemaining = parent ? (userInputs[parent]?.remaining ?? 0) : 0;
   const remainingValid = remaining !== null && remaining >= 0 && remaining <= block.weight;
-  const canSave = remainingValid && cycle === null;
+  const dailyMaxValid = dailyMax === null || dailyMax > 0;
+  const canSave = remainingValid && dailyMaxValid && cycle === null;
 
   const close = () => openBlock(null);
   const save = () => {
@@ -138,6 +141,7 @@ function BlockModalContent({ block, input }: { block: Block; input: BlockUserInp
     const result = setDependsOn(block.id, parent ? [parent] : []);
     if (!result.ok) return; // cycle shown inline; should not happen since canSave checked it
     setRemaining(block.id, remaining);
+    setDailyMax(block.id, dailyMax);
     const edited: Partial<Record<GradeField, number>> = {};
     for (const f of GRADE_FIELDS) {
       const v = grades[f];
@@ -252,6 +256,27 @@ function BlockModalContent({ block, input }: { block: Block; input: BlockUserInp
             </Button>
             <Button onClick={() => setRemainingDraft(0)}>{t('blockModal.setZero')}</Button>
           </Space.Compact>
+        </Form.Item>
+
+        <Form.Item
+          label={t('blockModal.dailyMax')}
+          help={t('blockModal.dailyMaxHint')}
+          validateStatus={dailyMaxValid ? undefined : 'error'}
+          style={{ marginTop: 24 }}
+        >
+          <InputNumber<number>
+            style={{ width: '100%' }}
+            min={1}
+            step={500}
+            value={dailyMax}
+            placeholder={t('blockModal.dailyMaxNone')}
+            formatter={formatThousands}
+            parser={parseThousands}
+            onChange={setDailyMaxDraft}
+            onPressEnter={save}
+            addonAfter={unit('t/d')}
+            aria-label={t('blockModal.dailyMax')}
+          />
         </Form.Item>
 
         <Form.Item

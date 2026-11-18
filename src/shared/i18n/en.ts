@@ -272,6 +272,10 @@ export const en = {
   'blockModal.sourceRow': 'File row',
   'blockModal.remaining': 'Remaining stock (t)',
   'blockModal.remainingHint': 'Between 0 and the original weight of {weight} t.',
+  'blockModal.dailyMax': 'Daily limit (t/day)',
+  'blockModal.dailyMaxHint':
+    'At most this many tonnes per day from this block when planning. Empty = no limit.',
+  'blockModal.dailyMaxNone': 'No limit',
   'blockModal.setFull': 'Full',
   'blockModal.setZero': 'Exhausted',
   'blockModal.dependency': 'Depends on',
@@ -542,6 +546,7 @@ export const en = {
   'unit.min': 'min',
   'unit.h': 'h',
   'unit.d': 'd',
+  'unit.tPerDay': 't/day',
 
   // Language
   'language.label': 'Language',
