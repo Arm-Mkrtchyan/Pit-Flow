@@ -26,6 +26,7 @@ export const BlockListItem = memo(function BlockListItem({ view, index, active, 
       style={{
         opacity: exhausted ? 0.45 : 1,
         background: active ? token.controlItemBgActive : undefined,
+        borderBottom: `1px solid ${token.colorSplit}`,
       }}
       onClick={() => onOpen(index)}
     >

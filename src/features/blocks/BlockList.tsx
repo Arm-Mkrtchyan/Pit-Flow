@@ -163,7 +163,7 @@ export function BlockList({ empty }: { empty?: ReactNode } = {}) {
             ref={listRef}
             data={rows}
             height={height}
-            itemHeight={52}
+            itemHeight={57}
             itemKey="key"
             virtual={shown > VIRTUAL_ABOVE}
           >
