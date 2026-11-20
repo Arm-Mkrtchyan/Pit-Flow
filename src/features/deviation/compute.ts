@@ -139,14 +139,13 @@ export function computeDeviation(plan: ParsedPlan, orderFact: ParsedOrderFact): 
   return rows;
 }
 
-/** Execution of a reference (order or plan): signed difference and fact / reference. */
+/** Execution of a reference (order or plan): signed difference fact − reference. */
 export function execution(fact: number, ref: number): Execution {
-  return { diff: fact - ref, ratio: ref > EPS ? fact / ref : null };
+  return { diff: fact - ref };
 }
 
 export interface Execution {
   diff: number;
-  ratio: number | null;
 }
 
 /** What one category group of a row shows (shared by the table and the Excel export). */

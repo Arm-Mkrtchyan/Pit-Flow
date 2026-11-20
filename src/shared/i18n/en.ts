@@ -26,8 +26,8 @@ export const en = {
   'home.resources.desc':
     "Actual exported ore per block from the geologist's workbook, written into the resource file.",
   'home.deviation.desc':
-    'Work order, weekly plan and actual extraction per block and date: ore to the crusher, ore to the OSP stockpiles and overburden, with the deviations.',
-  'deviation.plan.title': '1. Weekly mining plan',
+    'Work order, mining plan and actual extraction per block and date: ore to the crusher, ore to the OSP stockpiles and overburden, with the deviations.',
+  'deviation.plan.title': '1. Mining plan',
   'deviation.plan.hint':
     'Workbook «План горных работ … на период …» (sheets «Блоки CuEq» and «Блоки CuEq ниже порога»): planned tonnes per block and date. Names with «wd» are overburden, «mf» ore to the crusher, «mf» with «osp» ore to an OSP stockpile, «osp8»/«osp9» stockpile reclaim to the crusher.',
   'deviation.plan.upload': 'Upload plan',
@@ -42,7 +42,7 @@ export const en = {
   'deviation.needBoth': 'Upload both files to see the deviations.',
   'deviation.download': 'Download Excel',
   'deviation.legend':
-    'Execution = actual − order / plan, and actual ÷ order / plan; red when below. «—»: no actual data for the date yet.',
+    'Execution = actual − order / plan; red when below. «—»: no actual data for the date yet.',
   'deviation.col.date': 'Date',
   'deviation.col.block': 'Block',
   'deviation.group.crusher': 'Ore to the crusher',

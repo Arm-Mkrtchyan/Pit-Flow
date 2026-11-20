@@ -54,9 +54,6 @@ const signedIntFmt = new Intl.NumberFormat(LOCALE, {
 /** Signed whole number (a difference): "+2,300", "-5,106", "0". */
 export const fmtSignedInt = (v: number | null | undefined): string =>
   ok(v) ? signedIntFmt.format(Math.round(v)) : DASH;
-/** Ratio as a whole percentage: 0.93 → "93 %". */
-export const fmtPercentInt = (v: number | null | undefined): string =>
-  ok(v) ? `${tonnesFmt.format(v * 100)} %` : DASH;
 /** Duration in days, 1 decimal. */
 export const fmtDays = (v: number | null | undefined): string =>
   ok(v) ? oneDecimalFmt.format(v) : DASH;

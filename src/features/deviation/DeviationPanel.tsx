@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { Button, Card, Col, Empty, Row, Space, Table, Typography, Upload, theme } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { t } from '../../shared/i18n/t';
-import { fmtInt, fmtPercentInt, fmtSignedInt } from '../../shared/format';
+import { fmtInt, fmtSignedInt } from '../../shared/format';
 import { STICKY_HEADER } from '../../shared/layout';
 import { fromIso } from '../calendar';
 import { categoryView, rowLabelKey, shows, type Execution } from './compute';
@@ -23,12 +23,7 @@ const GROUP_KEY: Record<DeviationCategory, `deviation.group.${DeviationCategory}
 function ExecCell({ e, danger }: { e: Execution | null; danger: string }) {
   if (!e) return null;
   const color = e.diff < -0.5 ? danger : undefined;
-  return (
-    <div style={{ lineHeight: 1.25, color, fontWeight: 600 }}>
-      <div>{fmtSignedInt(e.diff)}</div>
-      {e.ratio !== null && <small>{fmtPercentInt(e.ratio)}</small>}
-    </div>
-  );
+  return <span style={{ color, fontWeight: 600 }}>{fmtSignedInt(e.diff)}</span>;
 }
 
 /** Deviation calculation: weekly plan + plan/actual workbook → order / plan / actual by block. */

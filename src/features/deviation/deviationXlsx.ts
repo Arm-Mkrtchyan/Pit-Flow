@@ -1,7 +1,7 @@
 import type { Borders, Cell, Fill, Font, PaperSize, Worksheet } from 'exceljs';
 import type { IsoDate } from '../../types/domain';
 import { t } from '../../shared/i18n/t';
-import { fmtPercentInt, fmtSignedInt } from '../../shared/format';
+import { fmtSignedInt } from '../../shared/format';
 import { fromIso } from '../calendar';
 import { downloadBlob } from '../export';
 import { categoryView, rowLabelKey, shows, type Execution } from './compute';
@@ -97,8 +97,7 @@ function writeExec(cell: Cell, e: Execution | null, bold: boolean) {
     cell.value = '';
     return;
   }
-  const diff = fmtSignedInt(e.diff);
-  cell.value = e.ratio === null ? diff : `${diff} (${fmtPercentInt(e.ratio)})`;
+  cell.value = fmtSignedInt(e.diff);
   cell.font = font(true, e.diff < -0.5 ? RED : BLACK, bold ? 11 : 10);
   cell.alignment = right;
 }
