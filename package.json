@@ -12,6 +12,7 @@
     "format": "prettier --write ."
   },
   "dependencies": {
+    "@vercel/analytics": "^2.0.1",
     "antd": "^5.29.3",
     "dayjs": "^1.11.23",
     "exceljs": "4.4.0",

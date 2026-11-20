@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { Analytics } from '@vercel/analytics/react';
 import { App as AntApp, Spin } from 'antd';
 import { t } from '../shared/i18n/t';
 import { useAppStore } from '../store';
@@ -34,8 +35,19 @@ function LoadErrorNotice() {
 }
 
 export function App() {
-  const hydrated = useHydrated();
   const page = useCurrentPage();
+  // Pages live in the URL hash, which Vercel Analytics doesn't see: report each page as a path.
+  const path = page === 'home' ? '/' : `/${page}`;
+  return (
+    <>
+      <Analytics route={path} path={path} />
+      <AppContent page={page} />
+    </>
+  );
+}
+
+function AppContent({ page }: { page: ReturnType<typeof useCurrentPage> }) {
+  const hydrated = useHydrated();
   if (!hydrated) {
     return (
       <div className={styles.loading}>
