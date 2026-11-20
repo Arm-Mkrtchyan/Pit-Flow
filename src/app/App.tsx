@@ -5,6 +5,7 @@ import { useAppStore } from '../store';
 import { useHydrated } from '../store/useHydrated';
 import { AppLayout } from './AppLayout';
 import styles from './AppLayout.module.css';
+import { DeviationPage } from './pages/DeviationPage';
 import { DrillingPage } from './pages/DrillingPage';
 import { ExtractionPage } from './pages/ExtractionPage';
 import { HomePage } from './pages/HomePage';
@@ -52,6 +53,7 @@ export function App() {
         {page === 'extraction' && <ExtractionPage />}
         {page === 'drilling' && <DrillingPage />}
         {page === 'resources' && <ResourcesPage />}
+        {page === 'deviation' && <DeviationPage />}
       </AppLayout>
     </>
   );

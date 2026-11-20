@@ -1,0 +1,6 @@
+/* Compact separator rows ("Руда" / "Вскрыша"); antd has no per-row size option. */
+.sectionRow > td {
+  padding-block: 1px !important;
+  font-size: 12px;
+  line-height: 18px;
+}

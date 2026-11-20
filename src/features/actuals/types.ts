@@ -27,6 +27,31 @@ export interface ParsedActuals {
   shiftCount: number;
 }
 
+/** One work-order (Պլան) or actual (Փաստ) row, tonnes by destination (shift columns summed). */
+export interface OrderFactRow {
+  /** 1-based Excel row number. */
+  row: number;
+  date: IsoDate;
+  kind: 'order' | 'fact';
+  /** Block name as written, e.g. "SS1890-48" or "OSP9". */
+  name: string;
+  /** Ore extracted (to the crusher), t. */
+  crusher: number;
+  /** Ore sent to the OSP stockpiles, t. */
+  osp: number;
+  /** Overburden, t. */
+  overburden: number;
+}
+
+export interface ParsedOrderFact {
+  sheetName: string;
+  rows: OrderFactRow[];
+  /** Dates that have any actual (Փաստ) tonnes. */
+  factDates: IsoDate[];
+  firstDate: IsoDate | null;
+  lastDate: IsoDate | null;
+}
+
 /** Extracted totals per block name, up to (not including) the cut-off date. */
 export interface ActualAggregate {
   /** Block name as first written in the file (e.g. "SS1875-27a"). */
