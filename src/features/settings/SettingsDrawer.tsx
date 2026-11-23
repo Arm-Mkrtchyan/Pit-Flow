@@ -73,6 +73,16 @@ const GENERAL: NumField[] = [
     suffix: 't',
   },
   {
+    key: 'maxDailyPerBlock',
+    label: 'settings.maxDailyPerBlock',
+    help: 'settings.maxDailyPerBlockHelp',
+    min: 0,
+    max: 1e7,
+    step: 500,
+    thousands: true,
+    suffix: 't/d',
+  },
+  {
     key: 'amberThreshold',
     label: 'settings.amber',
     help: 'settings.amberHelp',

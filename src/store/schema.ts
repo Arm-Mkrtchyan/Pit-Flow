@@ -70,6 +70,7 @@ export const settingsSchema = z.object({
   aimExactTarget: z.boolean(),
   releaseThreshold: finite.min(0),
   minDailyTonnes: finite.min(0),
+  maxDailyPerBlock: finite.min(0),
   releaseEpsilon: finite.min(0),
   roundingStep: z.union([z.literal(1), z.literal(10), z.literal(100)]),
   timeLimitSec: finite.positive(),

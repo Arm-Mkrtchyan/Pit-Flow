@@ -131,6 +131,11 @@ export interface Settings {
    * many tonnes per working day (the finishing day may take less). 0 turns the rule off.
    */
   minDailyTonnes: number;
+  /**
+   * Default upper limit on the take from any one block per day, t/day. Combined with the block's
+   * own limit and date exceptions (the lowest applies). 0 = no limit.
+   */
+  maxDailyPerBlock: number;
   releaseEpsilon: number;
   roundingStep: 1 | 10 | 100;
   timeLimitSec: number;

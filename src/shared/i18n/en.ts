@@ -491,6 +491,9 @@ export const en = {
   'settings.minDaily': 'Minimum per working day',
   'settings.minDailyHelp':
     'Continuity: once a block is started it is worked every day until exhausted, taking at least this much per day (the finishing day may take less). Dates switched off in the schedule table are skipped. 0 turns the rule off.',
+  'settings.maxDailyPerBlock': 'Maximum per block per day',
+  'settings.maxDailyPerBlockHelp':
+    'Default upper limit on the tonnes taken from any one block in a day. A lower limit set on a block or on a date still applies. 0 = no limit.',
   'settings.release': 'Dependency release threshold',
   'settings.releaseHelp':
     "A child block may be used on the day its parent is finished only if the parent's start-of-day balance was below this.",

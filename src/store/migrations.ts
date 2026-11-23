@@ -7,7 +7,7 @@ import { matchModel } from '../features/drilling/rigList';
  * Persisted-state migrations. Bump PERSIST_VERSION whenever the persisted shape changes and
  * add a step `from → from + 1`. Steps run in order from the stored version to the current one.
  */
-export const PERSIST_VERSION = 13;
+export const PERSIST_VERSION = 14;
 
 type Step = (state: Record<string, unknown>) => Record<string, unknown>;
 
@@ -90,6 +90,8 @@ const STEPS: Record<number, Step> = {
   // v12 → v13: block continuity (settings.minDailyTonnes, default 1000 t) and optional per-date
   // exceptions on user inputs (dayOverrides).
   12: (s) => ({ ...s, settings: { ...(s.settings as object), minDailyTonnes: 1000 } }),
+  // v13 → v14: default daily limit per block (settings.maxDailyPerBlock, default 26 000 t); 0 = no limit.
+  13: (s) => ({ ...s, settings: { ...(s.settings as object), maxDailyPerBlock: 26000 } }),
 };
 
 export function migrate(persisted: unknown, fromVersion: number): unknown {

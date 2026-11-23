@@ -14,6 +14,7 @@ export const DEFAULT_SETTINGS: Settings = {
   aimExactTarget: false,
   releaseThreshold: 15000,
   minDailyTonnes: 1000,
+  maxDailyPerBlock: 26000,
   releaseEpsilon: 1,
   roundingStep: 10,
   timeLimitSec: 30,

@@ -13,6 +13,16 @@ import { hashValue } from '../../shared/utils/hash';
 import { ROW_DESCRIPTORS } from './rowDescriptors';
 import { resolveTargets } from './targets';
 
+/**
+ * Daily limit the solver uses for a block: the lower of its own limit and the default limit
+ * per block from settings (0 = none). Missing = no limit.
+ */
+export function effectiveDailyMax(own: number | undefined, globalMax: number): number | undefined {
+  const g = globalMax > 0 ? globalMax : undefined;
+  if (own === undefined) return g;
+  return g === undefined ? own : Math.min(own, g);
+}
+
 /** Assemble the serialisable solver payload from app state. */
 export function buildSolverInput(
   blocks: readonly Block[],
@@ -37,7 +47,7 @@ export function buildSolverInput(
         cls: classifyBlock(b, settings.oreCutoffEq),
         remaining: input?.remaining ?? b.weight,
         dependsOn: input?.dependsOn ?? [],
-        dailyMax: input?.dailyMax,
+        dailyMax: effectiveDailyMax(input?.dailyMax, settings.maxDailyPerBlock),
         dayOverrides: input?.dayOverrides,
       };
     }),

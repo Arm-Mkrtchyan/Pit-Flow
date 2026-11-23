@@ -6,6 +6,7 @@ import { formatThousands, parseThousands } from '../../shared/ui/numberInput';
 import { useAppStore } from '../../store';
 import type { BlockId, IsoDate } from '../../types/domain';
 import { fromIso } from '../calendar';
+import { effectiveDailyMax } from './solverInput';
 
 export interface DayExceptionTarget {
   blockId: BlockId;
@@ -39,6 +40,8 @@ function DayExceptionContent({
 }: DayExceptionTarget & { onClose: () => void }) {
   const input = useAppStore((s) => s.userInputs[blockId]);
   const minDaily = useAppStore((s) => s.settings.minDailyTonnes);
+  const globalMax = useAppStore((s) => s.settings.maxDailyPerBlock);
+  const dailyMax = effectiveDailyMax(input?.dailyMax, globalMax);
   const setDayOverride = useAppStore((s) => s.setDayOverride);
   const current = input?.dayOverrides?.[date];
 
@@ -81,8 +84,8 @@ function DayExceptionContent({
           {fmtTonnes(planned)} {unit('t')}
         </Descriptions.Item>
         <Descriptions.Item label={t('blockModal.dailyMax')}>
-          {input?.dailyMax !== undefined
-            ? `${fmtTonnes(input.dailyMax)} ${unit('t/d')}`
+          {dailyMax !== undefined
+            ? `${fmtTonnes(dailyMax)} ${unit('t/d')}`
             : t('blockModal.dailyMaxNone')}
         </Descriptions.Item>
       </Descriptions>
