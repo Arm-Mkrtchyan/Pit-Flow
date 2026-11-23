@@ -12,8 +12,18 @@ export interface MergeReport {
   clamped: BlockId[];
 }
 
+/** Daily limit given on import to blocks whose name contains "lgw", t/day. */
+export const LGW_DAILY_MAX = 6000;
+
+/** The block's site name or ID contains "lgw" (any case). */
+export function isLgwBlock(block: Block): boolean {
+  return /lgw/i.test(block.site ?? '') || /lgw/i.test(block.id);
+}
+
 export function defaultUserInput(block: Block): BlockUserInput {
-  return { remaining: block.weight, dependsOn: [] };
+  const input: BlockUserInput = { remaining: block.weight, dependsOn: [] };
+  if (isLgwBlock(block)) input.dailyMax = LGW_DAILY_MAX;
+  return input;
 }
 
 /** Combine an import with existing state. Merge keeps user stock and dependencies by block ID. */
@@ -49,7 +59,10 @@ export function applyImport(
       return keep;
     });
     // Keep recalculated grades and actuals info along with stock and dependencies.
-    userInputs[b.id] = { ...prev, remaining, dependsOn };
+    const next: BlockUserInput = { ...prev, remaining, dependsOn };
+    // An "lgw" block gets its default limit unless the planner already set one.
+    if (next.dailyMax === undefined && isLgwBlock(b)) next.dailyMax = LGW_DAILY_MAX;
+    userInputs[b.id] = next;
   }
   if (mode === 'merge') {
     report.removed = existingBlocks.filter((b) => !incomingIds.has(b.id)).map((b) => b.id);
