@@ -10,6 +10,7 @@ const DESCRIPTION: Record<(typeof PAGES)[number]['id'], I18nKey> = {
   drilling: 'home.drilling.desc',
   resources: 'home.resources.desc',
   deviation: 'home.deviation.desc',
+  benchline: 'home.benchline.desc',
 };
 
 /** Start page: choose which work to do. */

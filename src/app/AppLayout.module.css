@@ -80,3 +80,8 @@ body {
   max-width: 880px;
   margin: 0 auto;
 }
+/* Benchline page: its own markup scrolls inside the content area below the header */
+.benchline {
+  overflow: auto;
+  min-width: 0;
+}

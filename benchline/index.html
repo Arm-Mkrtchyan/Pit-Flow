@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Benchline Scheduler</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap&subset=cyrillic">
+<link rel="stylesheet" href="css/benchline.css">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/delaunator@5.0.1/delaunator.min.js"></script>
+</head>
+<body>
+<header class="bar">
+  <div class="brand">
+    <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><path d="M1 6h28M4 11h22M7 16h16M10 21h10M13 26h4" stroke="var(--accent)" stroke-width="2.4" stroke-linecap="square" fill="none"/></svg>
+    <div><h1>Benchline</h1><small data-i="tagline"></small></div>
+  </div>
+  <div class="status" id="status"></div>
+  <div class="lang" role="group" aria-label="Language / Язык">
+    <button type="button" id="langRu" data-lang="ru" aria-pressed="true">RU</button>
+    <button type="button" id="langEn" data-lang="en" aria-pressed="false">EN</button>
+  </div>
+</header>
+
+<div class="app">
+<aside class="side" id="side">
+  <details class="step" open>
+    <summary><span class="n">1</span><span data-i="s1"></span><span class="chev">›</span></summary>
+    <div class="body">
+      <label class="drop" id="drop" for="file">
+        <b data-i="dropB"></b>
+        <span data-i="dropS"></span>
+      </label>
+      <input type="file" id="file" accept=".csv,.txt,.asc,.dat,.prn,.tsv">
+      <div class="row"><button class="btn" id="demoBtn" type="button" data-i="demo"></button><span class="src" id="srcInfo"></span></div>
+      <div class="sub" data-i="colmap"></div>
+      <div class="grid2" id="mapGrid"></div>
+      <div class="grid2">
+        <label class="field"><span><span data-i="bx"></span> <em data-i="u_m"></em></span><input type="number" id="bx" value="20" min="0.1" step="any" data-lv="model"></label>
+        <label class="field"><span><span data-i="by"></span> <em data-i="u_m"></em></span><input type="number" id="by" value="20" min="0.1" step="any" data-lv="model"></label>
+        <label class="field"><span><span data-i="bz"></span> <em data-i="u_m"></em></span><input type="number" id="bz" value="10" min="0.1" step="any" data-lv="model"></label>
+        <label class="field"><span><span data-i="dens"></span> <em data-i="u_tm3"></em></span><input type="number" id="dens" value="2.7" min="0.1" step="0.01" data-lv="model"></label>
+      </div>
+      <p class="hint" data-i="sizesHint"></p>
+      <div class="sub" data-i="filter"></div>
+      <div class="grid2">
+        <label class="field wide"><span data-i="fWhere"></span><select id="fCol" data-lv="model"></select></label>
+        <label class="field"><span data-i="fTest"></span><select id="fOp" data-lv="model"><option value="eq">=</option><option value="ne">≠</option><option value="gt">&gt;</option><option value="ge">≥</option><option value="lt">&lt;</option><option value="le">≤</option></select></label>
+        <label class="field"><span data-i="fValue"></span><input id="fVal" data-lv="model" data-ip="fValPh"></label>
+      </div>
+    </div>
+  </details>
+
+  <details class="step" open>
+    <summary><span class="n">2</span><span data-i="s2"></span><span class="chev">›</span></summary>
+    <div class="body">
+      <div class="grid2">
+        <label class="field wide"><span data-i="phSrc"></span><select id="phSrc" data-lv="model"><option value="col" data-i="phCol"></option><option value="auto" data-i="phAuto"></option></select></label>
+        <label class="field"><span><span data-i="phN"></span> <em data-i="u_cnt"></em></span><input type="number" id="phN" value="4" min="1" max="12" step="1" data-lv="model"></label>
+        <label class="field"><span><span data-i="lag"></span> <em data-i="u_ben"></em></span><input type="number" id="lag" value="2" min="0" step="1"></label>
+        <label class="field"><span><span data-i="sink"></span> <em data-i="u_benp"></em></span><input type="number" id="sink" value="3" min="1" step="1"></label>
+        <label class="field"><span data-i="maxAct"></span><input type="number" id="maxAct" value="2" min="1" step="1"></label>
+      </div>
+      <p class="hint" data-i="phHint"></p>
+    </div>
+  </details>
+
+  <details class="step" open>
+    <summary><span class="n">3</span><span data-i="s3"></span><span class="chev">›</span></summary>
+    <div class="body">
+      <div class="grid2">
+        <label class="field"><span data-i="ppy"></span><select id="ppy"><option value="12" data-i="month"></option><option value="4" selected data-i="quarter"></option><option value="1" data-i="year"></option></select></label>
+        <label class="field"><span data-i="maxP"></span><input type="number" id="maxP" value="60" min="1" max="400" step="1"></label>
+        <label class="field"><span><span data-i="mineCap"></span> <em data-i="u_ktp"></em></span><input type="number" id="mineCap" value="3000" min="1" step="any"></label>
+        <label class="field"><span><span data-i="millCap"></span> <em data-i="u_ktp"></em></span><input type="number" id="millCap" value="700" min="0" step="any"></label>
+        <label class="field"><span><span data-i="spCap"></span> <em data-i="u_kt"></em></span><input type="number" id="spCap" value="1500" min="0" step="any"></label>
+        <label class="field"><span><span data-i="cog"></span> <em id="cogU"></em></span><input type="number" id="cog" value="0.5" min="0" step="any"></label>
+        <label class="field wide"><span><span data-i="wasteRk"></span> <em data-i="u_comma"></em></span><input id="wasteRk" data-ip="wasteRkPh"></label>
+        <label class="field wide"><span data-i="strat"></span><select id="strat"><option value="phase" data-i="stratPhase"></option><option value="value" data-i="stratValue"></option><option value="feed" data-i="stratFeed"></option></select></label>
+      </div>
+    </div>
+  </details>
+
+  <details class="step">
+    <summary><span class="n">4</span><span data-i="s4"></span><span class="chev">›</span></summary>
+    <div class="body">
+      <div class="grid2">
+        <label class="field wide"><span data-i="gUnit"></span><select id="gUnit"><option value="gpt" data-i="gptOpt"></option><option value="pct" data-i="pctOpt"></option></select></label>
+        <label class="field"><span><span data-i="price"></span> <em id="priceU"></em></span><input type="number" id="price" value="3000" min="0" step="any"></label>
+        <label class="field"><span><span data-i="rec"></span> <em>%</em></span><input type="number" id="rec" value="90" min="0" max="100" step="any"></label>
+        <label class="field"><span><span data-i="cMine"></span> <em data-i="u_cMine"></em></span><input type="number" id="cMine" value="3.2" min="0" step="any"></label>
+        <label class="field"><span><span data-i="cProc"></span> <em data-i="u_cProc"></em></span><input type="number" id="cProc" value="22" min="0" step="any"></label>
+        <label class="field"><span><span data-i="cRe"></span> <em data-i="u_cRe"></em></span><input type="number" id="cRe" value="1.1" min="0" step="any"></label>
+        <label class="field"><span><span data-i="disc"></span> <em data-i="u_pyr"></em></span><input type="number" id="disc" value="8" min="0" step="any"></label>
+      </div>
+    </div>
+  </details>
+</aside>
+
+<main class="main">
+  <div class="alerts" id="alerts"></div>
+  <div class="kpis" id="kpis"></div>
+  <section class="work">
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" data-tab="charts" aria-selected="true" data-i="tCharts"></button>
+      <button class="tab" role="tab" data-tab="gantt" aria-selected="false" data-i="tGantt"></button>
+      <button class="tab" role="tab" data-tab="views" aria-selected="false" data-i="tViews"></button>
+      <button class="tab" role="tab" data-tab="table" aria-selected="false" data-i="tTable"></button>
+      <button class="tab" role="tab" data-tab="dtm" aria-selected="false" data-i="tDtm"></button>
+      <div class="tools"><button class="btn" id="expSched" type="button" data-i="expSched"></button><button class="btn" id="expBlocks" type="button" data-i="expBlocks"></button></div>
+    </div>
+    <div class="panel" data-panel="charts">
+      <div class="charts">
+        <div class="chart"><h3 data-i="c1"></h3><div class="box"><canvas id="c1"></canvas></div></div>
+        <div class="chart"><h3 data-i="c2"></h3><div class="box"><canvas id="c2"></canvas></div></div>
+        <div class="chart"><h3 data-i="c3"></h3><div class="box"><canvas id="c3"></canvas></div></div>
+        <div class="chart"><h3 data-i="c4"></h3><div class="box"><canvas id="c4"></canvas></div></div>
+      </div>
+    </div>
+    <div class="panel" data-panel="gantt" hidden>
+      <p class="hint" style="margin-bottom:10px" data-i="ganttHint"></p>
+      <div class="scroll"><table class="gantt" id="gantt"></table></div>
+    </div>
+    <div class="panel" data-panel="views" hidden>
+      <div class="ctrl">
+        <label class="field grow"><span><span data-i="pitEnd"></span> <b id="perLbl" class="num"></b></span><input type="range" id="perSl" min="0" max="1" value="1"></label>
+        <button class="btn" id="play" type="button"></button>
+        <label class="field"><span data-i="colBy"></span><select id="colMode"><option value="period" data-i="cPeriod"></option><option value="phase" data-i="cPhase"></option><option value="grade" data-i="cGrade"></option></select></label>
+      </div>
+      <div class="views">
+        <div>
+          <div class="vhead"><h3 data-i="plan"></h3><span class="num" id="benchLbl"></span></div>
+          <input type="range" id="benchSl" min="0" max="1" value="0" style="width:100%;accent-color:var(--accent);margin-bottom:6px">
+          <canvas class="view" id="plan"></canvas>
+        </div>
+        <div>
+          <div class="vhead"><h3 data-i="section"></h3><span class="row"><select id="secDir" class="btn" style="padding:3px 6px"><option value="EW" data-i="EW"></option><option value="NS" data-i="NS"></option></select><span class="num" id="secLbl"></span></span></div>
+          <input type="range" id="secSl" min="0" max="1" value="0" style="width:100%;accent-color:var(--accent);margin-bottom:6px">
+          <canvas class="view" id="sect"></canvas>
+        </div>
+      </div>
+      <div id="viewInfo"></div>
+      <div class="legend" id="legend"></div>
+    </div>
+    <div class="panel" data-panel="table" hidden>
+      <div class="scroll" style="max-height:560px;overflow:auto"><table id="ptable"></table></div>
+    </div>
+    <div class="panel" data-panel="dtm" hidden>
+      <div class="dtools">
+        <button class="btn primary" id="dtmBtn" type="button" data-i="dLoadDtm"></button>
+        <button class="btn" id="blkBtn" type="button" data-i="dLoadBlk"></button>
+        <button class="btn" id="dDemoBtn" type="button" data-i="dDemo"></button>
+        <input type="file" id="dtmFile" class="vh" multiple accept=".dtm,.str" tabindex="-1">
+        <input type="file" id="blkFile" class="vh" accept=".str" tabindex="-1">
+      </div>
+      <p class="hint" data-i="dDropHint"></p>
+      <div class="src" id="dSrc"></div>
+      <div class="alerts" id="dAlerts"></div>
+      <div class="dctl">
+        <div class="seg" role="group" id="dModeSeg"><button type="button" data-m="select" data-i="dModeSel"></button><button type="button" data-m="pick" data-i="dModePick"></button></div>
+        <div class="seg" role="group" id="dViewSeg"><button type="button" data-v="3d" data-i="d3d"></button><button type="button" data-v="plan" data-i="dPlan"></button></div>
+        <label class="field"><span><span data-i="dVex"></span> <em id="dVexV"></em></span><input type="range" id="dVex" min="1" max="5" step="0.1" value="1.5"></label>
+        <label class="field"><span data-i="dOpac"></span><input type="range" id="dOpac" min="0" max="1" step="0.05" value="0.55"></label>
+        <label class="field"><span data-i="dColor"></span><select id="dColor"><option value="block" data-i="dcBlock"></option><option value="volume" data-i="dcVol"></option><option value="rl" data-i="dcRl"></option></select></label>
+        <label class="chk"><input type="checkbox" id="dGrid" checked><span data-i="dGrid"></span></label>
+        <label class="chk"><input type="checkbox" id="dLabels" checked><span data-i="dLabels"></span></label>
+        <button class="btn" id="dFit" type="button" data-i="dFit"></button>
+      </div>
+      <div class="d3wrap" id="d3wrap">
+        <canvas id="d3"></canvas>
+        <div class="readout" id="dRead"></div>
+        <div class="compass"><div class="cin" id="dCompass"><b id="dCompN"></b><svg width="16" height="26" viewBox="0 0 16 26" aria-hidden="true"><path d="M8 1 L14 13 L8 11 L2 13 Z" fill="var(--accent)"/><path d="M8 25 L14 13 L8 11 L2 13 Z" fill="var(--muted)" opacity=".55"/></svg></div></div>
+        <div class="dnav" id="dNav"></div>
+        <div class="dempty" id="dEmpty" hidden></div>
+      </div>
+      <div class="dsec">
+        <h3 data-i="dParamsH"></h3>
+        <div class="dparams">
+          <label class="field"><span><span data-i="dBench"></span> <em data-i="u_m"></em></span><input type="number" id="dBench" value="10" min="0" step="any"></label>
+          <label class="field"><span data-i="dFloor"></span><select id="dFloorMode"><option value="poly" data-i="dfPoly"></option><option value="fixed" data-i="dfFixed"></option></select></label>
+          <label class="field"><span><span data-i="dFloorRL"></span> <em data-i="u_m"></em></span><input type="number" id="dFloorRL" value="290" step="any"></label>
+          <label class="field"><span><span data-i="dDens"></span> <em data-i="u_tm3"></em></span><input type="number" id="dDens" value="2.7" min="0" step="0.01"></label>
+        </div>
+      </div>
+      <div class="dsec">
+        <div class="vhead"><h3 data-i="dBlocksH"></h3><button class="btn" id="dExpBlk" type="button" data-i="dExpBlk"></button></div>
+        <p class="hint" id="dBlkEmpty" data-i="dBlkEmpty" hidden></p>
+        <div class="scroll" style="max-height:420px;overflow:auto"><table id="dBlk"></table></div>
+      </div>
+      <div class="dsplit">
+        <div class="dsec">
+          <div class="vhead"><h3 id="dVertsH"></h3></div>
+          <p class="hint" id="dVertsEmpty" data-i="dVertsEmpty"></p>
+          <div class="scroll" style="max-height:360px;overflow:auto"><table id="dVerts"></table></div>
+        </div>
+        <div class="dsec">
+          <div class="vhead"><h3 data-i="dPicksH"></h3><div class="row"><button class="btn" id="dExpStr" type="button" data-i="dExpStr"></button><button class="btn" id="dExpCsv" type="button" data-i="dExpCsv"></button><button class="btn" id="dClear" type="button" data-i="dClear"></button></div></div>
+          <p class="hint" id="dPicksEmpty" data-i="dPicksEmpty"></p>
+          <div class="scroll" style="max-height:360px;overflow:auto"><table id="dPicks"></table></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+</div>
+
+<div class="modal" id="modal" hidden>
+  <div class="card" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+    <div class="row" style="justify-content:space-between"><h2 id="mTitle" style="font-size:18px"></h2><button class="btn" id="mClose" type="button" data-i="close"></button></div>
+    <p class="hint" id="mHint"></p>
+    <textarea id="mText" readonly></textarea>
+    <div class="row"><button class="btn primary" id="mCopy" type="button" data-i="copy"></button><span class="muted" id="mMsg"></span></div>
+  </div>
+</div>
+
+<!-- Load order matters: each script uses globals from the ones before it. -->
+<script src="js/schedule-engine.js"></script>
+<script src="js/app.js"></script>
+<script src="js/dtm-engine.js"></script>
+<script src="js/terrain-viewer.js"></script>
+<script src="js/dtm-tab.js"></script>
+</body>
+</html>

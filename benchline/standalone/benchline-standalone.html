@@ -1,0 +1,1928 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}</style>
+<title>Benchline Scheduler</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap&subset=cyrillic">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/delaunator@5.0.1/delaunator.min.js"></script>
+<style>
+/* Layout: app bar, settings rail on the left (stacks on phones), results workspace on the right */
+:root{
+  --bg:#eceff0; --panel:#ffffff; --sunk:#f4f6f7; --ink:#1a2226; --muted:#5a676e; --line:#d2d9dc;
+  --accent:#d9540b; --accent-ink:#ffffff; --ore:#c68a0f; --waste:#8a97a1; --sp:#23837f; --good:#2f8a4a; --bad:#c23a2b;
+  --rest:#dfe4e6;
+  --f-display:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#111618; --panel:#192024; --sunk:#141a1d; --ink:#e3e8ea; --muted:#94a2a9; --line:#2b353a;
+  --accent:#ff7a2f; --accent-ink:#1a0d04; --ore:#e0a52a; --waste:#73828c; --sp:#3db1aa; --good:#58b874; --bad:#ef6a5a;
+  --rest:#262f34; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#111618; --panel:#192024; --sunk:#141a1d; --ink:#e3e8ea; --muted:#94a2a9; --line:#2b353a;
+  --accent:#ff7a2f; --accent-ink:#1a0d04; --ore:#e0a52a; --waste:#73828c; --sp:#3db1aa; --good:#58b874; --bad:#ef6a5a;
+  --rest:#262f34; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{background:var(--bg);color:var(--ink)}
+body{font-family:var(--f-body);font-size:14px;line-height:1.45}
+h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.num,.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+
+.bar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:var(--panel);border-bottom:1px solid var(--line);
+  padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.brand{display:flex;align-items:center;gap:10px}
+.brand svg{flex:none}
+.brand h1{font-size:20px;letter-spacing:.01em}
+.brand small{font-family:var(--f-mono);font-size:11px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.bar .status{margin-left:auto;font-size:12.5px;color:var(--muted);font-family:var(--f-mono)}
+.lang{display:flex;border:1px solid var(--line);border-radius:4px;overflow:hidden}
+.lang button{border:0;background:var(--panel);padding:4px 10px;cursor:pointer;font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.lang button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+
+.app{display:grid;grid-template-columns:350px minmax(0,1fr);gap:16px;align-items:start;
+  padding-block:16px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+@media (max-width:920px){.app{grid-template-columns:minmax(0,1fr)}}
+
+.side{display:flex;flex-direction:column;gap:12px}
+.step{background:var(--panel);border:1px solid var(--line);border-radius:6px}
+.step>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px;padding:12px 14px;font-family:var(--f-display);font-weight:600;font-size:16px}
+.step>summary::-webkit-details-marker{display:none}
+.step>summary .n{font-family:var(--f-mono);font-size:11px;font-weight:500;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;border:1.5px solid var(--accent);color:var(--accent);flex:none}
+.step>summary .chev{margin-left:auto;color:var(--muted);transition:transform .15s}
+.step[open]>summary .chev{transform:rotate(90deg)}
+.step .body{padding:0 14px 14px;display:flex;flex-direction:column;gap:10px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px 10px}
+.field{display:flex;flex-direction:column;gap:3px;min-width:0}
+.field>span{font-size:11.5px;color:var(--muted);letter-spacing:.02em}
+.field>span em{font-style:normal;font-family:var(--f-mono);font-size:10.5px}
+.field input,.field select{width:100%;min-width:0;background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:6px 8px;font-size:13px}
+.field input[type=number]{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.field.wide{grid-column:1/-1}
+.hint{font-size:12px;color:var(--muted);margin:0}
+.drop{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;text-align:center;border:1.5px dashed var(--line);border-radius:6px;padding:16px 10px;cursor:pointer;background:var(--sunk)}
+.drop:hover,.drop.over{border-color:var(--accent)}
+.drop b{font-weight:600}
+.drop span{font-size:12px;color:var(--muted)}
+#file{position:absolute;width:1px;height:1px;opacity:0}
+.row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.btn{border:1px solid var(--line);background:var(--panel);border-radius:4px;padding:6px 12px;cursor:pointer;font-size:13px;font-weight:500}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.src{font-family:var(--f-mono);font-size:11.5px;color:var(--muted);word-break:break-all}
+.sub{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-top:4px}
+
+.main{display:flex;flex-direction:column;gap:14px;min-width:0}
+.alerts{display:flex;flex-direction:column;gap:6px}
+.alert{font-size:13px;padding:8px 12px;border-radius:4px;border:1px solid var(--line);background:var(--panel);border-left:3px solid var(--ore)}
+.alert.err{border-left-color:var(--bad)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,148px),1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.kpi{background:var(--panel);padding:12px 14px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.kpi .k{font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.kpi .v{font-family:var(--f-mono);font-size:clamp(15px,1.25vw,19px);font-weight:500;font-variant-numeric:tabular-nums;line-height:1.25}
+.kpi .d{font-size:12px;color:var(--muted);font-family:var(--f-mono)}
+.kpi.npv .v{color:var(--accent)}
+
+.work{background:var(--panel);border:1px solid var(--line);border-radius:6px;min-width:0}
+.tabs{display:flex;flex-wrap:wrap;gap:2px;border-bottom:1px solid var(--line);padding:0 8px;align-items:flex-end}
+.tab{border:0;background:none;padding:11px 12px 9px;cursor:pointer;font-weight:500;color:var(--muted);border-bottom:2px solid transparent;white-space:nowrap}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.tabs .tools{margin-left:auto;display:flex;gap:6px;padding:6px 0}
+.tabs .tools .btn{white-space:nowrap}
+.panel{padding:14px}
+.charts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+@media (max-width:760px){.charts{grid-template-columns:minmax(0,1fr)}}
+.chart h3{font-size:14px;font-weight:600;margin-bottom:6px}
+.chart .box{position:relative;height:250px}
+
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;font-size:12.5px;width:100%}
+th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+th{font-weight:600;color:var(--muted);font-size:11px;letter-spacing:.04em;text-transform:uppercase;position:sticky;top:0;background:var(--panel)}
+td{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+th:first-child,td:first-child{text-align:left;position:sticky;left:0;background:var(--panel)}
+th{z-index:2}td:first-child{z-index:1}th:first-child{z-index:3}
+.field input:disabled,.field select:disabled{opacity:.5}
+tfoot td{font-weight:600;border-top:1.5px solid var(--ink)}
+.gantt td{text-align:center;padding:4px 3px;min-width:62px;font-size:11px;line-height:1.25;border-left:1px solid var(--line)}
+.gantt td.c small{display:block;color:var(--muted);font-size:10px}
+.gantt td:first-child{font-family:var(--f-body);font-weight:600;font-size:12.5px}
+.swatch{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+
+.views{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px}
+@media (max-width:1100px){.views{grid-template-columns:minmax(0,1fr)}}
+.ctrl{display:flex;gap:10px 14px;flex-wrap:wrap;align-items:end;margin-bottom:12px}
+.ctrl .field{min-width:120px}
+.ctrl .field.grow{flex:1;min-width:200px}
+.ctrl input[type=range]{width:100%;accent-color:var(--accent)}
+.vhead{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:6px;flex-wrap:wrap}
+.vhead h3{font-size:14px}
+.vhead .num{font-size:12px;color:var(--muted)}
+canvas.view{width:100%;display:block;background:var(--sunk);border:1px solid var(--line);border-radius:4px;cursor:crosshair}
+.legend{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:8px}
+.ramp{width:160px;height:10px;border-radius:2px}
+#viewInfo{font-family:var(--f-mono);font-size:12px;color:var(--muted);min-height:18px;margin-top:6px}
+
+.modal{position:fixed;inset:0;background:rgb(0 0 0 / .45);display:grid;place-items:center;z-index:20;
+  padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.modal .card{background:var(--panel);border:1px solid var(--line);border-radius:8px;width:min(760px,100%);padding:16px;display:flex;flex-direction:column;gap:10px}
+.modal textarea{width:100%;height:46vh;font-family:var(--f-mono);font-size:12px;background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:8px;resize:vertical}
+.vh{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.dtools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px}
+.btn:disabled{opacity:.45;cursor:default;border-color:var(--line)}
+#dSrc{display:flex;flex-direction:column;gap:2px;margin:8px 0}
+#dAlerts{margin-bottom:8px}
+.dctl{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:end;margin:4px 0 12px}
+.dctl .field{min-width:120px}
+.dctl input[type=range]{accent-color:var(--accent);padding:0;background:none;border:0}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:4px;overflow:hidden}
+.seg button{border:0;background:var(--panel);padding:6px 11px;cursor:pointer;font-size:12.5px;font-weight:500;color:var(--muted)}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--panel)}
+.chk{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted);padding-bottom:6px;cursor:pointer}
+.chk input{accent-color:var(--accent)}
+.d3wrap{position:relative;height:min(64vh,620px);min-height:340px;border:1px solid var(--line);border-radius:4px;overflow:hidden;background:var(--sunk)}
+.d3wrap.over{outline:2px dashed var(--accent);outline-offset:-4px}
+#d3{display:block;width:100%;height:100%;cursor:crosshair;touch-action:none}
+.readout{position:absolute;left:8px;bottom:8px;max-width:calc(100% - 16px);background:color-mix(in srgb,var(--panel) 90%,transparent);border:1px solid var(--line);border-radius:4px;padding:5px 9px;font-family:var(--f-mono);font-size:12.5px;font-variant-numeric:tabular-nums;pointer-events:none}
+.compass{position:absolute;right:10px;top:10px;width:48px;height:48px;border-radius:50%;background:color-mix(in srgb,var(--panel) 90%,transparent);border:1px solid var(--line);pointer-events:none}
+.compass .cin{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.compass b{font-family:var(--f-mono);font-size:10px;line-height:1;color:var(--ink)}
+.dnav{position:absolute;right:10px;bottom:10px;font-size:11.5px;color:var(--muted);background:color-mix(in srgb,var(--panel) 85%,transparent);padding:3px 7px;border-radius:4px;pointer-events:none}
+@media (max-width:700px){.dnav{display:none}}
+.dempty{position:absolute;inset:0;display:grid;place-items:center;text-align:center;color:var(--muted);padding:20px;font-size:14px}
+.dparams{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px 12px}
+.dsec{margin-top:18px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.dsec h3{font-size:15px}
+.dsec .vhead{align-items:center}
+.dsplit{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 22px}
+@media (max-width:900px){.dsplit{grid-template-columns:minmax(0,1fr)}}
+tr.sel td{background:color-mix(in srgb,var(--accent) 16%,var(--panel))}
+#dBlk tbody tr{cursor:pointer}
+#dBlk tbody tr:hover td{background:color-mix(in srgb,var(--ink) 5%,var(--panel))}
+#dBlk tbody tr.sel:hover td{background:color-mix(in srgb,var(--accent) 20%,var(--panel))}
+.xbtn{border:0;background:none;cursor:pointer;color:var(--muted);font-size:16px;line-height:1;padding:0 6px}
+.xbtn:hover{color:var(--bad)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<header class="bar">
+  <div class="brand">
+    <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><path d="M1 6h28M4 11h22M7 16h16M10 21h10M13 26h4" stroke="var(--accent)" stroke-width="2.4" stroke-linecap="square" fill="none"/></svg>
+    <div><h1>Benchline</h1><small data-i="tagline"></small></div>
+  </div>
+  <div class="status" id="status"></div>
+  <div class="lang" role="group" aria-label="Language / Язык">
+    <button type="button" id="langRu" data-lang="ru" aria-pressed="true">RU</button>
+    <button type="button" id="langEn" data-lang="en" aria-pressed="false">EN</button>
+  </div>
+</header>
+
+<div class="app">
+<aside class="side" id="side">
+  <details class="step" open>
+    <summary><span class="n">1</span><span data-i="s1"></span><span class="chev">›</span></summary>
+    <div class="body">
+      <label class="drop" id="drop" for="file">
+        <b data-i="dropB"></b>
+        <span data-i="dropS"></span>
+      </label>
+      <input type="file" id="file" accept=".csv,.txt,.asc,.dat,.prn,.tsv">
+      <div class="row"><button class="btn" id="demoBtn" type="button" data-i="demo"></button><span class="src" id="srcInfo"></span></div>
+      <div class="sub" data-i="colmap"></div>
+      <div class="grid2" id="mapGrid"></div>
+      <div class="grid2">
+        <label class="field"><span><span data-i="bx"></span> <em data-i="u_m"></em></span><input type="number" id="bx" value="20" min="0.1" step="any" data-lv="model"></label>
+        <label class="field"><span><span data-i="by"></span> <em data-i="u_m"></em></span><input type="number" id="by" value="20" min="0.1" step="any" data-lv="model"></label>
+        <label class="field"><span><span data-i="bz"></span> <em data-i="u_m"></em></span><input type="number" id="bz" value="10" min="0.1" step="any" data-lv="model"></label>
+        <label class="field"><span><span data-i="dens"></span> <em data-i="u_tm3"></em></span><input type="number" id="dens" value="2.7" min="0.1" step="0.01" data-lv="model"></label>
+      </div>
+      <p class="hint" data-i="sizesHint"></p>
+      <div class="sub" data-i="filter"></div>
+      <div class="grid2">
+        <label class="field wide"><span data-i="fWhere"></span><select id="fCol" data-lv="model"></select></label>
+        <label class="field"><span data-i="fTest"></span><select id="fOp" data-lv="model"><option value="eq">=</option><option value="ne">≠</option><option value="gt">&gt;</option><option value="ge">≥</option><option value="lt">&lt;</option><option value="le">≤</option></select></label>
+        <label class="field"><span data-i="fValue"></span><input id="fVal" data-lv="model" data-ip="fValPh"></label>
+      </div>
+    </div>
+  </details>
+
+  <details class="step" open>
+    <summary><span class="n">2</span><span data-i="s2"></span><span class="chev">›</span></summary>
+    <div class="body">
+      <div class="grid2">
+        <label class="field wide"><span data-i="phSrc"></span><select id="phSrc" data-lv="model"><option value="col" data-i="phCol"></option><option value="auto" data-i="phAuto"></option></select></label>
+        <label class="field"><span><span data-i="phN"></span> <em data-i="u_cnt"></em></span><input type="number" id="phN" value="4" min="1" max="12" step="1" data-lv="model"></label>
+        <label class="field"><span><span data-i="lag"></span> <em data-i="u_ben"></em></span><input type="number" id="lag" value="2" min="0" step="1"></label>
+        <label class="field"><span><span data-i="sink"></span> <em data-i="u_benp"></em></span><input type="number" id="sink" value="3" min="1" step="1"></label>
+        <label class="field"><span data-i="maxAct"></span><input type="number" id="maxAct" value="2" min="1" step="1"></label>
+      </div>
+      <p class="hint" data-i="phHint"></p>
+    </div>
+  </details>
+
+  <details class="step" open>
+    <summary><span class="n">3</span><span data-i="s3"></span><span class="chev">›</span></summary>
+    <div class="body">
+      <div class="grid2">
+        <label class="field"><span data-i="ppy"></span><select id="ppy"><option value="12" data-i="month"></option><option value="4" selected data-i="quarter"></option><option value="1" data-i="year"></option></select></label>
+        <label class="field"><span data-i="maxP"></span><input type="number" id="maxP" value="60" min="1" max="400" step="1"></label>
+        <label class="field"><span><span data-i="mineCap"></span> <em data-i="u_ktp"></em></span><input type="number" id="mineCap" value="3000" min="1" step="any"></label>
+        <label class="field"><span><span data-i="millCap"></span> <em data-i="u_ktp"></em></span><input type="number" id="millCap" value="700" min="0" step="any"></label>
+        <label class="field"><span><span data-i="spCap"></span> <em data-i="u_kt"></em></span><input type="number" id="spCap" value="1500" min="0" step="any"></label>
+        <label class="field"><span><span data-i="cog"></span> <em id="cogU"></em></span><input type="number" id="cog" value="0.5" min="0" step="any"></label>
+        <label class="field wide"><span><span data-i="wasteRk"></span> <em data-i="u_comma"></em></span><input id="wasteRk" data-ip="wasteRkPh"></label>
+        <label class="field wide"><span data-i="strat"></span><select id="strat"><option value="phase" data-i="stratPhase"></option><option value="value" data-i="stratValue"></option><option value="feed" data-i="stratFeed"></option></select></label>
+      </div>
+    </div>
+  </details>
+
+  <details class="step">
+    <summary><span class="n">4</span><span data-i="s4"></span><span class="chev">›</span></summary>
+    <div class="body">
+      <div class="grid2">
+        <label class="field wide"><span data-i="gUnit"></span><select id="gUnit"><option value="gpt" data-i="gptOpt"></option><option value="pct" data-i="pctOpt"></option></select></label>
+        <label class="field"><span><span data-i="price"></span> <em id="priceU"></em></span><input type="number" id="price" value="3000" min="0" step="any"></label>
+        <label class="field"><span><span data-i="rec"></span> <em>%</em></span><input type="number" id="rec" value="90" min="0" max="100" step="any"></label>
+        <label class="field"><span><span data-i="cMine"></span> <em data-i="u_cMine"></em></span><input type="number" id="cMine" value="3.2" min="0" step="any"></label>
+        <label class="field"><span><span data-i="cProc"></span> <em data-i="u_cProc"></em></span><input type="number" id="cProc" value="22" min="0" step="any"></label>
+        <label class="field"><span><span data-i="cRe"></span> <em data-i="u_cRe"></em></span><input type="number" id="cRe" value="1.1" min="0" step="any"></label>
+        <label class="field"><span><span data-i="disc"></span> <em data-i="u_pyr"></em></span><input type="number" id="disc" value="8" min="0" step="any"></label>
+      </div>
+    </div>
+  </details>
+</aside>
+
+<main class="main">
+  <div class="alerts" id="alerts"></div>
+  <div class="kpis" id="kpis"></div>
+  <section class="work">
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" data-tab="charts" aria-selected="true" data-i="tCharts"></button>
+      <button class="tab" role="tab" data-tab="gantt" aria-selected="false" data-i="tGantt"></button>
+      <button class="tab" role="tab" data-tab="views" aria-selected="false" data-i="tViews"></button>
+      <button class="tab" role="tab" data-tab="table" aria-selected="false" data-i="tTable"></button>
+      <button class="tab" role="tab" data-tab="dtm" aria-selected="false" data-i="tDtm"></button>
+      <div class="tools"><button class="btn" id="expSched" type="button" data-i="expSched"></button><button class="btn" id="expBlocks" type="button" data-i="expBlocks"></button></div>
+    </div>
+    <div class="panel" data-panel="charts">
+      <div class="charts">
+        <div class="chart"><h3 data-i="c1"></h3><div class="box"><canvas id="c1"></canvas></div></div>
+        <div class="chart"><h3 data-i="c2"></h3><div class="box"><canvas id="c2"></canvas></div></div>
+        <div class="chart"><h3 data-i="c3"></h3><div class="box"><canvas id="c3"></canvas></div></div>
+        <div class="chart"><h3 data-i="c4"></h3><div class="box"><canvas id="c4"></canvas></div></div>
+      </div>
+    </div>
+    <div class="panel" data-panel="gantt" hidden>
+      <p class="hint" style="margin-bottom:10px" data-i="ganttHint"></p>
+      <div class="scroll"><table class="gantt" id="gantt"></table></div>
+    </div>
+    <div class="panel" data-panel="views" hidden>
+      <div class="ctrl">
+        <label class="field grow"><span><span data-i="pitEnd"></span> <b id="perLbl" class="num"></b></span><input type="range" id="perSl" min="0" max="1" value="1"></label>
+        <button class="btn" id="play" type="button"></button>
+        <label class="field"><span data-i="colBy"></span><select id="colMode"><option value="period" data-i="cPeriod"></option><option value="phase" data-i="cPhase"></option><option value="grade" data-i="cGrade"></option></select></label>
+      </div>
+      <div class="views">
+        <div>
+          <div class="vhead"><h3 data-i="plan"></h3><span class="num" id="benchLbl"></span></div>
+          <input type="range" id="benchSl" min="0" max="1" value="0" style="width:100%;accent-color:var(--accent);margin-bottom:6px">
+          <canvas class="view" id="plan"></canvas>
+        </div>
+        <div>
+          <div class="vhead"><h3 data-i="section"></h3><span class="row"><select id="secDir" class="btn" style="padding:3px 6px"><option value="EW" data-i="EW"></option><option value="NS" data-i="NS"></option></select><span class="num" id="secLbl"></span></span></div>
+          <input type="range" id="secSl" min="0" max="1" value="0" style="width:100%;accent-color:var(--accent);margin-bottom:6px">
+          <canvas class="view" id="sect"></canvas>
+        </div>
+      </div>
+      <div id="viewInfo"></div>
+      <div class="legend" id="legend"></div>
+    </div>
+    <div class="panel" data-panel="table" hidden>
+      <div class="scroll" style="max-height:560px;overflow:auto"><table id="ptable"></table></div>
+    </div>
+    <div class="panel" data-panel="dtm" hidden>
+      <div class="dtools">
+        <button class="btn primary" id="dtmBtn" type="button" data-i="dLoadDtm"></button>
+        <button class="btn" id="blkBtn" type="button" data-i="dLoadBlk"></button>
+        <button class="btn" id="dDemoBtn" type="button" data-i="dDemo"></button>
+        <input type="file" id="dtmFile" class="vh" multiple accept=".dtm,.str" tabindex="-1">
+        <input type="file" id="blkFile" class="vh" accept=".str" tabindex="-1">
+      </div>
+      <p class="hint" data-i="dDropHint"></p>
+      <div class="src" id="dSrc"></div>
+      <div class="alerts" id="dAlerts"></div>
+      <div class="dctl">
+        <div class="seg" role="group" id="dModeSeg"><button type="button" data-m="select" data-i="dModeSel"></button><button type="button" data-m="pick" data-i="dModePick"></button></div>
+        <div class="seg" role="group" id="dViewSeg"><button type="button" data-v="3d" data-i="d3d"></button><button type="button" data-v="plan" data-i="dPlan"></button></div>
+        <label class="field"><span><span data-i="dVex"></span> <em id="dVexV"></em></span><input type="range" id="dVex" min="1" max="5" step="0.1" value="1.5"></label>
+        <label class="field"><span data-i="dOpac"></span><input type="range" id="dOpac" min="0" max="1" step="0.05" value="0.55"></label>
+        <label class="field"><span data-i="dColor"></span><select id="dColor"><option value="block" data-i="dcBlock"></option><option value="volume" data-i="dcVol"></option><option value="rl" data-i="dcRl"></option></select></label>
+        <label class="chk"><input type="checkbox" id="dGrid" checked><span data-i="dGrid"></span></label>
+        <label class="chk"><input type="checkbox" id="dLabels" checked><span data-i="dLabels"></span></label>
+        <button class="btn" id="dFit" type="button" data-i="dFit"></button>
+      </div>
+      <div class="d3wrap" id="d3wrap">
+        <canvas id="d3"></canvas>
+        <div class="readout" id="dRead"></div>
+        <div class="compass"><div class="cin" id="dCompass"><b id="dCompN"></b><svg width="16" height="26" viewBox="0 0 16 26" aria-hidden="true"><path d="M8 1 L14 13 L8 11 L2 13 Z" fill="var(--accent)"/><path d="M8 25 L14 13 L8 11 L2 13 Z" fill="var(--muted)" opacity=".55"/></svg></div></div>
+        <div class="dnav" id="dNav"></div>
+        <div class="dempty" id="dEmpty" hidden></div>
+      </div>
+      <div class="dsec">
+        <h3 data-i="dParamsH"></h3>
+        <div class="dparams">
+          <label class="field"><span><span data-i="dBench"></span> <em data-i="u_m"></em></span><input type="number" id="dBench" value="10" min="0" step="any"></label>
+          <label class="field"><span data-i="dFloor"></span><select id="dFloorMode"><option value="poly" data-i="dfPoly"></option><option value="fixed" data-i="dfFixed"></option></select></label>
+          <label class="field"><span><span data-i="dFloorRL"></span> <em data-i="u_m"></em></span><input type="number" id="dFloorRL" value="290" step="any"></label>
+          <label class="field"><span><span data-i="dDens"></span> <em data-i="u_tm3"></em></span><input type="number" id="dDens" value="2.7" min="0" step="0.01"></label>
+        </div>
+      </div>
+      <div class="dsec">
+        <div class="vhead"><h3 data-i="dBlocksH"></h3><button class="btn" id="dExpBlk" type="button" data-i="dExpBlk"></button></div>
+        <p class="hint" id="dBlkEmpty" data-i="dBlkEmpty" hidden></p>
+        <div class="scroll" style="max-height:420px;overflow:auto"><table id="dBlk"></table></div>
+      </div>
+      <div class="dsplit">
+        <div class="dsec">
+          <div class="vhead"><h3 id="dVertsH"></h3></div>
+          <p class="hint" id="dVertsEmpty" data-i="dVertsEmpty"></p>
+          <div class="scroll" style="max-height:360px;overflow:auto"><table id="dVerts"></table></div>
+        </div>
+        <div class="dsec">
+          <div class="vhead"><h3 data-i="dPicksH"></h3><div class="row"><button class="btn" id="dExpStr" type="button" data-i="dExpStr"></button><button class="btn" id="dExpCsv" type="button" data-i="dExpCsv"></button><button class="btn" id="dClear" type="button" data-i="dClear"></button></div></div>
+          <p class="hint" id="dPicksEmpty" data-i="dPicksEmpty"></p>
+          <div class="scroll" style="max-height:360px;overflow:auto"><table id="dPicks"></table></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+</div>
+
+<div class="modal" id="modal" hidden>
+  <div class="card" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+    <div class="row" style="justify-content:space-between"><h2 id="mTitle" style="font-size:18px"></h2><button class="btn" id="mClose" type="button" data-i="close"></button></div>
+    <p class="hint" id="mHint"></p>
+    <textarea id="mText" readonly></textarea>
+    <div class="row"><button class="btn primary" id="mCopy" type="button" data-i="copy"></button><span class="muted" id="mMsg"></span></div>
+  </div>
+</div>
+
+<script>
+/*ENGINE-START*/
+const Engine = (() => {
+  const EPS = 1e-6;
+  const fail = code => { const e = new Error(code); e.code = code; throw e; };
+  const isNum = s => s !== '' && s != null && isFinite(+s);
+  function splitLine(line, d) {
+    if (d === 'ws') return line.trim().split(/\s+/);
+    if (line.indexOf('"') < 0) return line.split(d).map(s => s.trim());
+    const out = []; let cur = '', q = false;
+    for (const ch of line) {
+      if (ch === '"') { q = !q; continue; }
+      if (ch === d && !q) { out.push(cur.trim()); cur = ''; } else cur += ch;
+    }
+    out.push(cur.trim()); return out;
+  }
+  const isComment = l => /^[#%!*]/.test(l);
+  function parseText(text) {
+    const lines = text.split(/\r?\n/);
+    const sample = lines.filter(l => l.trim() && !isComment(l.trim())).slice(0, 60);
+    let delim = ',', best = 0;
+    for (const d of [',', ';', '\t']) {
+      const c = sample.reduce((a, l) => a + (l.split(d).length - 1), 0);
+      if (c > best) { best = c; delim = d; }
+    }
+    if (best === 0) delim = 'ws';
+    let hi = -1;
+    for (let i = 0; i < Math.min(lines.length, 300); i++) {
+      const l = lines[i].trim();
+      if (!l || isComment(l)) continue;
+      const t = splitLine(l, delim);
+      if (t.length < 3) continue;
+      const nn = t.filter(x => !isNum(x)).length;
+      if (nn < t.length * 0.6) continue;
+      let j = i + 1; while (j < lines.length && !lines[j].trim()) j++;
+      if (j >= lines.length) continue;
+      const t2 = splitLine(lines[j].trim(), delim);
+      if (t2.filter(isNum).length >= 3 && t2.length >= t.length - 1) { hi = i; break; }
+    }
+    if (hi < 0) fail('noHeader');
+    const headers = splitLine(lines[hi].trim(), delim).map((h, i) => h || ('col' + (i + 1)));
+    const nc = headers.length, cols = headers.map(() => []);
+    let n = 0;
+    for (let i = hi + 1; i < lines.length; i++) {
+      const l = lines[i].trim();
+      if (!l || isComment(l)) continue;
+      const t = splitLine(l, delim);
+      if (t.length < 3) continue;
+      for (let c = 0; c < nc; c++) cols[c].push(t[c] === undefined ? '' : t[c]);
+      n++;
+    }
+    if (!n) fail('noRows');
+    const numeric = cols.map(col => {
+      let k = 0, bad = 0;
+      for (let i = 0; i < col.length && k < 2000; i++) { const v = col[i]; if (v === '') continue; k++; if (!isNum(v)) bad++; }
+      return k > 0 && bad === 0;
+    });
+    const data = cols.map((col, i) => numeric[i] ? Float64Array.from(col, v => v === '' ? NaN : +v) : col);
+    return { headers, numeric, data, n };
+  }
+  const KEYS = {
+    x: ['x', 'xc', 'xcentre', 'xcenter', 'xworld', 'xcentroid', 'centroidx', 'xcen', 'xmid', 'midx', 'east', 'easting', 'xcoord', 'xpos', 'восток'],
+    y: ['y', 'yc', 'ycentre', 'ycenter', 'yworld', 'ycentroid', 'centroidy', 'ycen', 'ymid', 'midy', 'north', 'northing', 'ycoord', 'ypos', 'север'],
+    z: ['z', 'zc', 'zcentre', 'zcenter', 'zworld', 'zcentroid', 'centroidz', 'zcen', 'zmid', 'midz', 'rl', 'elev', 'elevation', 'zcoord', 'zpos', 'отметка', 'высота'],
+    dx: ['dx', 'xinc', 'xlength', 'xsize', 'dimx', 'xdim', 'sizex', 'xlen', 'xextent', 'xblocksize'],
+    dy: ['dy', 'yinc', 'ylength', 'ysize', 'dimy', 'ydim', 'sizey', 'ylen', 'yextent', 'yblocksize'],
+    dz: ['dz', 'zinc', 'zlength', 'zsize', 'dimz', 'zdim', 'sizez', 'zlen', 'zextent', 'zblocksize'],
+    grade: ['au', 'cu', 'grade', 'ag', 'zn', 'ni', 'pb', 'mo', 'fe', 'u3o8', 'auppm', 'augt', 'augpt', 'cupct', 'gold', 'copper', 'содержание', 'золото', 'медь'],
+    density: ['density', 'sg', 'dens', 'bd', 'rd', 'bulkdensity', 'specificgravity', 'drydensity', 'плотность', 'объемныйвес', 'объёмныйвес'],
+    tonnes: ['tonnes', 'tons', 'tonnage', 'ton', 'mass', 'тоннаж', 'масса', 'тонны'],
+    rock: ['rocktype', 'rock', 'rtype', 'lith', 'lithology', 'mat', 'material', 'oretype', 'domain', 'geol', 'geology', 'zone', 'weathering', 'порода', 'типпороды', 'литология', 'домен'],
+    phase: ['pushback', 'phase', 'pb', 'stage', 'cutback', 'pitshell', 'shell', 'pit', 'этап', 'очередь']
+  };
+  const ORDER = ['x', 'y', 'z', 'dx', 'dy', 'dz', 'grade', 'density', 'tonnes', 'rock', 'phase'];
+  const NUMERIC = new Set(['x', 'y', 'z', 'dx', 'dy', 'dz', 'grade', 'density', 'tonnes']);
+  const PREFIX = new Set(['grade', 'density', 'tonnes', 'rock', 'phase']);
+  const norm = h => String(h).toLowerCase().replace(/[^a-z0-9а-яё]/g, '');
+  function detect(headers, numeric) {
+    const used = new Set(), map = {};
+    for (const pass of [0, 1]) for (const k of ORDER) {
+      if (map[k] != null || (pass === 1 && !PREFIX.has(k))) continue;
+      for (const name of KEYS[k]) {
+        const idx = headers.findIndex((h, i) => !used.has(i) && (!NUMERIC.has(k) || numeric[i]) &&
+          (pass === 0 ? norm(h) === name : norm(h).startsWith(name)));
+        if (idx >= 0) { map[k] = idx; used.add(idx); break; }
+      }
+    }
+    if (map.grade == null) { const idx = headers.findIndex((h, i) => numeric[i] && !used.has(i)); if (idx >= 0) map.grade = idx; }
+    return map;
+  }
+  function buildModel(parsed, map, o) {
+    const D = parsed.data;
+    const col = k => (map[k] != null && map[k] >= 0) ? D[map[k]] : null;
+    const X = col('x'), Y = col('y'), Z = col('z'), G = col('grade');
+    if (!X || !Y || !Z) fail('needXYZ');
+    if (!G) fail('needGrade');
+    const DX = col('dx'), DY = col('dy'), DZ = col('dz'), DN = col('density'), TN = col('tonnes'), RK = col('rock');
+    const PH = o.phSrc === 'col' ? col('phase') : null;
+    let F = null;
+    if (o.filter && o.filter.col >= 0 && o.filter.val !== '') {
+      const fc = D[o.filter.col], isN = parsed.numeric[o.filter.col], v = isN ? +o.filter.val : String(o.filter.val).trim();
+      const cmp = { eq: (a, b) => a == b, ne: (a, b) => a != b, gt: (a, b) => a > b, ge: (a, b) => a >= b, lt: (a, b) => a < b, le: (a, b) => a <= b }[o.filter.op];
+      F = i => cmp(fc[i], v);
+    }
+    const A = { x: [], y: [], z: [], dx: [], dy: [], dz: [], t: [], g: [], rock: [], ph: [] };
+    const rockNames = [], rockIdx = new Map(), phVals = new Map();
+    let air = 0, filtered = 0, outside = 0;
+    for (let i = 0; i < parsed.n; i++) {
+      if (F && !F(i)) { filtered++; continue; }
+      const x = +X[i], y = +Y[i], z = +Z[i];
+      if (!isFinite(x) || !isFinite(y) || !isFinite(z)) { filtered++; continue; }
+      let dx = DX ? +DX[i] : o.bx, dy = DY ? +DY[i] : o.by, dz = DZ ? +DZ[i] : o.bz;
+      if (!(dx > 0)) dx = o.bx; if (!(dy > 0)) dy = o.by; if (!(dz > 0)) dz = o.bz;
+      let den = DN ? +DN[i] : o.dens; if (!isFinite(den)) den = o.dens;
+      const t = TN ? +TN[i] : dx * dy * dz * den;
+      if (!(t > 0)) { air++; continue; }
+      let ph = 0;
+      if (PH) {
+        const pv = PH[i];
+        if (pv === '' || pv == null || (typeof pv === 'number' && !(pv > 0)) || pv === '0') { outside++; continue; }
+        const key = String(pv); if (!phVals.has(key)) phVals.set(key, pv); ph = key;
+      }
+      const rk = RK ? String(RK[i]) : '—';
+      let ri = rockIdx.get(rk); if (ri == null) { ri = rockNames.length; rockNames.push(rk); rockIdx.set(rk, ri); }
+      let g = +G[i]; if (!(g > 0)) g = 0;
+      A.x.push(x); A.y.push(y); A.z.push(z); A.dx.push(dx); A.dy.push(dy); A.dz.push(dz); A.t.push(t); A.g.push(g); A.rock.push(ri); A.ph.push(ph);
+    }
+    const n = A.x.length;
+    if (!n) fail('noBlocks');
+    const m = {
+      n, x: Float64Array.from(A.x), y: Float64Array.from(A.y), z: Float64Array.from(A.z),
+      dx: Float32Array.from(A.dx), dy: Float32Array.from(A.dy), dz: Float32Array.from(A.dz),
+      t: Float64Array.from(A.t), g: Float64Array.from(A.g), rock: Int32Array.from(A.rock), rockNames,
+      phase: new Int32Array(n), phaseKeys: [], bench: new Int32Array(n), benchZ: [], air, filtered, outside
+    };
+    if (PH) {
+      const keys = [...phVals.keys()];
+      const allNum = keys.every(k => isFinite(+k));
+      keys.sort(allNum ? (a, b) => (+a) - (+b) : (a, b) => a.localeCompare(b));
+      const pi = new Map(keys.map((k, i) => [k, i]));
+      for (let i = 0; i < n; i++) m.phase[i] = pi.get(A.ph[i]);
+      m.phaseKeys = keys;
+    } else {
+      let tw = 0, cx = 0, cy = 0, zmin = Infinity;
+      for (let i = 0; i < n; i++) { tw += m.t[i]; cx += m.x[i] * m.t[i]; cy += m.y[i] * m.t[i]; if (m.z[i] < zmin) zmin = m.z[i]; }
+      cx /= tw; cy /= tw;
+      const met = new Float64Array(n);
+      for (let i = 0; i < n; i++) met[i] = Math.hypot(m.x[i] - cx, m.y[i] - cy) - (m.z[i] - zmin);
+      const ord = Array.from({ length: n }, (_, i) => i).sort((a, b) => met[a] - met[b]);
+      const N = Math.max(1, Math.min(12, o.phN | 0));
+      let acc = 0;
+      for (const i of ord) { m.phase[i] = Math.min(N - 1, Math.floor(acc / tw * N)); acc += m.t[i]; }
+      m.phaseKeys = Array.from({ length: N }, (_, i) => String(i + 1));
+    }
+    const zk = [...new Set(Array.from(m.z, z => Math.round(z * 100)))].sort((a, b) => b - a);
+    const zi = new Map(zk.map((k, i) => [k, i]));
+    m.benchZ = zk.map(k => k / 100);
+    for (let i = 0; i < n; i++) m.bench[i] = zi.get(Math.round(m.z[i] * 100));
+    let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity, z0 = Infinity, z1 = -Infinity;
+    for (let i = 0; i < n; i++) {
+      x0 = Math.min(x0, m.x[i] - m.dx[i] / 2); x1 = Math.max(x1, m.x[i] + m.dx[i] / 2);
+      y0 = Math.min(y0, m.y[i] - m.dy[i] / 2); y1 = Math.max(y1, m.y[i] + m.dy[i] / 2);
+      z0 = Math.min(z0, m.z[i] - m.dz[i] / 2); z1 = Math.max(z1, m.z[i] + m.dz[i] / 2);
+    }
+    m.ext = { x0, x1, y0, y1, z0, z1 };
+    m.xs = [...new Set(Array.from(m.x, v => Math.round(v * 100)))].sort((a, b) => a - b).map(v => v / 100);
+    m.ys = [...new Set(Array.from(m.y, v => Math.round(v * 100)))].sort((a, b) => a - b).map(v => v / 100);
+    return m;
+  }
+  function buildUnits(m, cutoff, wasteRocks) {
+    const ws = new Set(); m.rockNames.forEach((r, i) => { if (wasteRocks.has(r.toUpperCase())) ws.add(i); });
+    const key = new Map(), units = [];
+    for (let i = 0; i < m.n; i++) {
+      const k = m.phase[i] * 100000 + m.bench[i];
+      let u = key.get(k);
+      if (!u) { u = { phase: m.phase[i], bench: m.bench[i], z: m.benchZ[m.bench[i]], blocks: [], t: 0, ore: 0, metal: 0 }; key.set(k, u); units.push(u); }
+      u.blocks.push(i); u.t += m.t[i];
+      if (m.g[i] >= cutoff && !ws.has(m.rock[i])) { u.ore += m.t[i]; u.metal += m.t[i] * m.g[i]; }
+    }
+    const byPhase = m.phaseKeys.map(() => []);
+    for (const u of units) {
+      u.blocks.sort((a, b) => (m.x[a] - m.x[b]) || (m.y[a] - m.y[b]));
+      byPhase[u.phase].push(u);
+    }
+    byPhase.forEach(l => l.sort((a, b) => a.bench - b.bench));
+    return { units, byPhase };
+  }
+  function schedule(m, U, p) {
+    const NP = U.byPhase.length, BP = U.byPhase;
+    const ptr = new Int32Array(NP), started = new Uint8Array(NP);
+    for (const u of U.units) { u.rem = u.t; u.hist = []; }
+    const lastBench = BP.map(l => l.length ? l[l.length - 1].bench : -1);
+    const firstInc = k => ptr[k] < BP[k].length ? BP[k][ptr[k]].bench : Infinity;
+    const sp = { t: 0, m: 0 }, periods = [], warnings = [];
+    let allDone = BP.every(l => !l.length);
+    for (let t = 1; t <= p.maxPeriods && !(allDone && sp.t <= EPS); t++) {
+      let mineRem = p.mineCap, millRem = p.millCap;
+      const rec = { t, moved: 0, ore: 0, waste: 0, oreMetal: 0, direct: 0, directMetal: 0, toSp: 0, reclaim: 0, reclaimMetal: 0, ph: new Array(NP).fill(null) };
+      const touched = BP.map(() => new Set()), blocked = new Set();
+      let guard = 0;
+      while (mineRem > EPS && guard++ < 200000) {
+        let active = 0; for (let k = 0; k < NP; k++) if (started[k] && ptr[k] < BP[k].length) active++;
+        const cands = [];
+        for (let k = 0; k < NP; k++) {
+          if (ptr[k] >= BP[k].length) continue;
+          const u = BP[k][ptr[k]];
+          if (blocked.has(u)) continue;
+          if (!started[k] && active >= p.maxActive) continue;
+          if (!touched[k].has(u.bench) && touched[k].size >= p.sink) continue;
+          if (k > 0 && firstInc(k - 1) <= Math.min(u.bench + p.lag, lastBench[k - 1])) continue;
+          cands.push(u);
+        }
+        if (!cands.length) break;
+        let u = cands[0];
+        const val = c => c.metal / c.t, of = c => c.ore / c.t;
+        if (p.strategy === 'value') { for (const c of cands) if (val(c) > val(u) + 1e-12) u = c; }
+        else if (p.strategy === 'feed') {
+          if (millRem > EPS) { for (const c of cands) if (of(c) > of(u) + 1e-12) u = c; }
+          else { for (const c of cands) if (of(c) < of(u) - 1e-12) u = c; }
+        }
+        const oreFrac = u.ore / u.t, g = u.ore > 0 ? u.metal / u.ore : 0;
+        let amt = Math.min(u.rem, mineRem);
+        if (oreFrac > 0) {
+          const room = millRem + Math.max(0, p.spCap - sp.t);
+          if (room / oreFrac < amt) amt = room / oreFrac;
+          if (amt <= EPS) { blocked.add(u); continue; }
+        }
+        const ore = amt * oreFrac, d = Math.min(ore, millRem), s = ore - d;
+        rec.moved += amt; rec.ore += ore; rec.waste += amt - ore; rec.oreMetal += ore * g;
+        rec.direct += d; rec.directMetal += d * g; millRem -= d;
+        rec.toSp += s; sp.t += s; sp.m += s * g;
+        mineRem -= amt; u.rem -= amt; u.hist.push([t, amt]);
+        const k = u.phase; started[k] = 1; touched[k].add(u.bench);
+        const ph = rec.ph[k] || (rec.ph[k] = { t: 0, zTop: u.z, zBot: u.z });
+        ph.t += amt; ph.zTop = Math.max(ph.zTop, u.z); ph.zBot = Math.min(ph.zBot, u.z);
+        if (u.rem <= Math.max(EPS, u.t * 1e-9)) { u.rem = 0; ptr[k]++; }
+      }
+      if (millRem > EPS && sp.t > EPS) {
+        const r = Math.min(millRem, sp.t), g = sp.m / sp.t;
+        rec.reclaim = r; rec.reclaimMetal = r * g; sp.t -= r; sp.m -= r * g; millRem -= r;
+        if (sp.t < EPS) { sp.t = 0; sp.m = 0; }
+      }
+      rec.feed = rec.direct + rec.reclaim; rec.feedMetal = rec.directMetal + rec.reclaimMetal;
+      rec.spT = sp.t; rec.spG = sp.t > 0 ? sp.m / sp.t : 0;
+      allDone = BP.every((l, k) => ptr[k] >= l.length);
+      if (rec.moved <= EPS && rec.reclaim <= EPS) {
+        if (!allDone) warnings.push({ k: 'stall', a: [t] });
+        break;
+      }
+      periods.push(rec);
+    }
+    let unmined = 0; for (const u of U.units) unmined += u.rem;
+    if (unmined > EPS && !warnings.length) warnings.push({ k: 'limit', a: [p.maxPeriods, unmined] });
+    if (sp.t > EPS) warnings.push({ k: 'spLeft', a: [sp.t] });
+    const conv = p.gUnit === 'gpt' ? 1 / 31.1035 : 1 / 100;
+    let cum = 0, npv = 0;
+    for (const r of periods) {
+      r.metal = r.feedMetal * conv * p.rec;
+      r.revenue = r.metal * p.price;
+      r.cost = r.moved * p.cMine + r.feed * p.cProc + r.reclaim * p.cRe;
+      r.cash = r.revenue - r.cost;
+      r.dcf = r.cash / Math.pow(1 + p.disc, r.t / p.ppy);
+      npv += r.dcf; cum += r.dcf; r.cumDcf = cum;
+    }
+    const bp = new Int16Array(m.n);
+    for (const u of U.units) {
+      if (!u.hist.length) continue;
+      let acc = 0, h = 0, cumH = u.hist[0][1];
+      for (const i of u.blocks) {
+        const mid = acc + m.t[i] / 2;
+        while (h < u.hist.length - 1 && mid > cumH) { h++; cumH += u.hist[h][1]; }
+        bp[i] = mid <= cumH + 1e-6 ? u.hist[h][0] : 0;
+        acc += m.t[i];
+      }
+    }
+    const sum = f => periods.reduce((a, r) => a + r[f], 0);
+    const totals = { moved: sum('moved'), ore: sum('ore'), waste: sum('waste'), oreMetal: sum('oreMetal'), feed: sum('feed'), feedMetal: sum('feedMetal'), reclaim: sum('reclaim'), metal: sum('metal'), revenue: sum('revenue'), cost: sum('cost'), cash: sum('cash'), npv, unmined };
+    return { periods, warnings, blockPeriod: bp, totals };
+  }
+  function mulberry(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  function demoCSV() {
+    const r = mulberry(11), gauss = () => Math.sqrt(-2 * Math.log(r() + 1e-12)) * Math.cos(2 * Math.PI * r());
+    const shells = [[335, 40], [305, 55], [285, 70], [265, 85]];
+    const L = ['xcentre,ycentre,zcentre,xlength,ylength,zlength,au,density,rocktype,pushback'];
+    for (let z = 415; z >= 265; z -= 10) for (let x = -250; x <= 250; x += 20) for (let y = -250; y <= 250; y += 20) {
+      const rr = Math.hypot(x, y); let ph = 0;
+      for (let k = 0; k < shells.length; k++) if (z >= shells[k][0] && rr <= shells[k][1] + (z - shells[k][0])) { ph = k + 1; break; }
+      if (!ph) continue;
+      const ex = (x - 15) / 150, ey = (y + 5 - 0.25 * x) / 60, ez = (z - 335 + 0.3 * x) / 75;
+      const d2 = ex * ex + ey * ey + ez * ez;
+      const trend = 1 + 0.35 * Math.sin(x / 45) * Math.cos(y / 60);
+      const g = 0.07 * Math.exp(0.7 * gauss()) + 3.4 * trend * Math.exp(-1.5 * d2) * Math.exp(0.4 * gauss());
+      const rock = z >= 385 ? 'OX' : 'FR';
+      const den = rock === 'OX' ? 2.2 : (g > 0.5 ? 2.8 : 2.7);
+      L.push(`${x},${y},${z},20,20,10,${g.toFixed(3)},${den},${rock},${ph}`);
+    }
+    return L.join('\n');
+  }
+  return { parseText, detect, buildModel, buildUnits, schedule, demoCSV, ORDER };
+})();
+/*ENGINE-END*/
+
+/* ---------- translations ---------- */
+const I18N = {
+  ru: {
+    tagline: 'Календарное планирование открытых горных работ',
+    s1: 'Блочная модель', dropB: 'Перетащите сюда CSV блочной модели', dropS: 'Экспорт Surpac или Vulcan (CSV / текст) · или нажмите, чтобы выбрать файл',
+    demo: 'Загрузить демо-карьер', colmap: 'Сопоставление столбцов',
+    bx: 'Размер блока X', by: 'Размер блока Y', bz: 'Размер блока Z', dens: 'Плотность по умолчанию',
+    sizesHint: 'Размеры и плотность применяются, только если в файле нет соответствующих столбцов.',
+    filter: 'Фильтр строк (необязательно)', fWhere: 'Включать только строки, где', fTest: 'Условие', fValue: 'Значение', fValPh: 'напр. 1',
+    s2: 'Этапы отработки и уступы', phSrc: 'Источник этапов', phCol: 'Из столбца этапов', phAuto: 'Авто: кольца параллельно борту',
+    phN: 'Число авто-этапов', lag: 'Отставание этапов', sink: 'Макс. скорость понижения', maxAct: 'Макс. одновременных этапов',
+    phHint: 'Строки с этапом 0 или пустым считаются вне карьера. Этап может отрабатывать уступ, только когда предыдущий этап опустился ниже на заданное число уступов.',
+    s3: 'Производственные показатели', ppy: 'Длительность периода', month: 'Месяц', quarter: 'Квартал', year: 'Год', maxP: 'Макс. число периодов',
+    mineCap: 'Производительность по горной массе', millCap: 'Производительность фабрики', spCap: 'Ёмкость склада руды', cog: 'Бортовое содержание',
+    wasteRk: 'Коды пород, всегда идущие в отвал', wasteRkPh: 'напр. OVB, DYKE',
+    strat: 'Приоритет отработки', stratPhase: 'По порядку этапов (сверху вниз, ранние этапы первыми)', stratValue: 'Сначала самые богатые уступы', stratFeed: 'Загрузить фабрику, остаток — на вскрышу',
+    s4: 'Экономика', gUnit: 'Единица содержания', gptOpt: 'г/т → металл в унциях', pctOpt: '% → металл в тоннах',
+    price: 'Цена металла', rec: 'Извлечение', cMine: 'Затраты на добычу', cProc: 'Затраты на переработку', cRe: 'Затраты на перевалку со склада', disc: 'Ставка дисконтирования',
+    u_m: 'м', u_tm3: 'т/м³', u_cnt: 'шт.', u_ben: 'уступов', u_benp: 'уступов/период', u_ktp: 'тыс. т/период', u_kt: 'тыс. т', u_comma: 'через запятую',
+    u_cMine: '$/т горной массы', u_cProc: '$/т руды', u_cRe: '$/т', u_pyr: '%/год', u_poz: '$/унц', u_pt: '$/т металла',
+    tCharts: 'Графики', tGantt: 'Диаграмма Ганта', tViews: 'План и разрез', tTable: 'Таблица по периодам',
+    expSched: 'Экспорт графика', expBlocks: 'Экспорт блоков',
+    c1: 'Перемещение горной массы', c2: 'Питание фабрики и содержание', c3: 'Остаток на складе руды', c4: 'Денежный поток',
+    ganttHint: 'В каждой ячейке — отметки отработанных уступов этапа и объём горной массы. Насыщенность цвета показывает долю от производительности за период.',
+    pitEnd: 'Карьер на конец периода', play: 'Воспроизвести', pause: 'Пауза', colBy: 'Раскраска', cPeriod: 'Период отработки', cPhase: 'Этап', cGrade: 'Содержание',
+    plan: 'План', section: 'Разрез', EW: 'Запад–Восток', NS: 'Юг–Север', hoverHint: 'Наведите курсор на блок, чтобы увидеть его данные.',
+    close: 'Закрыть', copy: 'Копировать CSV',
+    req: 'обязательно', none: '— нет —',
+    m_x: 'Восток (X)', m_y: 'Север (Y)', m_z: 'Отметка (Z)', m_dx: 'Размер блока X', m_dy: 'Размер блока Y', m_dz: 'Размер блока Z',
+    m_grade: 'Содержание', m_density: 'Плотность', m_tonnes: 'Тоннаж', m_rock: 'Тип породы', m_phase: 'Этап',
+    srcInfo: '{0} · строк: {1} · столбцов: {2}', reading: 'Чтение файла {0}…', demoName: 'demo_pit.csv (пример данных)',
+    statusOk: 'Блоков: {0} · этапов: {1} · уступов: {2} · расчёт за {3} мс', statusNone: 'Модель не загружена', statusErr: 'Требуется внимание',
+    t: 'т', kt: 'тыс. т', Mt: 'млн т', koz: 'тыс. унц', oz: 'унц', gpt: 'г/т', mUSD: 'млн $',
+    pb: 'Этап', Y: 'Г', Q: 'К', M: 'М', preMining: 'до начала работ',
+    k_life: 'Срок отработки', v_life: '{0} г.', d_life: 'периодов: {0} · до {1}',
+    k_moved: 'Горная масса', d_moved: 'коэф. вскрыши {0}',
+    k_ore: 'Добыто руды', d_ore: '{0} {1} в массиве',
+    k_feed: 'Переработано', d_feed: '{0} {1} · загрузка {2}%',
+    k_metal: 'Извлечено металла', d_metal: 'выручка {0}',
+    k_npv: 'ЧДД (NPV)', d_npv: 'ставка {0}% · без дисконта {1}',
+    l_oreMill: 'Руда на фабрику', l_oreSp: 'Руда на склад', l_waste: 'Вскрыша', l_head: 'Содержание в питании', l_millCap: 'Мощность фабрики',
+    l_direct: 'Прямая подача', l_reclaim: 'Со склада', l_spBal: 'Остаток на складе', l_spG: 'Содержание на складе', l_cum: 'Накопленный дисконт. поток', l_cash: 'Денежный поток за период',
+    th_period: 'Период', th_moved: 'Горн. масса, тыс. т', th_ore: 'Руда, тыс. т', th_waste: 'Вскрыша, тыс. т', th_strip: 'Коэф. вскрыши', th_oreG: 'Руда, {0}',
+    th_feed: 'Переработка, тыс. т', th_head: 'Питание, {0}', th_reclaim: 'Со склада, тыс. т', th_sp: 'Склад, тыс. т', th_metal: 'Металл, {0}',
+    th_cash: 'Поток, млн $', th_dcf: 'Дисконт., млн $', total: 'Итого',
+    g_title: '{0}, {1}: отметки {2}, {3} тыс. т',
+    benchLbl: 'Уступ, отм. {0} · {1} из {2}', notMined: 'Не отработано', below: 'Ниже {0} {1}',
+    north: 'С ↑', W: 'З', E: 'В', S: 'Ю', N: 'С',
+    info: 'X {0}  Y {1}  отм. {2} · {3} тыс. т · {4} {5} · {6} · {7} · {8}', minedIn: 'отработан: {0}', notSched: 'не запланирован',
+    w_stall: 'Расчёт остановился в периоде {0}: ни один блок нельзя отработать. Проверьте производительности, число одновременных этапов и отставание этапов.',
+    w_limit: 'Достигнут лимит в {0} периодов, в карьере осталось {1} млн т. Увеличьте производительность по горной массе или макс. число периодов.',
+    w_spLeft: 'На складе в конце графика осталось {0} тыс. т руды.',
+    w_mill: 'Периодов с недогрузкой фабрики: {0} из {1}. Это нормально для периодов предварительной вскрыши и доработки; если таких периодов намного больше, вскрыто слишком мало руды.',
+    e_noHeader: 'Не найдена строка заголовков. В файле должна быть одна строка с названиями столбцов, а затем по строке на каждый блок.',
+    e_noRows: 'В файле есть заголовок, но нет строк с блоками.',
+    e_needXYZ: 'Сопоставьте столбцы X, Y и Z, чтобы построить модель.',
+    e_needGrade: 'Сопоставьте столбец содержания, чтобы построить модель.',
+    e_noBlocks: 'После фильтрации не осталось блоков. Проверьте фильтр строк и столбец этапов.',
+    e_read: 'Не удалось прочитать файл {0}.',
+    x_sched: 'CSV графика по периодам', x_blocks: 'CSV графика по блокам',
+    x_schedHint: 'По строке на период. Вставьте в Excel или сохраните как .csv. Десятичный разделитель — точка.',
+    x_blocksHint: 'По строке на блок с периодом отработки (0 — не отработан). Импортируйте в Surpac или Vulcan как CSV и раскрасьте модель по полю period.',
+    copied: 'Скопировано в буфер обмена.', selected: 'Текст выделен. Нажмите Ctrl+C (⌘C), чтобы скопировать.'
+  },
+  en: {
+    tagline: 'Open-pit mine scheduler',
+    s1: 'Block model', dropB: 'Drop a block model CSV here', dropS: 'Surpac or Vulcan CSV / text export · or click to browse',
+    demo: 'Load demo pit', colmap: 'Column mapping',
+    bx: 'Block size X', by: 'Block size Y', bz: 'Block size Z', dens: 'Default density',
+    sizesHint: 'Sizes and density are used only where the file has no column for them.',
+    filter: 'Row filter (optional)', fWhere: 'Only include rows where', fTest: 'Test', fValue: 'Value', fValPh: 'e.g. 1',
+    s2: 'Pushbacks & benches', phSrc: 'Pushback source', phCol: 'From pushback column', phAuto: 'Auto: slope-parallel rings',
+    phN: 'Auto pushbacks', lag: 'Pushback lag', sink: 'Max sink rate', maxAct: 'Max active pushbacks',
+    phHint: 'Rows with pushback 0 or blank count as outside the pit. A pushback can mine a bench only when the previous pushback is that many benches deeper.',
+    s3: 'Production targets', ppy: 'Period length', month: 'Month', quarter: 'Quarter', year: 'Year', maxP: 'Max periods',
+    mineCap: 'Mining capacity', millCap: 'Mill capacity', spCap: 'Stockpile capacity', cog: 'Cut-off grade',
+    wasteRk: 'Rock codes always sent to waste', wasteRkPh: 'e.g. OVB, DYKE',
+    strat: 'Sequencing priority', stratPhase: 'Pushback order (top-down, earliest pushback first)', stratValue: 'Highest grade first', stratFeed: 'Keep the mill full, strip when it is',
+    s4: 'Economics', gUnit: 'Grade unit', gptOpt: 'g/t → reports ounces', pctOpt: '% → reports tonnes of metal',
+    price: 'Metal price', rec: 'Recovery', cMine: 'Mining cost', cProc: 'Processing cost', cRe: 'Rehandle cost', disc: 'Discount rate',
+    u_m: 'm', u_tm3: 't/m³', u_cnt: 'count', u_ben: 'benches', u_benp: 'benches/period', u_ktp: 'kt/period', u_kt: 'kt', u_comma: 'comma separated',
+    u_cMine: '$/t moved', u_cProc: '$/t feed', u_cRe: '$/t reclaimed', u_pyr: '%/yr', u_poz: '$/oz', u_pt: '$/t metal',
+    tCharts: 'Charts', tGantt: 'Gantt', tViews: 'Plan & section', tTable: 'Period table',
+    expSched: 'Export schedule', expBlocks: 'Export blocks',
+    c1: 'Material movement', c2: 'Mill feed and head grade', c3: 'Stockpile balance', c4: 'Cash flow',
+    ganttHint: "Each cell shows the bench RLs mined in that pushback and the tonnes moved. Shading is the share of the period's mining capacity.",
+    pitEnd: 'Pit at end of', play: 'Play', pause: 'Pause', colBy: 'Colour by', cPeriod: 'Period mined', cPhase: 'Pushback', cGrade: 'Grade',
+    plan: 'Plan view', section: 'Section', EW: 'West–East', NS: 'South–North', hoverHint: 'Hover a block to inspect it.',
+    close: 'Close', copy: 'Copy CSV',
+    req: 'required', none: '— none —',
+    m_x: 'Easting (X)', m_y: 'Northing (Y)', m_z: 'Elevation (Z)', m_dx: 'Block size X', m_dy: 'Block size Y', m_dz: 'Block size Z',
+    m_grade: 'Grade', m_density: 'Density', m_tonnes: 'Tonnes', m_rock: 'Rock type', m_phase: 'Pushback',
+    srcInfo: '{0} · {1} rows · {2} columns', reading: 'Reading {0}…', demoName: 'demo_pit.csv (example data)',
+    statusOk: '{0} blocks · {1} pushbacks · {2} benches · scheduled in {3} ms', statusNone: 'No model loaded', statusErr: 'Needs attention',
+    t: 't', kt: 'kt', Mt: 'Mt', koz: 'koz', oz: 'oz', gpt: 'g/t', mUSD: '$M',
+    pb: 'PB', Y: 'Y', Q: 'Q', M: 'M', preMining: 'pre-mining',
+    k_life: 'Mine life', v_life: '{0} yr', d_life: '{0} periods · to {1}',
+    k_moved: 'Total moved', d_moved: 'strip ratio {0}',
+    k_ore: 'Ore mined', d_ore: '{0} {1} in situ',
+    k_feed: 'Mill feed', d_feed: '{0} {1} · {2}% utilised',
+    k_metal: 'Metal recovered', d_metal: '{0} revenue',
+    k_npv: 'NPV', d_npv: 'at {0}% · undiscounted {1}',
+    l_oreMill: 'Ore to mill', l_oreSp: 'Ore to stockpile', l_waste: 'Waste', l_head: 'Head grade', l_millCap: 'Mill capacity',
+    l_direct: 'Direct feed', l_reclaim: 'Reclaimed', l_spBal: 'Closing balance', l_spG: 'Stockpile grade', l_cum: 'Cumulative discounted', l_cash: 'Period cash flow',
+    th_period: 'Period', th_moved: 'Moved kt', th_ore: 'Ore kt', th_waste: 'Waste kt', th_strip: 'Strip', th_oreG: 'Ore {0}',
+    th_feed: 'Feed kt', th_head: 'Head {0}', th_reclaim: 'Reclaim kt', th_sp: 'Stockpile kt', th_metal: 'Metal {0}',
+    th_cash: 'Cash $M', th_dcf: 'Disc. $M', total: 'Total',
+    g_title: '{0} {1}: RL {2}, {3} kt',
+    benchLbl: 'Bench RL {0} · {1} of {2}', notMined: 'Not yet mined', below: 'Below {0} {1}',
+    north: 'N ↑', W: 'W', E: 'E', S: 'S', N: 'N',
+    info: 'X {0}  Y {1}  RL {2} · {3} kt · {4} {5} · {6} · {7} · {8}', minedIn: 'mined {0}', notSched: 'not scheduled',
+    w_stall: 'Scheduling stalled in period {0}: no block could be mined. Check capacities, max active pushbacks and the pushback lag.',
+    w_limit: 'Reached the {0}-period limit with {1} Mt still in the pit. Raise mining capacity or max periods.',
+    w_spLeft: '{0} kt of ore is left on the stockpile at the end of the schedule.',
+    w_mill: 'The mill runs below capacity in {0} of {1} periods. Pre-strip and ramp-down periods are normal; many more points to too little ore exposed.',
+    e_noHeader: "Couldn't find a header row. The file needs one row of column names followed by one row per block.",
+    e_noRows: 'The file has a header but no block rows.',
+    e_needXYZ: 'Map the X, Y and Z columns to build the model.',
+    e_needGrade: 'Map a grade column to build the model.',
+    e_noBlocks: 'No blocks left after filtering. Check the row filter and pushback column.',
+    e_read: "Couldn't read {0}.",
+    x_sched: 'Period schedule CSV', x_blocks: 'Block schedule CSV',
+    x_schedHint: 'One row per period. Paste into Excel, or save as .csv.',
+    x_blocksHint: 'One row per block with its scheduled period (0 = not mined). Import it into Surpac or Vulcan as a CSV and use the period field to colour the model.',
+    copied: 'Copied to clipboard.', selected: 'Selected. Press Ctrl+C (⌘C) to copy.'
+  }
+};
+
+const $ = s => document.querySelector(s);
+const S = { lang: 'ru', parsed: null, src: null, map: {}, model: null, U: null, res: null, err: null, charts: [], ms: 0, rects: { plan: [], sect: [] }, exportKind: null };
+try { const l = localStorage.getItem('benchline-lang'); if (l === 'en' || l === 'ru') S.lang = l; } catch (e) {}
+const t = (k, ...a) => { const s = (I18N[S.lang][k] ?? I18N.en[k] ?? k); return a.length ? s.replace(/\{(\d)\}/g, (_, i) => a[i]) : s; };
+const loc = () => S.lang === 'ru' ? 'ru-RU' : 'en-US';
+const nf = (v, d = 0) => Number(v).toLocaleString(loc(), { minimumFractionDigits: d, maximumFractionDigits: d });
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const num = id => { const v = parseFloat(String($('#' + id).value).replace(',', '.')); return isFinite(v) ? v : 0; };
+const PHC = ['#3a7bd5', '#d9540b', '#2f8a4a', '#8e4ec6', '#c23a2b', '#0f8fa8', '#b8930f', '#6b7a8f', '#d1497a', '#4f6d1f', '#7a4b2a', '#2a5b8a'];
+const RAMP_P = [[33, 60, 110], [32, 122, 140], [86, 166, 104], [214, 186, 60], [226, 98, 36]];
+const RAMP_G = [[246, 214, 92], [236, 142, 40], [196, 44, 40]];
+const ramp = (st, v) => { v = Math.max(0, Math.min(1, v)); const f = v * (st.length - 1), i = Math.min(st.length - 2, Math.floor(f)), u = f - i; const c = st[i].map((x, k) => Math.round(x + (st[i + 1][k] - x) * u)); return `rgb(${c})`; };
+const fT = v => v >= 1e6 ? nf(v / 1e6, 2) + ' ' + t('Mt') : nf(v / 1e3) + ' ' + t('kt');
+const fK = v => nf(v / 1e3);
+const fM = v => S.lang === 'ru' ? (v < 0 ? '−' : '') + nf(Math.abs(v) / 1e6, 1) + ' млн $' : (v < 0 ? '−$' : '$') + nf(Math.abs(v) / 1e6, 1) + 'M';
+const gU = () => $('#gUnit').value === 'gpt' ? t('gpt') : '%';
+const mU = () => $('#gUnit').value === 'gpt' ? t('oz') : t('t');
+const phName = k => t('pb') + ' ' + S.model.phaseKeys[k];
+const perName = (p, short) => {
+  const ppy = +$('#ppy').value, y = Math.ceil(p / ppy), k = (p - 1) % ppy + 1;
+  if (ppy === 1) return t('Y') + y;
+  return `${t('Y')}${y}${short ? '' : ' '}${ppy === 4 ? t('Q') : t('M')}${k}`;
+};
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+function applyStatic() {
+  document.documentElement.lang = S.lang;
+  document.querySelectorAll('[data-i]').forEach(e => { e.textContent = t(e.dataset.i); });
+  document.querySelectorAll('[data-ip]').forEach(e => { e.placeholder = t(e.dataset.ip); });
+  document.querySelectorAll('.lang button').forEach(b => b.setAttribute('aria-pressed', b.dataset.lang === S.lang));
+  $('#benchSl').setAttribute('aria-label', t('plan')); $('#secSl').setAttribute('aria-label', t('section')); $('#secDir').setAttribute('aria-label', t('section'));
+  $('#play').textContent = t(S.view.play ? 'pause' : 'play');
+  $('#viewInfo').textContent = t('hoverHint');
+  if (S.parsed) buildMapUI(true);
+  renderSrc();
+  if (!$('#modal').hidden && S.exportKind) openExport(S.exportKind);
+}
+function setLang(l) {
+  S.lang = l;
+  try { localStorage.setItem('benchline-lang', l); } catch (e) {}
+  applyStatic(); renderAll();
+}
+
+function params() {
+  return {
+    mineCap: num('mineCap') * 1e3, millCap: num('millCap') * 1e3, spCap: num('spCap') * 1e3,
+    lag: Math.max(0, num('lag') | 0), sink: Math.max(1, num('sink') | 0), maxActive: Math.max(1, num('maxAct') | 0),
+    maxPeriods: Math.max(1, Math.min(400, num('maxP') | 0)), strategy: $('#strat').value, ppy: +$('#ppy').value,
+    gUnit: $('#gUnit').value, price: num('price'), rec: num('rec') / 100, cMine: num('cMine'), cProc: num('cProc'), cRe: num('cRe'), disc: num('disc') / 100
+  };
+}
+
+function buildMapUI(keep) {
+  const P = S.parsed, g = $('#mapGrid');
+  const prev = keep ? Object.fromEntries(Engine.ORDER.map(k => [k, $('#map_' + k) ? $('#map_' + k).value : -1])) : null;
+  const prevF = keep ? $('#fCol').value : null;
+  const opts = [`<option value="-1">${t('none')}</option>`, ...P.headers.map((h, i) => `<option value="${i}">${esc(h)}</option>`)].join('');
+  g.innerHTML = Engine.ORDER.map(k => `<label class="field"><span>${t('m_' + k)}${['x', 'y', 'z', 'grade'].includes(k) ? ' <em>' + t('req') + '</em>' : ''}</span><select id="map_${k}" data-lv="model">${opts}</select></label>`).join('');
+  for (const k of Engine.ORDER) $('#map_' + k).value = keep ? prev[k] : (S.map[k] != null ? S.map[k] : -1);
+  $('#fCol').innerHTML = opts;
+  if (keep) $('#fCol').value = prevF;
+  else { $('#fCol').value = -1; $('#fVal').value = ''; $('#phSrc').value = S.map.phase != null ? 'col' : 'auto'; }
+}
+function renderSrc() {
+  const s = S.src;
+  if (!s) { $('#srcInfo').textContent = ''; return; }
+  if (s.reading) { $('#srcInfo').textContent = t('reading', s.name); return; }
+  $('#srcInfo').textContent = t('srcInfo', s.demo ? t('demoName') : s.name, nf(s.n), s.c);
+}
+
+function loadText(text, name, demo) {
+  try {
+    S.parsed = Engine.parseText(text);
+    S.src = { name, demo, n: S.parsed.n, c: S.parsed.headers.length };
+    S.map = Engine.detect(S.parsed.headers, S.parsed.numeric);
+    buildMapUI(false); renderSrc();
+    run('model');
+  } catch (e) { S.err = { k: e.code, msg: e.message }; S.model = null; S.res = null; renderSrc(); renderAll(); }
+}
+
+function run(level) {
+  const t0 = performance.now();
+  S.err = null;
+  try {
+    if (!S.parsed) return;
+    if (level === 'model' || !S.model) {
+      for (const k of Engine.ORDER) { const v = +$('#map_' + k).value; S.map[k] = v >= 0 ? v : null; }
+      S.model = Engine.buildModel(S.parsed, S.map, {
+        bx: num('bx') || 1, by: num('by') || 1, bz: num('bz') || 1, dens: num('dens') || 2.7,
+        phSrc: $('#phSrc').value === 'col' && S.map.phase != null ? 'col' : 'auto', phN: num('phN') || 1,
+        filter: { col: +$('#fCol').value, op: $('#fOp').value, val: $('#fVal').value.trim() }
+      });
+      S.view.firstBench = null; S.view.sec = -1;
+    }
+    const ws = new Set($('#wasteRk').value.split(',').map(s => s.trim().toUpperCase()).filter(Boolean));
+    S.U = Engine.buildUnits(S.model, num('cog'), ws);
+    S.res = Engine.schedule(S.model, S.U, params());
+    S.view.period = S.res.periods.length;
+  } catch (e) { S.err = { k: e.code, msg: e.message }; S.res = null; if (level === 'model') S.model = null; }
+  S.ms = performance.now() - t0;
+  renderAll();
+}
+let timer = null;
+const queue = lv => { queue.lv = queue.lv === 'model' ? 'model' : lv; clearTimeout(timer); timer = setTimeout(() => { const l = queue.lv; queue.lv = null; run(l); }, 220); };
+
+S.view = { period: 1, bench: 0, sec: -1, play: null, firstBench: null };
+
+function renderAll() {
+  $('#cogU').textContent = gU(); $('#priceU').textContent = $('#gUnit').value === 'gpt' ? t('u_poz') : t('u_pt');
+  renderAlerts(); renderKPIs(); renderCharts(); renderGantt(); renderTable(); setupViews(); renderViews();
+}
+
+function warnText(w) {
+  if (w.k === 'stall') return t('w_stall', w.a[0]);
+  if (w.k === 'limit') return t('w_limit', w.a[0], nf(w.a[1] / 1e6, 2));
+  if (w.k === 'spLeft') return t('w_spLeft', nf(w.a[0] / 1e3));
+  return w.k;
+}
+function renderAlerts() {
+  const a = [];
+  if (S.err) a.push(`<div class="alert err">${esc(S.err.k ? t('e_' + S.err.k) : S.err.msg)}</div>`);
+  if (S.res) {
+    for (const w of S.res.warnings) a.push(`<div class="alert">${esc(warnText(w))}</div>`);
+    const p = params(), under = S.res.periods.filter(r => r.feed < p.millCap * 0.98).length;
+    if (under > 1 && p.millCap > 0) a.push(`<div class="alert">${esc(t('w_mill', under, S.res.periods.length))}</div>`);
+  }
+  $('#alerts').innerHTML = a.join('');
+  const m = S.model;
+  $('#status').textContent = m && S.res ? t('statusOk', nf(m.n), m.phaseKeys.length, m.benchZ.length, nf(S.ms)) : (S.err ? t('statusErr') : t('statusNone'));
+}
+
+function renderKPIs() {
+  const r = S.res;
+  if (!r || !r.periods.length) { $('#kpis').innerHTML = ''; return; }
+  const T = r.totals, p = params(), n = r.periods.length;
+  const g = T.ore ? T.oreMetal / T.ore : 0, fg = T.feed ? T.feedMetal / T.feed : 0;
+  const mFmt = $('#gUnit').value === 'gpt' ? nf(T.metal / 1e3) + ' ' + t('koz') : nf(T.metal / 1e3, 1) + ' ' + t('kt');
+  const util = p.millCap ? T.feed / (p.millCap * n) * 100 : 0;
+  const K = [
+    [t('k_life'), t('v_life', nf(n / p.ppy, 1)), t('d_life', n, perName(n))],
+    [t('k_moved'), fT(T.moved), t('d_moved', nf(T.ore ? T.waste / T.ore : 0, 2))],
+    [t('k_ore'), fT(T.ore), t('d_ore', nf(g, 2), gU())],
+    [t('k_feed'), fT(T.feed), t('d_feed', nf(fg, 2), gU(), nf(util))],
+    [t('k_metal'), mFmt, t('d_metal', fM(T.revenue))],
+    [t('k_npv'), fM(T.npv), t('d_npv', nf(p.disc * 100, 1), fM(T.cash))]
+  ];
+  $('#kpis').innerHTML = K.map((k, i) => `<div class="kpi${i === 5 ? ' npv' : ''}"><span class="k">${esc(k[0])}</span><span class="v">${esc(k[1])}</span><span class="d">${esc(k[2])}</span></div>`).join('');
+}
+
+function renderCharts() {
+  S.charts.forEach(c => c.destroy()); S.charts = [];
+  const r = S.res; if (!r || !r.periods.length || !window.Chart) return;
+  const P = r.periods, labels = P.map(x => perName(x.t, true)), p = params();
+  const ink = css('--muted'), grid = css('--line');
+  Chart.defaults.font.family = css('--f-body'); Chart.defaults.font.size = 11; Chart.defaults.color = ink;
+  const base = (y2) => ({
+    responsive: true, maintainAspectRatio: false, animation: false, locale: loc(), interaction: { mode: 'index', intersect: false },
+    plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, boxHeight: 10, padding: 10 } } },
+    scales: Object.assign({ x: { stacked: true, grid: { display: false }, ticks: { maxRotation: 0, autoSkipPadding: 12 } },
+      y: { stacked: true, grid: { color: grid }, border: { display: false }, title: { display: true, text: t('kt') } } },
+      y2 ? { y2: { position: 'right', grid: { display: false }, border: { display: false }, beginAtZero: true, title: { display: true, text: y2 } } } : {})
+  });
+  const kt = f => P.map(x => +(x[f] / 1e3).toFixed(1));
+  const ore = css('--ore'), waste = css('--waste'), spc = css('--sp'), acc = css('--accent');
+  S.charts.push(new Chart($('#c1'), { type: 'bar', data: { labels, datasets: [
+    { label: t('l_oreMill'), data: kt('direct'), backgroundColor: ore },
+    { label: t('l_oreSp'), data: kt('toSp'), backgroundColor: spc },
+    { label: t('l_waste'), data: kt('waste'), backgroundColor: waste }] }, options: base() }));
+  const o2 = base(gU()); o2.scales.y2.stacked = false;
+  S.charts.push(new Chart($('#c2'), { type: 'bar', data: { labels, datasets: [
+    { type: 'line', label: t('l_head'), data: P.map(x => x.feed ? +(x.feedMetal / x.feed).toFixed(3) : null), borderColor: acc, backgroundColor: acc, yAxisID: 'y2', pointRadius: 0, borderWidth: 2, tension: .25 },
+    { type: 'line', label: t('l_millCap'), data: P.map(() => p.millCap / 1e3), borderColor: ink, borderDash: [4, 4], borderWidth: 1, pointRadius: 0, stack: 'cap' },
+    { label: t('l_direct'), data: kt('direct'), backgroundColor: ore },
+    { label: t('l_reclaim'), data: kt('reclaim'), backgroundColor: spc }] }, options: o2 }));
+  const o3 = base(gU()); o3.scales.y.stacked = false; o3.scales.x.stacked = false; o3.scales.y.beginAtZero = true;
+  S.charts.push(new Chart($('#c3'), { type: 'line', data: { labels, datasets: [
+    { label: t('l_spBal'), data: kt('spT'), borderColor: spc, backgroundColor: spc + '33', fill: true, pointRadius: 0, borderWidth: 2, stepped: true },
+    { label: t('l_spG'), data: P.map(x => x.spT > 0 ? +x.spG.toFixed(3) : null), borderColor: acc, yAxisID: 'y2', pointRadius: 0, borderWidth: 1.5 }] }, options: o3 }));
+  const o4 = base(); o4.scales.y.stacked = false; o4.scales.x.stacked = false; o4.scales.y.title.text = t('mUSD');
+  S.charts.push(new Chart($('#c4'), { type: 'bar', data: { labels, datasets: [
+    { type: 'line', label: t('l_cum'), data: P.map(x => +(x.cumDcf / 1e6).toFixed(2)), borderColor: acc, pointRadius: 0, borderWidth: 2 },
+    { label: t('l_cash'), data: P.map(x => +(x.cash / 1e6).toFixed(2)), backgroundColor: P.map(x => x.cash >= 0 ? css('--good') : css('--bad')) }] }, options: o4 }));
+}
+
+function renderGantt() {
+  const r = S.res, m = S.model, el = $('#gantt');
+  if (!r || !m) { el.innerHTML = ''; return; }
+  const cap = params().mineCap, P = r.periods;
+  let h = `<thead><tr><th>${t('cPhase')}</th>${P.map(x => `<th>${perName(x.t, true)}</th>`).join('')}</tr></thead><tbody>`;
+  m.phaseKeys.forEach((_, k) => {
+    const name = phName(k);
+    h += `<tr><td><span class="swatch" style="background:${PHC[k % PHC.length]}"></span>${esc(name)}</td>`;
+    for (const x of P) {
+      const c = x.ph[k];
+      if (!c) { h += '<td></td>'; continue; }
+      const pct = Math.max(8, Math.min(100, c.t / cap * 100));
+      const rl = c.zTop === c.zBot ? `${c.zTop}` : `${c.zTop}–${c.zBot}`;
+      h += `<td class="c" style="background:color-mix(in srgb, ${PHC[k % PHC.length]} ${(pct * 0.55).toFixed(0)}%, transparent)" title="${esc(t('g_title', name, perName(x.t), rl, fK(c.t)))}">${rl}<small>${fK(c.t)} ${t('kt')}</small></td>`;
+    }
+    h += '</tr>';
+  });
+  el.innerHTML = h + '</tbody>';
+}
+
+function renderTable() {
+  const r = S.res, el = $('#ptable');
+  if (!r || !r.periods.length) { el.innerHTML = ''; return; }
+  const u = gU(), mu = mU();
+  const cols = [
+    [t('th_period'), x => perName(x.t)], [t('th_moved'), x => fK(x.moved)], [t('th_ore'), x => fK(x.ore)], [t('th_waste'), x => fK(x.waste)],
+    [t('th_strip'), x => x.ore ? nf(x.waste / x.ore, 2) : '—'], [t('th_oreG', u), x => x.ore ? nf(x.oreMetal / x.ore, 2) : '—'],
+    [t('th_feed'), x => fK(x.feed)], [t('th_head', u), x => x.feed ? nf(x.feedMetal / x.feed, 2) : '—'], [t('th_reclaim'), x => fK(x.reclaim)],
+    [t('th_sp'), x => fK(x.spT)], [t('th_metal', mu), x => nf(x.metal)], [t('th_cash'), x => nf(x.cash / 1e6, 1)], [t('th_dcf'), x => nf(x.dcf / 1e6, 1)]
+  ];
+  const T = r.totals;
+  const tot = [t('total'), fK(T.moved), fK(T.ore), fK(T.waste), T.ore ? nf(T.waste / T.ore, 2) : '—', T.ore ? nf(T.oreMetal / T.ore, 2) : '—', fK(T.feed), T.feed ? nf(T.feedMetal / T.feed, 2) : '—', fK(T.reclaim), '', nf(T.metal), nf(T.cash / 1e6, 1), nf(T.npv / 1e6, 1)];
+  el.innerHTML = `<thead><tr>${cols.map(c => `<th>${esc(c[0])}</th>`).join('')}</tr></thead><tbody>${r.periods.map(x => `<tr>${cols.map(c => `<td>${c[1](x)}</td>`).join('')}</tr>`).join('')}</tbody><tfoot><tr>${tot.map(v => `<td>${v}</td>`).join('')}</tr></tfoot>`;
+}
+
+/* ---------- plan & section views ---------- */
+function setupViews() {
+  const m = S.model, r = S.res;
+  if (!m || !r) return;
+  const sl = $('#perSl'); sl.max = r.periods.length; sl.value = S.view.period;
+  const bs = $('#benchSl'); bs.max = m.benchZ.length - 1;
+  if (S.view.firstBench == null) {
+    const ore = new Float64Array(m.benchZ.length); const cog = num('cog');
+    for (let i = 0; i < m.n; i++) if (m.g[i] >= cog) ore[m.bench[i]] += m.t[i];
+    S.view.bench = Math.max(0, ore.indexOf(Math.max(...ore))); S.view.firstBench = 1; S.view.sec = -1;
+  }
+  bs.value = S.view.bench;
+  const list = $('#secDir').value === 'EW' ? m.ys : m.xs;
+  const ss = $('#secSl'); ss.max = list.length - 1;
+  if (S.view.sec < 0 || S.view.sec > list.length - 1) {
+    let best = 0, bd = Infinity; const c = $('#secDir').value === 'EW' ? (m.ext.y0 + m.ext.y1) / 2 : (m.ext.x0 + m.ext.x1) / 2;
+    list.forEach((v, i) => { if (Math.abs(v - c) < bd) { bd = Math.abs(v - c); best = i; } });
+    S.view.sec = best;
+  }
+  ss.value = S.view.sec;
+}
+function blockColor(i, mode, per, bp, cog, gmax) {
+  const p = bp[i], mined = p > 0 && p <= per;
+  if (mode === 'period') return mined ? ramp(RAMP_P, (p - 1) / Math.max(1, S.res.periods.length - 1)) : null;
+  if (!mined) return null;
+  if (mode === 'phase') return PHC[S.model.phase[i] % PHC.length];
+  const g = S.model.g[i];
+  return g < cog ? css('--waste') : ramp(RAMP_G, (g - cog) / Math.max(1e-9, gmax - cog));
+}
+function sizeCanvas(cv, wW, wH) {
+  const w = cv.clientWidth || cv.parentElement.clientWidth || 400;
+  const h = Math.max(160, Math.min(520, w * wH / wW));
+  const dpr = window.devicePixelRatio || 1;
+  cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); cv.style.height = h + 'px';
+  const ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return { ctx, w, h };
+}
+function gradeMax() {
+  if (S.view.gmaxModel === S.model) return S.view.gmax;
+  const a = Array.from(S.model.g).sort((x, y) => x - y);
+  S.view.gmax = a[Math.floor(a.length * 0.98)] || 1; S.view.gmaxModel = S.model; return S.view.gmax;
+}
+function renderViews() {
+  const panel = document.querySelector('[data-panel="views"]');
+  const m = S.model, r = S.res;
+  if (panel.hidden || !m || !r) return;
+  const per = S.view.period, mode = $('#colMode').value, bp = r.blockPeriod, cog = num('cog'), gmax = gradeMax();
+  const rest = css('--rest'), muted = css('--muted');
+  $('#perLbl').textContent = per === 0 ? t('preMining') : perName(per);
+  {
+    const E = m.ext, pad = 8, b = S.view.bench;
+    const cv = $('#plan'), { ctx, w, h } = sizeCanvas(cv, E.x1 - E.x0, E.y1 - E.y0);
+    const s = Math.min((w - 2 * pad) / (E.x1 - E.x0), (h - 2 * pad) / (E.y1 - E.y0));
+    const ox = (w - s * (E.x1 - E.x0)) / 2, oy = (h - s * (E.y1 - E.y0)) / 2;
+    ctx.clearRect(0, 0, w, h);
+    const rects = [];
+    for (let i = 0; i < m.n; i++) {
+      if (m.bench[i] !== b) continue;
+      const x = ox + (m.x[i] - m.dx[i] / 2 - E.x0) * s, y = oy + (E.y1 - (m.y[i] + m.dy[i] / 2)) * s, bw = m.dx[i] * s, bh = m.dy[i] * s;
+      ctx.fillStyle = blockColor(i, mode, per, bp, cog, gmax) || rest;
+      ctx.fillRect(x, y, Math.max(1, bw - (bw > 4 ? 0.6 : 0)), Math.max(1, bh - (bh > 4 ? 0.6 : 0)));
+      rects.push([x, y, bw, bh, i]);
+    }
+    ctx.strokeStyle = muted; ctx.setLineDash([5, 4]); ctx.lineWidth = 1; ctx.beginPath();
+    if ($('#secDir').value === 'EW') { const yy = oy + (E.y1 - m.ys[S.view.sec]) * s; ctx.moveTo(0, yy); ctx.lineTo(w, yy); }
+    else { const xx = ox + (m.xs[S.view.sec] - E.x0) * s; ctx.moveTo(xx, 0); ctx.lineTo(xx, h); }
+    ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = muted; ctx.font = `11px ${css('--f-mono')}`; ctx.fillText(t('north'), w - 30, 16);
+    S.rects.plan = rects;
+    $('#benchLbl').textContent = t('benchLbl', m.benchZ[b], b + 1, m.benchZ.length);
+  }
+  {
+    const E = m.ext, pad = 8, ew = $('#secDir').value === 'EW';
+    const list = ew ? m.ys : m.xs, at = list[S.view.sec];
+    const a0 = ew ? E.x0 : E.y0, a1 = ew ? E.x1 : E.y1;
+    const cv = $('#sect'), { ctx, w, h } = sizeCanvas(cv, a1 - a0, Math.max((E.z1 - E.z0) * 1.6, (a1 - a0) * 0.45));
+    const s = Math.min((w - 2 * pad) / (a1 - a0), (h - 2 * pad) / (E.z1 - E.z0));
+    const ox = (w - s * (a1 - a0)) / 2, oy = (h - s * (E.z1 - E.z0)) / 2;
+    ctx.clearRect(0, 0, w, h);
+    const rects = [];
+    for (let i = 0; i < m.n; i++) {
+      const c = ew ? m.y[i] : m.x[i], half = (ew ? m.dy[i] : m.dx[i]) / 2;
+      if (Math.abs(c - at) > half * 0.999) continue;
+      const a = ew ? m.x[i] : m.y[i], da = ew ? m.dx[i] : m.dy[i];
+      const x = ox + (a - da / 2 - a0) * s, y = oy + (E.z1 - (m.z[i] + m.dz[i] / 2)) * s, bw = da * s, bh = m.dz[i] * s;
+      ctx.fillStyle = blockColor(i, mode, per, bp, cog, gmax) || rest;
+      ctx.fillRect(x, y, Math.max(1, bw - (bw > 4 ? 0.6 : 0)), Math.max(1, bh - (bh > 4 ? 0.6 : 0)));
+      rects.push([x, y, bw, bh, i]);
+    }
+    const zb = m.benchZ[S.view.bench], yb = oy + (E.z1 - zb) * s;
+    ctx.strokeStyle = muted; ctx.setLineDash([5, 4]); ctx.beginPath(); ctx.moveTo(0, yb); ctx.lineTo(w, yb); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = muted; ctx.font = `11px ${css('--f-mono')}`;
+    ctx.fillText(ew ? t('W') : t('S'), 4, h - 6); ctx.fillText(ew ? t('E') : t('N'), w - 12, h - 6);
+    S.rects.sect = rects;
+    $('#secLbl').textContent = `${ew ? 'Y' : 'X'} = ${at}`;
+  }
+  const lg = $('#legend'), nm = `<span><span class="swatch" style="background:var(--rest);border:1px solid var(--line)"></span>${t('notMined')}</span>`;
+  if (mode === 'period') {
+    lg.innerHTML = `<span>${perName(1)}</span><span class="ramp" style="background:linear-gradient(90deg,${[0, .25, .5, .75, 1].map(v => ramp(RAMP_P, v)).join(',')})"></span><span>${perName(r.periods.length)}</span><span style="margin-left:12px"></span>${nm}`;
+  } else if (mode === 'phase') {
+    lg.innerHTML = m.phaseKeys.map((_, k) => `<span><span class="swatch" style="background:${PHC[k % PHC.length]}"></span>${esc(phName(k))}</span>`).join('') + nm;
+  } else {
+    lg.innerHTML = `<span><span class="swatch" style="background:var(--waste)"></span>${t('below', nf(cog, 2), gU())}</span><span>${nf(cog, 2)}</span><span class="ramp" style="background:linear-gradient(90deg,${[0, .5, 1].map(v => ramp(RAMP_G, v)).join(',')})"></span><span>${nf(gmax, 2)}+ ${gU()}</span>${nm}`;
+  }
+}
+function hover(which, ev) {
+  const cv = ev.currentTarget, b = cv.getBoundingClientRect(), x = ev.clientX - b.left, y = ev.clientY - b.top;
+  const hit = S.rects[which].find(r => x >= r[0] && x <= r[0] + r[2] && y >= r[1] && y <= r[1] + r[3]);
+  if (!hit) { $('#viewInfo').textContent = t('hoverHint'); return; }
+  const m = S.model, i = hit[4], p = S.res.blockPeriod[i];
+  $('#viewInfo').textContent = t('info', m.x[i], m.y[i], m.z[i], fK(m.t[i]), nf(m.g[i], 2), gU(), m.rockNames[m.rock[i]], phName(m.phase[i]), p ? t('minedIn', perName(p)) : t('notSched'));
+}
+
+/* ---------- export ---------- */
+function openExport(kind) {
+  if (!S.res) return;
+  S.exportKind = kind;
+  let csv, hint;
+  if (kind === 'sched') {
+    const gl = $('#gUnit').value === 'gpt' ? 'gpt' : 'pct';
+    csv = [`period,label,moved_t,ore_t,waste_t,ore_grade_${gl},feed_t,head_grade_${gl},reclaim_t,stockpile_t,metal_${$('#gUnit').value === 'gpt' ? 'oz' : 't'},revenue_usd,cost_usd,cash_usd,discounted_cash_usd`,
+      ...S.res.periods.map(x => [x.t, perName(x.t), x.moved.toFixed(0), x.ore.toFixed(0), x.waste.toFixed(0), x.ore ? (x.oreMetal / x.ore).toFixed(3) : 0, x.feed.toFixed(0), x.feed ? (x.feedMetal / x.feed).toFixed(3) : 0, x.reclaim.toFixed(0), x.spT.toFixed(0), x.metal.toFixed(0), x.revenue.toFixed(0), x.cost.toFixed(0), x.cash.toFixed(0), x.dcf.toFixed(0)].join(','))].join('\n');
+    hint = t('x_schedHint');
+  } else {
+    const m = S.model, bp = S.res.blockPeriod, L = ['x,y,z,tonnes,grade,rock,pushback,period'];
+    for (let i = 0; i < m.n; i++) L.push(`${m.x[i]},${m.y[i]},${m.z[i]},${m.t[i].toFixed(1)},${m.g[i]},${m.rockNames[m.rock[i]]},${m.phaseKeys[m.phase[i]]},${bp[i]}`);
+    csv = L.join('\n');
+    hint = t('x_blocksHint');
+  }
+  $('#mTitle').textContent = kind === 'sched' ? t('x_sched') : t('x_blocks');
+  $('#mHint').textContent = hint; $('#mText').value = csv; $('#mMsg').textContent = '';
+  if ($('#modal').hidden) { $('#modal').hidden = false; $('#mCopy').focus(); }
+}
+$('#mCopy').addEventListener('click', () => {
+  const ta = $('#mText');
+  const fallback = () => { ta.focus(); ta.select(); $('#mMsg').textContent = t('selected'); };
+  try { navigator.clipboard.writeText(ta.value).then(() => $('#mMsg').textContent = t('copied'), fallback); } catch (e) { fallback(); }
+});
+const closeModal = () => { $('#modal').hidden = true; S.exportKind = null; };
+$('#mClose').addEventListener('click', closeModal);
+$('#modal').addEventListener('click', e => { if (e.target.id === 'modal') closeModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+$('#expSched').addEventListener('click', () => openExport('sched'));
+$('#expBlocks').addEventListener('click', () => openExport('blocks'));
+
+/* ---------- wiring ---------- */
+document.querySelectorAll('.lang button').forEach(b => b.addEventListener('click', () => { if (S.lang !== b.dataset.lang) setLang(b.dataset.lang); }));
+$('#side').addEventListener('input', e => { if (e.target.id === 'file') return; queue(e.target.dataset.lv || 'sched'); });
+$('#side').addEventListener('change', e => { if (e.target.tagName === 'SELECT') queue(e.target.dataset.lv || 'sched'); });
+$('#file').addEventListener('change', e => { const f = e.target.files[0]; if (f) readFile(f); });
+function readFile(f) {
+  S.src = { name: f.name, reading: true }; renderSrc();
+  const fr = new FileReader();
+  fr.onload = () => loadText(String(fr.result), f.name, false);
+  fr.onerror = () => { S.err = { msg: t('e_read', f.name) }; S.src = null; renderSrc(); renderAll(); };
+  fr.readAsText(f);
+}
+const drop = $('#drop');
+['dragenter', 'dragover'].forEach(ty => drop.addEventListener(ty, e => { e.preventDefault(); drop.classList.add('over'); }));
+['dragleave', 'drop'].forEach(ty => drop.addEventListener(ty, e => { e.preventDefault(); drop.classList.remove('over'); }));
+drop.addEventListener('drop', e => { const f = e.dataTransfer.files[0]; if (f) readFile(f); });
+$('#demoBtn').addEventListener('click', () => loadText(Engine.demoCSV(), 'demo_pit.csv', true));
+
+document.querySelectorAll('.tab').forEach(tb => tb.addEventListener('click', () => {
+  document.querySelectorAll('.tab').forEach(x => x.setAttribute('aria-selected', x === tb));
+  document.querySelectorAll('[data-panel]').forEach(p => p.hidden = p.dataset.panel !== tb.dataset.tab);
+  try { localStorage.setItem('benchline-tab', tb.dataset.tab); } catch (e) {}
+  if (tb.dataset.tab === 'views') renderViews();
+}));
+$('#perSl').addEventListener('input', e => { S.view.period = +e.target.value; renderViews(); });
+$('#benchSl').addEventListener('input', e => { S.view.bench = +e.target.value; renderViews(); });
+$('#secSl').addEventListener('input', e => { S.view.sec = +e.target.value; renderViews(); });
+$('#secDir').addEventListener('change', () => { S.view.sec = -1; setupViews(); renderViews(); });
+$('#colMode').addEventListener('change', renderViews);
+$('#plan').addEventListener('mousemove', e => hover('plan', e));
+$('#sect').addEventListener('mousemove', e => hover('sect', e));
+$('#play').addEventListener('click', () => {
+  if (S.view.play) { clearInterval(S.view.play); S.view.play = null; $('#play').textContent = t('play'); return; }
+  if (!S.res) return;
+  const n = S.res.periods.length; if (S.view.period >= n) S.view.period = 0;
+  $('#play').textContent = t('pause');
+  S.view.play = setInterval(() => {
+    S.view.period++; $('#perSl').value = S.view.period; renderViews();
+    if (S.view.period >= n) { clearInterval(S.view.play); S.view.play = null; $('#play').textContent = t('play'); }
+  }, 450);
+});
+let rz; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(renderViews, 120); });
+const retheme = () => { renderCharts(); renderViews(); };
+try { matchMedia('(prefers-color-scheme: dark)').addEventListener('change', retheme); } catch (e) {}
+new MutationObserver(retheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+applyStatic();
+try { const tb = localStorage.getItem('benchline-tab'); if (tb) { const b = document.querySelector(`.tab[data-tab="${tb}"]`); if (b) b.click(); } } catch (e) {}
+loadText(Engine.demoCSV(), 'demo_pit.csv', true);
+</script>
+<script>
+/*DTM-START*/
+const DtmEng = (() => {
+  const err = (k, ...a) => { const e = new Error(k); e.code = k; e.args = a; return e; };
+  const base = n => String(n || '').split(/[\\/]/).pop().trim();
+  function isBinary(s) {
+    const n = Math.min(s.length, 4000); let bad = 0;
+    for (let i = 0; i < n; i++) { const c = s.charCodeAt(i); if (c === 0 || c === 0xFFFD || (c < 32 && c !== 9 && c !== 10 && c !== 13)) bad++; }
+    return bad > Math.max(2, n * 0.01);
+  }
+  // Surpac string file: "string, Y, X, Z, D1, D2…"; a record with string 0 ends a segment; "0,…,END" ends the file.
+  function parseStr(text, name) {
+    if (isBinary(text)) throw err('binary', name);
+    const pts = [], segs = []; let cur = null;
+    const L = text.split(/\r?\n/);
+    for (let i = 0; i < L.length; i++) {
+      const l = L[i].trim(); if (!l) continue;
+      const f = l.split(','), s0 = f[0].trim();
+      if (!/^\d+$/.test(s0)) continue;
+      const s = +s0;
+      if (s === 0) { if (cur) { segs.push(cur); cur = null; } if (/\bEND\b/i.test(l)) break; continue; }
+      const y = parseFloat(f[1]), x = parseFloat(f[2]), z = parseFloat(f[3]);
+      if (!isFinite(x) || !isFinite(y)) continue;
+      const p = { x, y, z: isFinite(z) ? z : 0, s, d: f.slice(4).map(v => v.trim()).filter(Boolean) };
+      pts.push(p);
+      if (!cur || cur.s !== s) { if (cur) segs.push(cur); cur = { s, pts: [] }; }
+      cur.pts.push(p);
+    }
+    if (cur) segs.push(cur);
+    if (!pts.length) throw err('strEmpty', name);
+    return { pts, segs };
+  }
+  const dtmStrName = text => base((text.split(/\r?\n/, 1)[0] || '').split(',')[0]);
+  // Surpac DTM text file: after TRISOLATION, "tri, p1, p2, p3, n1, n2, n3" with 1-based point numbers into the .str
+  function parseDtm(text, name, n, strName) {
+    if (isBinary(text)) throw err('binary', name);
+    const tri = []; let seen = false, bad = 0;
+    for (const raw of text.split(/\r?\n/)) {
+      const l = raw.trim(); if (!l) continue;
+      if (/^TRISOLATION/i.test(l)) { seen = true; continue; }
+      if (!seen || /^(OBJECT|END|POINT)/i.test(l)) continue;
+      const f = l.split(',').map(v => v.trim());
+      if (f.length < 4 || !/^\d+$/.test(f[1]) || !/^\d+$/.test(f[2]) || !/^\d+$/.test(f[3])) continue;
+      const a = +f[1] - 1, b = +f[2] - 1, c = +f[3] - 1;
+      if (a < 0 || b < 0 || c < 0 || a >= n || b >= n || c >= n) { bad++; continue; }
+      tri.push(a, b, c);
+    }
+    if (bad > 0 && bad >= tri.length / 3) throw err('dtmMismatch', strName);
+    if (!tri.length) throw err('noTri');
+    return Uint32Array.from(tri);
+  }
+  function triangulate(pts, D) {
+    if (!D) throw err('noDelaunay');
+    const seen = new Set(), keep = [];
+    for (const p of pts) { const k = Math.round(p.x * 100) + ':' + Math.round(p.y * 100); if (!seen.has(k)) { seen.add(k); keep.push(p); } }
+    if (keep.length < 3) throw err('noTri');
+    const c = new Float64Array(keep.length * 2); keep.forEach((p, i) => { c[2 * i] = p.x; c[2 * i + 1] = p.y; });
+    const T = new D(c).triangles, nt = T.length / 3, me = new Float64Array(nt);
+    const ed = (a, b) => Math.hypot(keep[a].x - keep[b].x, keep[a].y - keep[b].y);
+    for (let k = 0; k < nt; k++) { const a = T[3 * k], b = T[3 * k + 1], d = T[3 * k + 2]; me[k] = Math.max(ed(a, b), ed(b, d), ed(d, a)); }
+    const lim = Float64Array.from(me).sort()[Math.floor(nt / 2)] * 8;
+    const out = []; for (let k = 0; k < nt; k++) if (me[k] <= lim) out.push(T[3 * k], T[3 * k + 1], T[3 * k + 2]);
+    if (!out.length) throw err('noTri');
+    return { pts: keep, tri: Uint32Array.from(out) };
+  }
+  function rasterize(d, N) {
+    const E = d.ext, W = E.x1 - E.x0, H = E.y1 - E.y0, cell = Math.max(W, H) / N;
+    const nx = Math.floor(W / cell) + 1, ny = Math.floor(H / cell) + 1, z = new Float32Array(nx * ny).fill(NaN);
+    const { px, py, pz, tri } = d;
+    for (let t = 0; t < tri.length; t += 3) {
+      const a = tri[t], b = tri[t + 1], c = tri[t + 2];
+      const ax = (px[a] - E.x0) / cell, ay = (E.y1 - py[a]) / cell, bx = (px[b] - E.x0) / cell, by = (E.y1 - py[b]) / cell, cx = (px[c] - E.x0) / cell, cy = (E.y1 - py[c]) / cell;
+      const den = (by - cy) * (ax - cx) + (cx - bx) * (ay - cy); if (Math.abs(den) < 1e-12) continue;
+      const i0 = Math.max(0, Math.ceil(Math.min(ax, bx, cx) - 1e-9)), i1 = Math.min(nx - 1, Math.floor(Math.max(ax, bx, cx) + 1e-9));
+      const j0 = Math.max(0, Math.ceil(Math.min(ay, by, cy) - 1e-9)), j1 = Math.min(ny - 1, Math.floor(Math.max(ay, by, cy) + 1e-9));
+      for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) {
+        const w1 = ((by - cy) * (i - cx) + (cx - bx) * (j - cy)) / den, w2 = ((cy - ay) * (i - cx) + (ax - cx) * (j - cy)) / den, w3 = 1 - w1 - w2;
+        if (w1 >= -1e-7 && w2 >= -1e-7 && w3 >= -1e-7) z[j * nx + i] = w1 * pz[a] + w2 * pz[b] + w3 * pz[c];
+      }
+    }
+    return { nx, ny, cell, z, x0: E.x0, y1: E.y1 };
+  }
+  function zAt(r, x, y) {
+    const fx = (x - r.x0) / r.cell, fy = (r.y1 - y) / r.cell;
+    if (!(fx >= 0 && fy >= 0 && fx <= r.nx - 1 && fy <= r.ny - 1)) return NaN;
+    const i = Math.min(r.nx - 2, Math.floor(fx)), j = Math.min(r.ny - 2, Math.floor(fy)), u = fx - i, v = fy - j, k = j * r.nx + i, Z = r.z;
+    const q = [[Z[k], (1 - u) * (1 - v)], [Z[k + 1], u * (1 - v)], [Z[k + r.nx], (1 - u) * v], [Z[k + r.nx + 1], u * v]];
+    let s = 0, w = 0, any = null;
+    for (const [z, wt] of q) if (z === z) { s += z * wt; w += wt; any = z; }
+    return any === null ? NaN : (w > 1e-9 ? s / w : any);
+  }
+  function buildDtm(pts, tri, name, N) {
+    const n = pts.length, px = new Float64Array(n), py = new Float64Array(n), pz = new Float64Array(n);
+    pts.forEach((p, i) => { px[i] = p.x; py[i] = p.y; pz[i] = p.z; });
+    let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity, z0 = Infinity, z1 = -Infinity;
+    for (const i of tri) { const x = px[i], y = py[i], z = pz[i]; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; if (z < z0) z0 = z; if (z > z1) z1 = z; }
+    if (!(x1 > x0) || !(y1 > y0)) throw err('noTri');
+    if (!(z1 > z0)) z1 = z0 + 1;
+    const d = { name, n, px, py, pz, tri, ntri: tri.length / 3, ext: { x0, x1, y0, y1, z0, z1 } };
+    d.r = rasterize(d, N || 1500);
+    return d;
+  }
+  function pip(x, y, P) {
+    let c = false;
+    for (let i = 0, j = P.length - 1; i < P.length; j = i++) { const a = P[i], b = P[j]; if ((a.y > y) !== (b.y > y) && x < (b.x - a.x) * (y - a.y) / (b.y - a.y) + a.x) c = !c; }
+    return c;
+  }
+  function buildBlocks(segs, name) {
+    const list = [], cnt = {};
+    for (const sg of segs) {
+      const P = sg.pts.map(p => ({ x: p.x, y: p.y, z: p.z }));
+      if (P.length > 1 && Math.hypot(P[0].x - P[P.length - 1].x, P[0].y - P[P.length - 1].y) < 1e-3) P.pop();
+      if (P.length < 3) continue;
+      cnt[sg.s] = (cnt[sg.s] || 0) + 1;
+      const nm = sg.pts[0].d[0] || `${sg.s}-${cnt[sg.s]}`;
+      const ox = P[0].x, oy = P[0].y, bb = { x0: Infinity, x1: -Infinity, y0: Infinity, y1: -Infinity };
+      let a2 = 0, cx = 0, cy = 0, per = 0, zs = 0, mx = 0, my = 0;
+      for (let i = 0; i < P.length; i++) {
+        const p = P[i], q = P[(i + 1) % P.length], x1 = p.x - ox, y1 = p.y - oy, x2 = q.x - ox, y2 = q.y - oy, cr = x1 * y2 - x2 * y1;
+        a2 += cr; cx += (x1 + x2) * cr; cy += (y1 + y2) * cr; per += Math.hypot(q.x - p.x, q.y - p.y); zs += p.z; mx += p.x; my += p.y;
+        bb.x0 = Math.min(bb.x0, p.x); bb.x1 = Math.max(bb.x1, p.x); bb.y0 = Math.min(bb.y0, p.y); bb.y1 = Math.max(bb.y1, p.y);
+      }
+      const ok = Math.abs(a2) > 1e-9;
+      list.push({ name: nm, s: sg.s, P, area: Math.abs(a2) / 2, per, cx: ok ? ox + cx / (3 * a2) : mx / P.length, cy: ok ? oy + cy / (3 * a2) : my / P.length, rl: zs / P.length, bb });
+    }
+    if (!list.length) throw err('noPoly', name);
+    return list;
+  }
+  // Volume above the blast floor: mean (surface − floor) over raster nodes inside the polygon × exact polygon area
+  function stats(list, r, o) {
+    let outside = 0;
+    for (const b of list) {
+      b.floor = o.fixed ? o.floorRL : b.rl - o.bench; b.surf = b.vol = b.t = null;
+      if (!r) continue;
+      const i0 = Math.max(0, Math.floor((b.bb.x0 - r.x0) / r.cell)), i1 = Math.min(r.nx - 1, Math.ceil((b.bb.x1 - r.x0) / r.cell));
+      const j0 = Math.max(0, Math.floor((r.y1 - b.bb.y1) / r.cell)), j1 = Math.min(r.ny - 1, Math.ceil((r.y1 - b.bb.y0) / r.cell));
+      let n = 0, sz = 0, dep = 0;
+      for (let j = j0; j <= j1; j++) {
+        const y = r.y1 - j * r.cell;
+        for (let i = i0; i <= i1; i++) {
+          const z = r.z[j * r.nx + i]; if (z !== z) continue;
+          if (!pip(r.x0 + i * r.cell, y, b.P)) continue;
+          n++; sz += z; dep += Math.max(0, z - b.floor);
+        }
+      }
+      if (!n) { const z = zAt(r, b.cx, b.cy); if (z !== z) { outside++; continue; } n = 1; sz = z; dep = Math.max(0, z - b.floor); }
+      b.surf = sz / n; b.vol = dep / n * b.area; b.t = b.vol * o.dens;
+    }
+    return outside;
+  }
+  const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const sdate = (d = new Date()) => `${String(d.getDate()).padStart(2, '0')}-${MON[d.getMonth()]}-${String(d.getFullYear()).slice(2)}`;
+  const f3 = v => v.toFixed(3);
+  function strText(points, title) {
+    return [`${title},${sdate()},,`, '0, 0.000, 0.000, 0.000,',
+      ...points.map((p, i) => `1, ${f3(p.y)}, ${f3(p.x)}, ${f3(p.z)}, P${i + 1}`),
+      '0, 0.000, 0.000, 0.000,', '0, 0.000, 0.000, 0.000, END'].join('\n');
+  }
+  // Example data written in Surpac text format, so it goes through the same parsers as real files
+  function demo() {
+    // Pit surface built like a surveyed pit DTM: rings along each toe and crest, joined into triangles
+    const X0 = 452300, Y0 = 4381500, R = 330, A = 240, face = 3.6, Rf = 80;
+    const berm = [12, 12, 12, 40, 12, 12, 12, 12, 12, 12, 12, 12];
+    const pitZ = r => { if (r <= Rf) return 300; let rr = Rf, z = 300; for (const b of berm) { if (r < rr + face) return z + 10 * (r - rr) / face; rr += face; z += 10; if (r < rr + b) return z; rr += b; } return z + (r - rr) * 0.8; };
+    const topo = (x, y) => 418 + 0.025 * x - 0.015 * y + 6 * Math.sin(x / 90) * Math.cos(y / 120) + 4 * Math.cos((x + y) / 70);
+    const rings = [];
+    for (let r = 10; r < Rf; r += 10) rings.push(r);
+    let rr = Rf; rings.push(Rf);
+    for (const b of berm) { rr += face; rings.push(rr - 0.01); if (b > 20) rings.push(rr + b / 2); rr += b; rings.push(rr); }
+    for (let r = rr + 8; r <= R; r += 8) rings.push(r);
+    const S = ['demo_topo,' + sdate() + ',,ssi_styles:styles.ssi', '0, 0.000, 0.000, 0.000,'];
+    const pt = (x, y) => S.push(`1, ${f3(Y0 + y)}, ${f3(X0 + x)}, ${f3(Math.min(topo(x, y), pitZ(Math.hypot(x, y))))},`);
+    pt(0, 0);
+    for (const r of rings) for (let a = 0; a < A; a++) { const q = a / A * Math.PI * 2; pt(r * Math.cos(q), r * Math.sin(q)); }
+    S.push('0, 0.000, 0.000, 0.000,', '0, 0.000, 0.000, 0.000, END');
+    const D = ['demo_topo.str,' + sdate() + ',,ssi_styles:styles.ssi', '0,           0.000,           0.000,           0.000,           0.000,           0.000,           0.000', 'OBJECT, 1,', 'TRISOLATION, 1, neighbours=no,validated=true,closed=no'];
+    let k = 0; const id = (ring, a) => 2 + ring * A + (a % A);
+    for (let a = 0; a < A; a++) D.push(`${++k}, 1, ${id(0, a)}, ${id(0, a + 1)}, 0, 0, 0,`);
+    for (let ring = 0; ring < rings.length - 1; ring++) for (let a = 0; a < A; a++) {
+      const p = id(ring, a), q = id(ring, a + 1), s = id(ring + 1, a), u = id(ring + 1, a + 1);
+      D.push(`${++k}, ${p}, ${s}, ${u}, 0, 0, 0,`, `${++k}, ${p}, ${u}, ${q}, 0, 0, 0,`);
+    }
+    D.push('END');
+    const B = ['demo_blasts,' + sdate() + ',,', '0, 0.000, 0.000, 0.000,'];
+    const poly = (s, name, P, z) => { [...P, P[0]].forEach(([x, y]) => B.push(`${s}, ${f3(Y0 + y)}, ${f3(X0 + x)}, ${f3(z)}, ${name}`)); B.push('0, 0.000, 0.000, 0.000,'); };
+    let m = 0;
+    for (let y = 50; y >= -75; y -= 25) for (let x = -75; x < 75; x += 25) {
+      const C = [[x, y], [x + 25, y], [x + 25, y + 25], [x, y + 25]];
+      if (C.every(([a, b]) => Math.hypot(a, b) <= 80)) poly(1, `300-${String(++m).padStart(2, '0')}`, C, 300);
+    }
+    m = 0;
+    for (let a = -75; a < 75; a += 30) {
+      const P = [];
+      for (let q = a; q <= a + 30 + 1e-9; q += 5) P.push([132 * Math.cos(q * Math.PI / 180), 132 * Math.sin(q * Math.PI / 180)]);
+      for (let q = a + 30; q >= a - 1e-9; q -= 5) P.push([168 * Math.cos(q * Math.PI / 180), 168 * Math.sin(q * Math.PI / 180)]);
+      poly(2, `340-${String(++m).padStart(2, '0')}`, P, 340);
+    }
+    B.push('0, 0.000, 0.000, 0.000, END');
+    return { str: S.join('\n'), dtm: D.join('\n'), blk: B.join('\n') };
+  }
+  return { parseStr, parseDtm, dtmStrName, triangulate, buildDtm, zAt, pip, buildBlocks, stats, strText, demo };
+})();
+/*DTM-END*/
+
+/* ---------- small WebGL 2 terrain viewer: one textured mesh, orbit / plan camera, heightfield picking ---------- */
+const V = (() => {
+  let gl = null, cv = null, prog, loc = {}, vao, vb, tb, ib, cnt = 0, tex = null, aniso = null, need = false, cb = {}, VP = null, IVP = null;
+  const C = { mode: '3d', yaw: 0.35, pitch: 0.62, dist: 800, t: [0, 0, 0], hh: 300, zoom: 1, size: 600, W: 600, H: 600, zr: 100, cell: 1, bg: [0.95, 0.96, 0.97] };
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+  const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+  const nrm = a => { const l = Math.hypot(a[0], a[1], a[2]) || 1; return [a[0] / l, a[1] / l, a[2] / l]; };
+  const M = {
+    persp(f, a, n, fa) { const t = 1 / Math.tan(f / 2), m = new Float32Array(16); m[0] = t / a; m[5] = t; m[10] = (fa + n) / (n - fa); m[11] = -1; m[14] = 2 * fa * n / (n - fa); return m; },
+    ortho(l, r, b, t, n, f) { const m = new Float32Array(16); m[0] = 2 / (r - l); m[5] = 2 / (t - b); m[10] = -2 / (f - n); m[12] = -(r + l) / (r - l); m[13] = -(t + b) / (t - b); m[14] = -(f + n) / (f - n); m[15] = 1; return m; },
+    look(e, c, u) { const z = nrm([e[0] - c[0], e[1] - c[1], e[2] - c[2]]), x = nrm(cross(u, z)), y = cross(z, x); return Float32Array.from([x[0], y[0], z[0], 0, x[1], y[1], z[1], 0, x[2], y[2], z[2], 0, -dot(x, e), -dot(y, e), -dot(z, e), 1]); },
+    mul(a, b) { const o = new Float32Array(16); for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) { let s = 0; for (let k = 0; k < 4; k++) s += a[k * 4 + j] * b[i * 4 + k]; o[i * 4 + j] = s; } return o; },
+    inv(a) {
+      const [a00, a01, a02, a03, a10, a11, a12, a13, a20, a21, a22, a23, a30, a31, a32, a33] = a;
+      const b00 = a00 * a11 - a01 * a10, b01 = a00 * a12 - a02 * a10, b02 = a00 * a13 - a03 * a10, b03 = a01 * a12 - a02 * a11, b04 = a01 * a13 - a03 * a11, b05 = a02 * a13 - a03 * a12;
+      const b06 = a20 * a31 - a21 * a30, b07 = a20 * a32 - a22 * a30, b08 = a20 * a33 - a23 * a30, b09 = a21 * a32 - a22 * a31, b10 = a21 * a33 - a23 * a31, b11 = a22 * a33 - a23 * a32;
+      const d = 1 / (b00 * b11 - b01 * b10 + b02 * b09 + b03 * b08 - b04 * b07 + b05 * b06);
+      return Float32Array.from([(a11 * b11 - a12 * b10 + a13 * b09) * d, (a02 * b10 - a01 * b11 - a03 * b09) * d, (a31 * b05 - a32 * b04 + a33 * b03) * d, (a22 * b04 - a21 * b05 - a23 * b03) * d,
+        (a12 * b08 - a10 * b11 - a13 * b07) * d, (a00 * b11 - a02 * b08 + a03 * b07) * d, (a32 * b02 - a30 * b05 - a33 * b01) * d, (a20 * b05 - a22 * b02 + a23 * b01) * d,
+        (a10 * b10 - a11 * b08 + a13 * b06) * d, (a01 * b08 - a00 * b10 - a03 * b06) * d, (a30 * b04 - a31 * b02 + a33 * b00) * d, (a21 * b02 - a20 * b04 - a23 * b00) * d,
+        (a11 * b07 - a10 * b09 - a12 * b06) * d, (a00 * b09 - a01 * b07 + a02 * b06) * d, (a31 * b01 - a30 * b03 - a32 * b00) * d, (a20 * b03 - a21 * b01 + a22 * b00) * d]);
+    }
+  };
+  const aspect = () => Math.max(0.1, (cv.clientWidth || 1) / (cv.clientHeight || 1));
+  function mats() {
+    const a = aspect(); let P, Vw;
+    if (C.mode === '3d') {
+      const cp = Math.cos(C.pitch), e = [C.t[0] + C.dist * cp * Math.sin(C.yaw), C.t[1] + C.dist * Math.sin(C.pitch), C.t[2] + C.dist * cp * Math.cos(C.yaw)];
+      P = M.persp(Math.PI / 4, a, Math.max(0.05, C.dist / 400), C.dist + C.size * 8); Vw = M.look(e, C.t, [0, 1, 0]);
+    } else {
+      const hh = C.hh / C.zoom, top = C.zr + C.size;
+      P = M.ortho(-hh * a, hh * a, -hh, hh, 0.1, top * 2 + C.size); Vw = M.look([C.t[0], top, C.t[2]], [C.t[0], 0, C.t[2]], [0, 0, -1]);
+    }
+    VP = M.mul(P, Vw); IVP = M.inv(VP);
+  }
+  function render() {
+    need = false; if (!gl) return;
+    const dpr = Math.min(2, window.devicePixelRatio || 1), w = Math.round(cv.clientWidth * dpr), h = Math.round(cv.clientHeight * dpr);
+    if (!w || !h) return;
+    if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
+    gl.viewport(0, 0, w, h); gl.clearColor(C.bg[0], C.bg[1], C.bg[2], 1); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    if (cnt && tex) {
+      mats(); gl.useProgram(prog); gl.uniformMatrix4fv(loc.m, false, VP);
+      gl.bindVertexArray(vao); gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tex); gl.uniform1i(loc.s, 0);
+      gl.drawElements(gl.TRIANGLES, cnt, gl.UNSIGNED_INT, 0);
+    }
+    if (cb.change) cb.change();
+  }
+  const req = () => { if (!need) { need = true; requestAnimationFrame(render); } };
+  function pan(dx, dy) {
+    if (C.mode === '3d') {
+      const k = 2 * C.dist * Math.tan(Math.PI / 8) / (cv.clientHeight || 1), s = Math.sin(C.yaw), c = Math.cos(C.yaw);
+      C.t[0] += (-dx * c - dy * s) * k; C.t[2] += (dx * s - dy * c) * k;
+    } else { const k = 2 * C.hh / C.zoom / (cv.clientHeight || 1); C.t[0] -= dx * k; C.t[2] -= dy * k; }
+  }
+  function planXZ(e) {
+    const b = cv.getBoundingClientRect(), nx = (e.clientX - b.left) / b.width * 2 - 1, ny = -((e.clientY - b.top) / b.height * 2 - 1), hh = C.hh / C.zoom;
+    return [C.t[0] + nx * hh * aspect(), C.t[2] - ny * hh];
+  }
+  function zoomBy(f, e) {
+    if (C.mode === '3d') C.dist = clamp(C.dist * f, C.size * 0.02, C.size * 6);
+    else {
+      const b0 = e ? planXZ(e) : null; C.zoom = clamp(C.zoom / f, 0.3, 400);
+      if (b0) { const b1 = planXZ(e); C.t[0] += b0[0] - b1[0]; C.t[2] += b0[1] - b1[1]; }
+    }
+  }
+  function interaction() {
+    const ptr = new Map(); let down = null, pd = null;
+    cv.addEventListener('contextmenu', e => e.preventDefault());
+    cv.addEventListener('pointerdown', e => { try { cv.setPointerCapture(e.pointerId); } catch (x) {} ptr.set(e.pointerId, { x: e.clientX, y: e.clientY }); down = { x: e.clientX, y: e.clientY, moved: false }; pd = null; });
+    cv.addEventListener('pointermove', e => {
+      const p = ptr.get(e.pointerId);
+      if (p) {
+        const dx = e.clientX - p.x, dy = e.clientY - p.y; p.x = e.clientX; p.y = e.clientY;
+        if (down && Math.hypot(e.clientX - down.x, e.clientY - down.y) > 4) down.moved = true;
+        if (down && down.moved) {
+          if (ptr.size === 1) {
+            if (C.mode === '3d' && !(e.shiftKey || (e.buttons & 6))) { C.yaw -= dx * 0.006; C.pitch = clamp(C.pitch + dy * 0.006, 0.08, 1.55); }
+            else pan(dx, dy);
+          } else if (ptr.size === 2) {
+            const [a, b] = [...ptr.values()], d = Math.hypot(a.x - b.x, a.y - b.y);
+            if (pd) zoomBy(pd / d); pd = d; pan(dx / 2, dy / 2);
+          }
+          req();
+        }
+      }
+      if (cb.hover) cb.hover(e);
+    });
+    const up = e => { const had = ptr.delete(e.pointerId); pd = null; if (had && down && !down.moved && !ptr.size && cb.click) cb.click(e); if (!ptr.size) down = null; };
+    cv.addEventListener('pointerup', up);
+    cv.addEventListener('pointercancel', e => { ptr.delete(e.pointerId); pd = null; down = null; });
+    cv.addEventListener('pointerleave', () => { if (!ptr.size && cb.leave) cb.leave(); });
+    cv.addEventListener('wheel', e => { e.preventDefault(); zoomBy(Math.exp(clamp(e.deltaY, -200, 200) * 0.0015), e); req(); if (cb.hover) cb.hover(e); }, { passive: false });
+  }
+  function init(canvas, callbacks) {
+    cv = canvas; cb = callbacks || {};
+    gl = canvas.getContext('webgl2', { antialias: true, alpha: false });
+    if (!gl) return false;
+    const sh = (type, src) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s)); return s; };
+    prog = gl.createProgram();
+    gl.attachShader(prog, sh(gl.VERTEX_SHADER, '#version 300 es\nin vec3 p;in vec2 t;uniform mat4 m;out vec2 vt;void main(){vt=t;gl_Position=m*vec4(p,1.0);}'));
+    gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, '#version 300 es\nprecision highp float;in vec2 vt;uniform sampler2D s;out vec4 o;void main(){vec4 c=texture(s,vt);if(c.a<0.05)discard;o=vec4(c.rgb,1.0);}'));
+    gl.linkProgram(prog); if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
+    loc = { p: gl.getAttribLocation(prog, 'p'), t: gl.getAttribLocation(prog, 't'), m: gl.getUniformLocation(prog, 'm'), s: gl.getUniformLocation(prog, 's') };
+    vao = gl.createVertexArray(); gl.bindVertexArray(vao);
+    vb = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, vb); gl.enableVertexAttribArray(loc.p); gl.vertexAttribPointer(loc.p, 3, gl.FLOAT, false, 0, 0);
+    tb = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, tb); gl.enableVertexAttribArray(loc.t); gl.vertexAttribPointer(loc.t, 2, gl.FLOAT, false, 0, 0);
+    ib = gl.createBuffer(); gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ib);
+    gl.bindVertexArray(null);
+    gl.enable(gl.DEPTH_TEST);
+    aniso = gl.getExtension('EXT_texture_filter_anisotropic');
+    interaction();
+    new ResizeObserver(req).observe(canvas);
+    return true;
+  }
+  function setMesh(pos, uv, idx) {
+    gl.bindVertexArray(vao);
+    gl.bindBuffer(gl.ARRAY_BUFFER, vb); gl.bufferData(gl.ARRAY_BUFFER, pos, gl.STATIC_DRAW);
+    gl.bindBuffer(gl.ARRAY_BUFFER, tb); gl.bufferData(gl.ARRAY_BUFFER, uv, gl.STATIC_DRAW);
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ib); gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, idx, gl.STATIC_DRAW);
+    gl.bindVertexArray(null); cnt = idx.length; req();
+  }
+  function setPos(pos) { gl.bindBuffer(gl.ARRAY_BUFFER, vb); gl.bufferData(gl.ARRAY_BUFFER, pos, gl.STATIC_DRAW); req(); }
+  function setTexture(canvas) {
+    if (!tex) tex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, canvas);
+    gl.generateMipmap(gl.TEXTURE_2D);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    if (aniso) gl.texParameterf(gl.TEXTURE_2D, aniso.TEXTURE_MAX_ANISOTROPY_EXT, Math.min(8, gl.getParameter(aniso.MAX_TEXTURE_MAX_ANISOTROPY_EXT)));
+    req();
+  }
+  function scene(o) { Object.assign(C, o); C.size = Math.max(C.W, C.H); }
+  function fit() {
+    C.t = [0, C.zr * 0.05, 0]; C.dist = C.size * 1.12; C.yaw = 0.35; C.pitch = 0.62; C.zoom = 1;
+    C.hh = Math.max(C.H / 2, C.W / 2 / aspect()) * 1.05; req();
+  }
+  // Ray through the cursor, clipped to the model footprint, marched across the heightfield hf(x, z) → scene height
+  function pick(e, hf) {
+    if (!gl || !cnt) return null;
+    mats();
+    const b = cv.getBoundingClientRect(), nx = (e.clientX - b.left) / b.width * 2 - 1, ny = -((e.clientY - b.top) / b.height * 2 - 1);
+    const tr = v => { const m = IVP, x = m[0] * v[0] + m[4] * v[1] + m[8] * v[2] + m[12], y = m[1] * v[0] + m[5] * v[1] + m[9] * v[2] + m[13], z = m[2] * v[0] + m[6] * v[1] + m[10] * v[2] + m[14], w = m[3] * v[0] + m[7] * v[1] + m[11] * v[2] + m[15]; return [x / w, y / w, z / w]; };
+    const o = tr([nx, ny, -1]), p1 = tr([nx, ny, 1]), dv = [p1[0] - o[0], p1[1] - o[1], p1[2] - o[2]], L = Math.hypot(...dv), d = dv.map(v => v / L);
+    let t0 = 0, t1 = L;
+    for (const [ax, lo, hi] of [[0, -C.W / 2, C.W / 2], [2, -C.H / 2, C.H / 2]]) {
+      if (Math.abs(d[ax]) < 1e-12) { if (o[ax] < lo || o[ax] > hi) return null; continue; }
+      let a = (lo - o[ax]) / d[ax], c = (hi - o[ax]) / d[ax]; if (a > c) [a, c] = [c, a];
+      t0 = Math.max(t0, a); t1 = Math.min(t1, c);
+    }
+    if (t0 > t1) return null;
+    const hz = Math.hypot(d[0], d[2]), step = hz < 1e-6 ? (t1 - t0) : Math.max(C.cell * 0.7 / hz, (t1 - t0) / 6000);
+    let prev = null;
+    for (let t = t0; t <= t1 + 1e-9; t += step) {
+      const x = o[0] + d[0] * t, y = o[1] + d[1] * t, z = o[2] + d[2] * t, g = hf(x, z);
+      if (g !== g) { prev = null; continue; }
+      if (y - g <= 0) {
+        if (prev === null) return { x, z, y: g };
+        let a = prev, c = t;
+        for (let i = 0; i < 24; i++) { const m = (a + c) / 2, gm = hf(o[0] + d[0] * m, o[2] + d[2] * m); if (gm !== gm || o[1] + d[1] * m - gm > 0) a = m; else c = m; }
+        const xb = o[0] + d[0] * c, zb = o[2] + d[2] * c; return { x: xb, z: zb, y: hf(xb, zb) };
+      }
+      prev = t;
+    }
+    return null;
+  }
+  return {
+    init, setMesh, setPos, setTexture, scene, fit, pick, req,
+    setMode(m) { C.mode = m; req(); }, mode: () => C.mode, yaw: () => C.mode === '3d' ? C.yaw : 0,
+    setBg(rgb) { C.bg = rgb; req(); }, maxTex: () => gl ? gl.getParameter(gl.MAX_TEXTURE_SIZE) : 2048
+  };
+})();
+
+/* ---------- translations for this tab ---------- */
+Object.assign(I18N.ru, {
+  tDtm: 'ЦМР и взрывные блоки', dLoadDtm: 'Загрузить ЦМР (.dtm + .str)', dLoadBlk: 'Загрузить взрывные блоки (.str)', dDemo: 'Демо-данные',
+  dDropHint: 'Для ЦМР выберите сразу два файла: .dtm и его .str. Один .str с точками тоже подойдёт: поверхность будет построена триангуляцией. Файлы можно перетащить на окно вида: .dtm вместе с .str — поверхность, отдельный .str — взрывные блоки.',
+  dNoDtm: 'ЦМР: не загружена', dNoBlk: 'Блоки: не загружены', dDtmInfo: 'ЦМР: {0} · точек: {1} · треугольников: {2}', dBlkInfo: 'Блоки: {0} · полигонов: {1}',
+  dDemoDtm: 'демо-поверхность карьера (пример данных)', dDemoBlk: 'демо-блоки (пример данных)', dTriang: 'триангуляция',
+  dModeSel: 'Выбор блока', dModePick: 'Запись точек', d3d: '3D', dPlan: 'План', dVex: 'Верт. масштаб', dOpac: 'Заливка блоков',
+  dColor: 'Цвет блоков', dcBlock: 'По блокам', dcVol: 'По объёму', dcRl: 'По отметке', dGrid: 'Сетка координат', dLabels: 'Подписи блоков', dFit: 'Показать всё',
+  dHover: 'Наведите курсор на поверхность', dEmpty: 'Загрузите ЦМР из Surpac, чтобы увидеть поверхность.',
+  dNav: 'Перетаскивание — вращение · ПКМ или Shift — сдвиг · колесо — масштаб', dNavPlan: 'Перетаскивание — сдвиг · колесо — масштаб',
+  dParamsH: 'Расчёт объёмов', dBench: 'Высота уступа', dFloor: 'Подошва блока', dfPoly: 'Отметка полигона − высота уступа', dfFixed: 'Фиксированная отметка', dFloorRL: 'Отметка подошвы', dDens: 'Плотность',
+  dBlocksH: 'Взрывные блоки', dBlkEmpty: 'Загрузите .str с полигонами взрывных блоков.',
+  dthName: 'Блок', dthArea: 'Площадь, м²', dthPer: 'Периметр, м', dthCx: 'Центр X', dthCy: 'Центр Y', dthRl: 'Отм. полигона', dthSurf: 'Ср. отм. ЦМР', dthFloor: 'Подошва', dthVol: 'Объём, м³', dthT: 'Масса, т',
+  dVertsTitle: 'Координаты вершин', dVertsH: 'Координаты вершин: {0}', dVertsEmpty: 'Щёлкните по блоку на поверхности или в таблице, чтобы увидеть координаты его вершин.',
+  dthNo: '№', dthZs: 'Z полигона', dthZd: 'Z по ЦМР',
+  dPicksH: 'Записанные точки', dPicksEmpty: 'Включите «Запись точек» и щёлкните по поверхности: координаты X, Y, Z появятся здесь.',
+  dClear: 'Очистить', dExpStr: 'Экспорт .str', dExpCsv: 'Экспорт CSV', dExpBlk: 'Экспорт таблицы', dRemove: 'Удалить точку {0}',
+  e_binary: 'Файл {0} сохранён в двоичном формате. Сохраните его в Surpac как текстовый (без флажка «Binary») и загрузите снова.',
+  e_strEmpty: 'В файле {0} не найдено точек.', e_noStrForDtm: 'Для файла .dtm нужен его файл .str с точками. Выберите оба файла вместе.',
+  e_dtmMismatch: 'Треугольники в .dtm ссылаются на точки, которых нет в {0}. Проверьте, что это парный файл .str.',
+  e_noTri: 'Не удалось построить поверхность: в файле нет треугольников.', e_noDelaunay: 'Не удалось загрузить модуль триангуляции. Загрузите .dtm вместе с .str или обновите страницу.',
+  e_noPoly: 'В файле {0} нет полигонов: в каждом сегменте нужно не меньше трёх точек.', e_noDtmFile: 'Выберите файл .dtm и его .str.',
+  e_no3d: 'Браузер не поддерживает WebGL 2, поэтому 3D-вид недоступен. Таблицы и расчёты работают.',
+  w_outside: 'Блоков вне ЦМР: {0}. Для них объём не рассчитан.',
+  x_dBlk: 'CSV таблицы блоков', x_dBlkHint: 'По строке на блок: центр, площадь, отметки, объём и масса.',
+  x_dStr: 'Записанные точки в формате Surpac .str', x_dStrHint: 'Сохраните текст в файл с расширением .str и откройте в Surpac. Порядок полей: номер стринга, Y, X, Z, описание.',
+  x_dCsv: 'CSV записанных точек', x_dCsvHint: 'По строке на точку: номер, X, Y, Z.'
+});
+Object.assign(I18N.en, {
+  tDtm: 'DTM & blasts', dLoadDtm: 'Load DTM (.dtm + .str)', dLoadBlk: 'Load blast blocks (.str)', dDemo: 'Demo data',
+  dDropHint: 'For a DTM, select the .dtm and its .str together. A .str of points on its own also works: it is triangulated. You can drop files on the view: a .dtm with its .str loads the surface, a single .str loads blast blocks.',
+  dNoDtm: 'DTM: not loaded', dNoBlk: 'Blocks: not loaded', dDtmInfo: 'DTM: {0} · {1} points · {2} triangles', dBlkInfo: 'Blocks: {0} · {1} polygons',
+  dDemoDtm: 'demo pit surface (example data)', dDemoBlk: 'demo blocks (example data)', dTriang: 'triangulated',
+  dModeSel: 'Select block', dModePick: 'Record points', d3d: '3D', dPlan: 'Plan', dVex: 'Vertical exaggeration', dOpac: 'Block fill',
+  dColor: 'Block colour', dcBlock: 'By block', dcVol: 'By volume', dcRl: 'By RL', dGrid: 'Coordinate grid', dLabels: 'Block labels', dFit: 'Fit view',
+  dHover: 'Move the cursor over the surface', dEmpty: 'Load a Surpac DTM to see the surface.',
+  dNav: 'Drag to rotate · right-drag or Shift to pan · wheel to zoom', dNavPlan: 'Drag to pan · wheel to zoom',
+  dParamsH: 'Volume calculation', dBench: 'Bench height', dFloor: 'Blast floor', dfPoly: 'Polygon RL − bench height', dfFixed: 'Fixed RL', dFloorRL: 'Floor RL', dDens: 'Density',
+  dBlocksH: 'Blast blocks', dBlkEmpty: 'Load a .str of blast block polygons.',
+  dthName: 'Block', dthArea: 'Area m²', dthPer: 'Perimeter m', dthCx: 'Centroid X', dthCy: 'Centroid Y', dthRl: 'Polygon RL', dthSurf: 'Mean DTM Z', dthFloor: 'Floor RL', dthVol: 'Volume m³', dthT: 'Tonnes',
+  dVertsTitle: 'Vertex coordinates', dVertsH: 'Vertex coordinates: {0}', dVertsEmpty: 'Click a block on the surface or in the table to see its vertex coordinates.',
+  dthNo: '#', dthZs: 'Z (string)', dthZd: 'Z (DTM)',
+  dPicksH: 'Recorded points', dPicksEmpty: 'Turn on Record points and click the surface; the X, Y, Z coordinates appear here.',
+  dClear: 'Clear', dExpStr: 'Export .str', dExpCsv: 'Export CSV', dExpBlk: 'Export table', dRemove: 'Remove point {0}',
+  e_binary: 'File {0} is in binary format. Save it from Surpac as text (clear the Binary option) and load it again.',
+  e_strEmpty: 'No points found in {0}.', e_noStrForDtm: 'A .dtm needs its .str point file. Select both files together.',
+  e_dtmMismatch: 'Triangles in the .dtm refer to points missing from {0}. Check that it is the matching .str.',
+  e_noTri: 'Could not build a surface: the file has no triangles.', e_noDelaunay: 'The triangulation module did not load. Load a .dtm with its .str, or reload the page.',
+  e_noPoly: 'No polygons in {0}: each segment needs at least three points.', e_noDtmFile: 'Select a .dtm and its .str.',
+  e_no3d: 'This browser has no WebGL 2, so the 3D view is unavailable. Tables and calculations still work.',
+  w_outside: '{0} blocks fall outside the DTM; their volume is not calculated.',
+  x_dBlk: 'Block table CSV', x_dBlkHint: 'One row per block: centroid, area, elevations, volume and tonnes.',
+  x_dStr: 'Recorded points as Surpac .str', x_dStrHint: 'Save the text as a .str file and open it in Surpac. Field order: string, Y, X, Z, description.',
+  x_dCsv: 'Recorded points CSV', x_dCsvHint: 'One row per point: number, X, Y, Z.'
+});
+
+/* ---------- DTM tab UI ---------- */
+const DT = (() => {
+  const g = id => document.getElementById(id);
+  const st = { dtm: null, blk: null, picks: [], sel: -1, mode: 'select', errs: {}, gl: null, built: false, started: false, base: null, skin: null, o: null };
+  const mk = (k, ...a) => { const e = new Error(k); e.code = k; e.args = a; return e; };
+  const panelOn = () => !document.querySelector('[data-panel="dtm"]').hidden;
+  const errMsg = e => e.code ? t('e_' + e.code, ...(e.args || [])) : String(e.message || e);
+  const vex = () => Math.max(1, num('dVex') || 1);
+  const RAMP_D = [[66, 82, 92], [112, 118, 110], [160, 148, 120], [206, 196, 170], [240, 236, 224]];
+  const hexRgb = h => { const m = /^#?([0-9a-f]{6})$/i.exec(h.trim()); if (!m) return [0.95, 0.96, 0.97]; const n = parseInt(m[1], 16); return [(n >> 16 & 255) / 255, (n >> 8 & 255) / 255, (n & 255) / 255]; };
+  const nice = v => { const p = Math.pow(10, Math.floor(Math.log10(v))), m = v / p; return (m < 1.5 ? 1 : m < 3.5 ? 2 : m < 7.5 ? 5 : 10) * p; };
+
+  function buildFrom(dtm, strs, isDemo) {
+    let pts, tri, name;
+    if (dtm) {
+      if (!strs.length) throw mk('noStrForDtm');
+      const want = DtmEng.dtmStrName(dtm.text).toLowerCase();
+      const s = strs.find(f => f.name.toLowerCase() === want) || strs[0];
+      pts = DtmEng.parseStr(s.text, s.name).pts;
+      tri = DtmEng.parseDtm(dtm.text, dtm.name, pts.length, s.name);
+      name = dtm.name + ' + ' + s.name;
+    } else if (strs.length) {
+      const r = DtmEng.triangulate(DtmEng.parseStr(strs[0].text, strs[0].name).pts, window.Delaunator);
+      pts = r.pts; tri = r.tri; name = strs[0].name;
+    } else throw mk('noDtmFile');
+    const d = DtmEng.buildDtm(pts, tri, name); d.demo = !!isDemo; d.triang = !dtm; return d;
+  }
+  const readAll = files => Promise.all([...files].map(f => f.text().then(text => ({ name: f.name, text }))));
+  async function loadDtmFiles(files) {
+    try {
+      const F = await readAll(files);
+      const d = buildFrom(F.find(f => /\.dtm$/i.test(f.name)), F.filter(f => /\.str$/i.test(f.name)), false);
+      setDtm(d);
+    } catch (e) { st.errs.dtm = e; renderInfo(); }
+  }
+  async function loadBlkFile(f) {
+    try { const text = await f.text(); setBlk(DtmEng.buildBlocks(DtmEng.parseStr(text, f.name).segs, f.name), f.name, false); }
+    catch (e) { st.errs.blk = e; renderInfo(); }
+  }
+  function setDtm(d) { st.dtm = d; st.errs.dtm = null; st.picks = []; st.sel = -1; st.built = false; st.started = true; recompute(); if (panelOn()) show(); renderAll(); }
+  function setBlk(list, name, demo) { st.blk = { list, name, demo }; st.errs.blk = null; st.sel = -1; recompute(); drawSkin(); renderAll(); }
+  function loadDemo() {
+    const D = DtmEng.demo();
+    st.dtm = buildFrom({ name: 'demo_topo.dtm', text: D.dtm }, [{ name: 'demo_topo.str', text: D.str }], true);
+    st.blk = { list: DtmEng.buildBlocks(DtmEng.parseStr(D.blk, 'demo_blasts.str').segs, 'demo_blasts.str'), name: 'demo_blasts.str', demo: true };
+    st.errs = {}; st.picks = []; st.sel = -1; st.built = false; recompute();
+  }
+  function recompute() {
+    if (!st.blk) return;
+    st.blk.outside = DtmEng.stats(st.blk.list, st.dtm && st.dtm.r, { bench: num('dBench'), fixed: g('dFloorMode').value === 'fixed', floorRL: num('dFloorRL'), dens: num('dDens') });
+  }
+
+  function show() {
+    if (!st.started) { st.started = true; if (!st.dtm && !st.blk) loadDemo(); renderAll(); }
+    if (st.gl === null) { try { st.gl = V.init(g('d3'), { hover, click, leave, change: compass }); } catch (e) { st.gl = false; } if (st.gl) V.setBg(hexRgb(css('--sunk'))); renderInfo(); }
+    if (!st.gl) return;
+    if (st.dtm && !st.built) build();
+    V.req();
+  }
+  function shade(r, z0, z1) {
+    const img = new ImageData(r.nx, r.ny), D = img.data, Z = r.z, nx = r.nx, ny = r.ny, c = r.cell;
+    const zen = Math.PI / 4, az = (360 - 315 + 90) * Math.PI / 180, cz = Math.cos(zen), sz = Math.sin(zen), span = z1 - z0 || 1;
+    for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) {
+      const k = j * nx + i, z = Z[k]; if (z !== z) continue;
+      const at = (ii, jj) => { if (ii < 0 || jj < 0 || ii >= nx || jj >= ny) return z; const v = Z[jj * nx + ii]; return v === v ? v : z; };
+      const dzdx = (at(i + 1, j) - at(i - 1, j)) / (2 * c), dzdy = (at(i, j + 1) - at(i, j - 1)) / (2 * c);
+      const slope = Math.atan(Math.hypot(dzdx, dzdy)), asp = Math.atan2(dzdy, -dzdx);
+      const hs = Math.max(0, cz * Math.cos(slope) + sz * Math.sin(slope) * Math.cos(az - asp));
+      const f = Math.max(0, Math.min(1, (z - z0) / span)) * (RAMP_D.length - 1), q = Math.min(RAMP_D.length - 2, Math.floor(f)), u = f - q, m = 0.38 + 0.72 * hs;
+      for (let ch = 0; ch < 3; ch++) D[4 * k + ch] = Math.min(255, (RAMP_D[q][ch] + (RAMP_D[q + 1][ch] - RAMP_D[q][ch]) * u) * m);
+      D[4 * k + 3] = 255;
+    }
+    return img;
+  }
+  function positions() {
+    const d = st.dtm, o = st.o, n = d.n, ve = vex(), pos = new Float32Array(n * 3);
+    for (let i = 0; i < n; i++) { pos[3 * i] = d.px[i] - o.x; pos[3 * i + 1] = (d.pz[i] - o.z) * ve; pos[3 * i + 2] = -(d.py[i] - o.y); }
+    return pos;
+  }
+  function build() {
+    const d = st.dtm, E = d.ext, W = E.x1 - E.x0, H = E.y1 - E.y0, r = d.r;
+    st.o = { x: (E.x0 + E.x1) / 2, y: (E.y0 + E.y1) / 2, z: E.z0 };
+    const uv = new Float32Array(d.n * 2);
+    for (let i = 0; i < d.n; i++) { uv[2 * i] = (d.px[i] - E.x0) / W; uv[2 * i + 1] = (E.y1 - d.py[i]) / H; }
+    V.setMesh(positions(), uv, d.tri);
+    V.scene({ W, H, zr: (E.z1 - E.z0) * vex(), cell: r.cell });
+    const maxT = Math.min(V.maxTex(), window.innerWidth < 700 ? 2048 : 4096), s = maxT / Math.max(W, H);
+    st.base = st.base || document.createElement('canvas'); st.skin = st.skin || document.createElement('canvas');
+    st.base.width = st.skin.width = Math.max(2, Math.round(W * s)); st.base.height = st.skin.height = Math.max(2, Math.round(H * s));
+    const tmp = document.createElement('canvas'); tmp.width = r.nx; tmp.height = r.ny; tmp.getContext('2d').putImageData(shade(r, E.z0, E.z1), 0, 0);
+    const bc = st.base.getContext('2d'); bc.clearRect(0, 0, st.base.width, st.base.height); bc.imageSmoothingEnabled = true; bc.imageSmoothingQuality = 'high';
+    bc.drawImage(tmp, -0.5 * r.cell * s, -0.5 * r.cell * s, r.nx * r.cell * s, r.ny * r.cell * s);
+    st.built = true; V.fit(); drawSkin();
+  }
+  const blockColor = (b, i, mode, vmax, r0, r1) => mode === 'volume' ? ramp(RAMP_G, (b.vol || 0) / vmax) : mode === 'rl' ? ramp(RAMP_P, (b.rl - r0) / ((r1 - r0) || 1)) : PHC[i % PHC.length];
+  function drawSkin() {
+    if (!st.built || !st.skin) return;
+    const c = st.skin, x = c.getContext('2d'), E = st.dtm.ext, r = st.dtm.r, W = E.x1 - E.x0, H = E.y1 - E.y0, sx = c.width / W, sy = c.height / H, u = Math.max(c.width, c.height) / 1000;
+    const T = (X, Y) => [(X - E.x0) * sx, (E.y1 - Y) * sy];
+    x.clearRect(0, 0, c.width, c.height); x.drawImage(st.base, 0, 0);
+    const lab = (s, px, py, size, al) => { x.font = `600 ${Math.round(size)}px "IBM Plex Mono", ui-monospace, monospace`; x.textAlign = al || 'left'; x.lineJoin = 'round'; x.lineWidth = size * 0.28; x.strokeStyle = 'rgba(16,22,26,.8)'; x.strokeText(s, px, py); x.fillStyle = '#fff'; x.fillText(s, px, py); };
+    if (g('dGrid').checked) {
+      const step = nice(Math.max(W, H) / 7);
+      x.strokeStyle = 'rgba(255,255,255,.5)'; x.lineWidth = u * 0.9; x.beginPath();
+      const xs = [], ys = [];
+      for (let X = Math.ceil(E.x0 / step) * step; X <= E.x1; X += step) { const px = T(X, 0)[0]; xs.push([X, px]); x.moveTo(px, 0); x.lineTo(px, c.height); }
+      for (let Y = Math.ceil(E.y0 / step) * step; Y <= E.y1; Y += step) { const py = T(0, Y)[1]; ys.push([Y, py]); x.moveTo(0, py); x.lineTo(c.width, py); }
+      x.stroke(); x.textBaseline = 'top';
+      for (const [X, px] of xs) { const i = Math.round((X - r.x0) / r.cell); let j = 0; while (j < r.ny && !(r.z[j * r.nx + i] === r.z[j * r.nx + i])) j++; if (j < r.ny) lab('X ' + nf(X), px + u * 4, j * r.cell * sy + u * 5, u * 12); }
+      x.textBaseline = 'bottom';
+      for (const [Y, py] of ys) { const j = Math.round((r.y1 - Y) / r.cell); let i = 0; while (i < r.nx && !(r.z[j * r.nx + i] === r.z[j * r.nx + i])) i++; if (i < r.nx) lab('Y ' + nf(Y), i * r.cell * sx + u * 5, py - u * 4, u * 12); }
+    }
+    if (st.blk) {
+      const L = st.blk.list, op = +g('dOpac').value, mode = g('dColor').value, vmax = Math.max(1, ...L.map(b => b.vol || 0));
+      const r0 = Math.min(...L.map(b => b.rl)), r1 = Math.max(...L.map(b => b.rl));
+      const path = b => { x.beginPath(); b.P.forEach((p, k) => { const [px, py] = T(p.x, p.y); k ? x.lineTo(px, py) : x.moveTo(px, py); }); x.closePath(); };
+      L.forEach((b, i) => {
+        path(b); x.globalAlpha = op; x.fillStyle = blockColor(b, i, mode, vmax, r0, r1); x.fill(); x.globalAlpha = 1;
+        x.lineWidth = u * 1.3; x.strokeStyle = 'rgba(14,18,22,.9)'; x.stroke();
+      });
+      if (st.sel >= 0 && L[st.sel]) { path(L[st.sel]); x.lineWidth = u * 4.5; x.strokeStyle = css('--accent'); x.stroke(); x.lineWidth = u * 1.2; x.strokeStyle = '#fff'; x.stroke(); }
+      if (g('dLabels').checked) {
+        x.textBaseline = 'middle';
+        L.forEach(b => { const [px, py] = T(b.cx, b.cy), size = Math.max(u * 7, Math.min(u * 18, Math.sqrt(b.area) * sx * 0.2)); lab(b.name, px, py, size, 'center'); });
+      }
+    }
+    x.textBaseline = 'alphabetic';
+    st.picks.forEach((p, i) => {
+      const [px, py] = T(p.x, p.y);
+      x.beginPath(); x.arc(px, py, u * 5, 0, Math.PI * 2); x.fillStyle = css('--accent'); x.fill(); x.lineWidth = u * 1.5; x.strokeStyle = '#fff'; x.stroke();
+      lab('P' + (i + 1), px + u * 8, py - u * 6, u * 13);
+    });
+    V.setTexture(c);
+  }
+
+  const hf = (sx, sz) => { const o = st.o, z = DtmEng.zAt(st.dtm.r, sx + o.x, -sz + o.y); return z === z ? (z - o.z) * vex() : NaN; };
+  function world(e) {
+    if (!st.built) return null;
+    const h = V.pick(e, hf); if (!h) return null;
+    const o = st.o, X = h.x + o.x, Y = -h.z + o.y, Z = DtmEng.zAt(st.dtm.r, X, Y);
+    return Z === Z ? { x: X, y: Y, z: Z } : null;
+  }
+  const blockAt = p => { if (!st.blk) return -1; const L = st.blk.list; for (let i = L.length - 1; i >= 0; i--) if (DtmEng.pip(p.x, p.y, L[i].P)) return i; return -1; };
+  let hq = null;
+  function hover(e) {
+    if (hq) { hq = e; return; } hq = e;
+    requestAnimationFrame(() => {
+      const ev = hq; hq = null; const p = world(ev);
+      if (!p) { g('dRead').textContent = t('dHover'); return; }
+      const k = blockAt(p);
+      g('dRead').textContent = `X ${nf(p.x, 2)}   Y ${nf(p.y, 2)}   Z ${nf(p.z, 2)}` + (k >= 0 ? ' · ' + st.blk.list[k].name : '');
+    });
+  }
+  const leave = () => { g('dRead').textContent = t('dHover'); };
+  function click(e) {
+    const p = world(e); if (!p) return;
+    if (st.mode === 'pick') { st.picks.push(p); drawSkin(); renderPicks(); return; }
+    select(blockAt(p));
+  }
+  function select(k) { st.sel = k; drawSkin(); renderBlocks(); renderVerts(); }
+  function compass() { g('dCompass').style.transform = `rotate(${V.yaw() * 180 / Math.PI}deg)`; }
+
+  function renderInfo() {
+    const d = st.dtm, b = st.blk;
+    const dn = d ? (d.demo ? t('dDemoDtm') : d.name + (d.triang ? ' (' + t('dTriang') + ')' : '')) : '';
+    const bn = b ? (b.demo ? t('dDemoBlk') : b.name) : '';
+    g('dSrc').innerHTML = `<span>${esc(d ? t('dDtmInfo', dn, nf(d.n), nf(d.ntri)) : t('dNoDtm'))}</span><span>${esc(b ? t('dBlkInfo', bn, b.list.length) : t('dNoBlk'))}</span>`;
+    const a = [];
+    for (const k of ['dtm', 'blk']) if (st.errs[k]) a.push(`<div class="alert err">${esc(errMsg(st.errs[k]))}</div>`);
+    if (st.gl === false) a.push(`<div class="alert err">${esc(t('e_no3d'))}</div>`);
+    if (b && d && b.outside) a.push(`<div class="alert">${esc(t('w_outside', b.outside))}</div>`);
+    g('dAlerts').innerHTML = a.join('');
+    const em = g('dEmpty'); em.hidden = !!d && st.gl !== false; em.textContent = st.gl === false ? t('e_no3d') : t('dEmpty');
+    g('dNav').textContent = V.mode() === 'plan' ? t('dNavPlan') : t('dNav');
+    g('dCompN').textContent = t('N');
+    g('dVexV').textContent = '×' + nf(vex(), 1);
+  }
+  function renderBlocks() {
+    const el = g('dBlk'), B = st.blk;
+    g('dBlkEmpty').hidden = !!B; g('dExpBlk').disabled = !B;
+    if (!B) { el.innerHTML = ''; return; }
+    const f = (v, d) => v == null ? '—' : nf(v, d);
+    const H = ['dthName', 'dthArea', 'dthPer', 'dthCx', 'dthCy', 'dthRl', 'dthSurf', 'dthFloor', 'dthVol', 'dthT'].map(k => `<th>${esc(t(k))}</th>`).join('');
+    const rows = B.list.map((b, i) => `<tr data-k="${i}"${i === st.sel ? ' class="sel"' : ''}><td><span class="swatch" style="background:${blockColor(b, i, g('dColor').value, Math.max(1, ...B.list.map(q => q.vol || 0)), Math.min(...B.list.map(q => q.rl)), Math.max(...B.list.map(q => q.rl)))}"></span>${esc(b.name)}</td><td>${f(b.area)}</td><td>${f(b.per)}</td><td>${f(b.cx, 1)}</td><td>${f(b.cy, 1)}</td><td>${f(b.rl, 1)}</td><td>${f(b.surf, 1)}</td><td>${f(b.floor, 1)}</td><td>${f(b.vol)}</td><td>${f(b.t)}</td></tr>`).join('');
+    const sum = k => B.list.reduce((a, b) => a + (b[k] || 0), 0);
+    el.innerHTML = `<thead><tr>${H}</tr></thead><tbody>${rows}</tbody><tfoot><tr><td>${esc(t('total'))}</td><td>${nf(sum('area'))}</td><td></td><td></td><td></td><td></td><td></td><td></td><td>${nf(sum('vol'))}</td><td>${nf(sum('t'))}</td></tr></tfoot>`;
+  }
+  function renderVerts() {
+    const B = st.blk, b = B && st.sel >= 0 ? B.list[st.sel] : null;
+    g('dVertsH').textContent = b ? t('dVertsH', b.name) : t('dVertsTitle');
+    g('dVertsEmpty').hidden = !!b;
+    if (!b) { g('dVerts').innerHTML = ''; return; }
+    const r = st.dtm && st.dtm.r;
+    g('dVerts').innerHTML = `<thead><tr><th>${t('dthNo')}</th><th>X</th><th>Y</th><th>${esc(t('dthZs'))}</th><th>${esc(t('dthZd'))}</th></tr></thead><tbody>` +
+      b.P.map((p, i) => { const zd = r ? DtmEng.zAt(r, p.x, p.y) : NaN; return `<tr><td>${i + 1}</td><td>${nf(p.x, 2)}</td><td>${nf(p.y, 2)}</td><td>${nf(p.z, 2)}</td><td>${zd === zd ? nf(zd, 2) : '—'}</td></tr>`; }).join('') + '</tbody>';
+  }
+  function renderPicks() {
+    const P = st.picks;
+    g('dPicksEmpty').hidden = P.length > 0;
+    ['dExpStr', 'dExpCsv', 'dClear'].forEach(id => g(id).disabled = !P.length);
+    g('dPicks').innerHTML = P.length ? `<thead><tr><th>${t('dthNo')}</th><th>X</th><th>Y</th><th>Z</th><th></th></tr></thead><tbody>` +
+      P.map((p, i) => `<tr><td>P${i + 1}</td><td>${nf(p.x, 2)}</td><td>${nf(p.y, 2)}</td><td>${nf(p.z, 2)}</td><td><button class="xbtn" type="button" data-rm="${i}" aria-label="${esc(t('dRemove', i + 1))}">×</button></td></tr>`).join('') + '</tbody>' : '';
+  }
+  function renderSegs() {
+    document.querySelectorAll('#dModeSeg button').forEach(b => b.setAttribute('aria-pressed', b.dataset.m === st.mode));
+    document.querySelectorAll('#dViewSeg button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === V.mode()));
+    g('dFloorRL').disabled = g('dFloorMode').value !== 'fixed';
+  }
+  function renderAll() { renderInfo(); renderBlocks(); renderVerts(); renderPicks(); renderSegs(); }
+  function relang() { renderAll(); leave(); drawSkin(); }
+
+  // exports reuse the CSV modal
+  const baseExport = openExport;
+  openExport = function (kind) {
+    if (!String(kind).startsWith('d_')) return baseExport(kind);
+    S.exportKind = kind; let csv = '', title = '', hint = '';
+    if (kind === 'd_blk' && st.blk) {
+      const q = v => v == null ? '' : (+v).toFixed(3);
+      csv = ['name,centroid_x,centroid_y,area_m2,perimeter_m,polygon_rl,mean_dtm_z,floor_rl,volume_m3,tonnes',
+        ...st.blk.list.map(b => [/[",]/.test(b.name) ? `"${b.name.replace(/"/g, '""')}"` : b.name, q(b.cx), q(b.cy), q(b.area), q(b.per), q(b.rl), q(b.surf), q(b.floor), q(b.vol), q(b.t)].join(','))].join('\n');
+      title = t('x_dBlk'); hint = t('x_dBlkHint');
+    } else if (kind === 'd_str') { csv = DtmEng.strText(st.picks, 'recorded_points'); title = t('x_dStr'); hint = t('x_dStrHint'); }
+    else { csv = ['point,x,y,z', ...st.picks.map((p, i) => `P${i + 1},${p.x.toFixed(3)},${p.y.toFixed(3)},${p.z.toFixed(3)}`)].join('\n'); title = t('x_dCsv'); hint = t('x_dCsvHint'); }
+    g('mTitle').textContent = title; g('mHint').textContent = hint; g('mText').value = csv; g('mMsg').textContent = '';
+    if (g('modal').hidden) { g('modal').hidden = false; g('mCopy').focus(); }
+  };
+
+  // wiring
+  g('dtmBtn').addEventListener('click', () => g('dtmFile').click());
+  g('blkBtn').addEventListener('click', () => g('blkFile').click());
+  g('dtmFile').addEventListener('change', e => { if (e.target.files.length) loadDtmFiles(e.target.files); e.target.value = ''; });
+  g('blkFile').addEventListener('change', e => { if (e.target.files[0]) loadBlkFile(e.target.files[0]); e.target.value = ''; });
+  g('dDemoBtn').addEventListener('click', () => { loadDemo(); st.started = true; renderAll(); show(); });
+  const wrap = g('d3wrap');
+  ['dragenter', 'dragover'].forEach(ty => wrap.addEventListener(ty, e => { e.preventDefault(); wrap.classList.add('over'); }));
+  ['dragleave', 'drop'].forEach(ty => wrap.addEventListener(ty, e => { e.preventDefault(); wrap.classList.remove('over'); }));
+  wrap.addEventListener('drop', e => {
+    const fs = [...e.dataTransfer.files]; if (!fs.length) return;
+    if (fs.some(f => /\.dtm$/i.test(f.name))) loadDtmFiles(fs); else { const s = fs.find(f => /\.str$/i.test(f.name)); if (s) loadBlkFile(s); }
+  });
+  document.querySelectorAll('#dModeSeg button').forEach(b => b.addEventListener('click', () => { st.mode = b.dataset.m; renderSegs(); }));
+  document.querySelectorAll('#dViewSeg button').forEach(b => b.addEventListener('click', () => { V.setMode(b.dataset.v); renderSegs(); renderInfo(); compass(); }));
+  g('dVex').addEventListener('input', () => { g('dVexV').textContent = '×' + nf(vex(), 1); if (st.built) { V.setPos(positions()); V.scene({ zr: (st.dtm.ext.z1 - st.dtm.ext.z0) * vex() }); } });
+  ['dOpac', 'dColor', 'dGrid', 'dLabels'].forEach(id => g(id).addEventListener(id === 'dOpac' ? 'input' : 'change', () => { drawSkin(); renderBlocks(); }));
+  ['dBench', 'dFloorMode', 'dFloorRL', 'dDens'].forEach(id => g(id).addEventListener(id === 'dFloorMode' ? 'change' : 'input', () => { renderSegs(); recompute(); renderBlocks(); renderInfo(); if (g('dColor').value === 'volume') drawSkin(); }));
+  g('dFit').addEventListener('click', () => { if (st.built) V.fit(); });
+  g('dBlk').addEventListener('click', e => { const tr = e.target.closest('tr[data-k]'); if (tr) select(+tr.dataset.k === st.sel ? -1 : +tr.dataset.k); });
+  g('dPicks').addEventListener('click', e => { const b = e.target.closest('[data-rm]'); if (b) { st.picks.splice(+b.dataset.rm, 1); drawSkin(); renderPicks(); } });
+  g('dClear').addEventListener('click', () => { st.picks = []; drawSkin(); renderPicks(); });
+  g('dExpBlk').addEventListener('click', () => openExport('d_blk'));
+  g('dExpStr').addEventListener('click', () => openExport('d_str'));
+  g('dExpCsv').addEventListener('click', () => openExport('d_csv'));
+  document.querySelector('.tab[data-tab="dtm"]').addEventListener('click', () => requestAnimationFrame(show));
+  const syncTools = () => { document.querySelector('.tabs .tools').hidden = panelOn(); };
+  document.querySelectorAll('.tab').forEach(tb => tb.addEventListener('click', syncTools)); syncTools();
+  const rebg = () => { if (st.gl) V.setBg(hexRgb(css('--sunk'))); };
+  try { matchMedia('(prefers-color-scheme: dark)').addEventListener('change', rebg); } catch (e) {}
+  new MutationObserver(rebg).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  const baseSetLang = setLang;
+  setLang = l => { baseSetLang(l); relang(); };
+
+  applyStatic(); renderAll(); leave();
+  if (panelOn()) requestAnimationFrame(show);
+  return { st, show };
+})();
+</script>

@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { Suspense, lazy, useEffect } from 'react';
 import { Analytics } from '@vercel/analytics/react';
 import { App as AntApp, Spin } from 'antd';
 import { t } from '../shared/i18n/t';
@@ -12,6 +12,11 @@ import { ExtractionPage } from './pages/ExtractionPage';
 import { HomePage } from './pages/HomePage';
 import { ResourcesPage } from './pages/ResourcesPage';
 import { useCurrentPage } from './routes';
+
+// Benchline (~110 KB plus Chart.js) loads only when its page is opened.
+const BenchlinePage = lazy(() =>
+  import('./pages/BenchlinePage').then((m) => ({ default: m.BenchlinePage })),
+);
 
 function LoadErrorNotice() {
   const { notification } = AntApp.useApp();
@@ -66,6 +71,17 @@ function AppContent({ page }: { page: ReturnType<typeof useCurrentPage> }) {
         {page === 'drilling' && <DrillingPage />}
         {page === 'resources' && <ResourcesPage />}
         {page === 'deviation' && <DeviationPage />}
+        {page === 'benchline' && (
+          <Suspense
+            fallback={
+              <div style={{ flex: 1, display: 'grid', placeItems: 'center' }}>
+                <Spin size="large" />
+              </div>
+            }
+          >
+            <BenchlinePage />
+          </Suspense>
+        )}
       </AppLayout>
     </>
   );

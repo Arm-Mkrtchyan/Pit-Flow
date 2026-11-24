@@ -36,7 +36,16 @@ export function detectLanguage(): Language {
 
 /** Translate a key in the active language, replacing `{name}` placeholders with params. */
 export function t(key: I18nKey, params?: Record<string, string | number>): string {
-  const template = DICTS[current][key] ?? en[key];
+  return translate(current, key, params);
+}
+
+/** Translate a key in a given language (for modules that track their own language). */
+export function translate(
+  lang: Language,
+  key: I18nKey,
+  params?: Record<string, string | number>,
+): string {
+  const template = DICTS[lang][key] ?? en[key];
   if (!params) return template;
   return template.replace(/\{(\w+)\}/g, (match, name: string) =>
     name in params ? String(params[name]) : match,
