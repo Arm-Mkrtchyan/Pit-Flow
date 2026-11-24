@@ -1,6 +1,6 @@
 # Benchline: open-pit mine scheduler
 
-A browser-based open-pit scheduling tool in the spirit of GEOVIA MineSched, with a simpler, lighter workflow. The interface is in Russian and English; Russian is the default.
+A browser-based open-pit scheduling tool in the spirit of GEOVIA MineSched, with a simpler, lighter workflow. It runs as the **Benchline** page of Pit Flow (`#/benchline`), in English, Russian and Armenian, following the app's language switch.
 
 ## What it does
 
@@ -19,35 +19,40 @@ A browser-based open-pit scheduling tool in the spirit of GEOVIA MineSched, with
 
 ## Project structure
 
+The app code lives in the host project; this folder keeps the docs, the engine tests and the original standalone build.
+
 ```
-benchline/
-  index.html                 page markup + script/style includes (entry point)
-  css/benchline.css          all styles (design tokens, light + dark themes)
-  js/schedule-engine.js      PURE  block model parsing + scheduling + economics      → global Engine
-  js/app.js                  DOM   translations (I18N, t), helpers, scheduler UI      → globals S, t, nf, setLang, openExport, …
-  js/dtm-engine.js           PURE  Surpac .str/.dtm parsing, raster, block volumes     → global DtmEng
-  js/terrain-viewer.js       DOM   minimal WebGL 2 terrain viewer + picking           → global V
-  js/dtm-tab.js              DOM   DTM & blast blocks tab (adds its own translations) → global DT
-  tests/engines.test.js      node tests for both pure engines
-  standalone/benchline-standalone.html   the same app as one self-contained file
-  INTEGRATION.md             instructions for integrating into another project
+src/features/benchline/               (Pit Flow)
+  index.ts                 public entry: attachBenchline(host, lang) → detach
+  attach.ts                creates the .benchline root, mounts it, keeps it alive across the language remount, loads the IBM Plex fonts
+  template.html            page markup (IDs prefixed with bl-)
+  benchline.css            all styles, scoped under .benchline (light palette; dark via html[data-theme="dark"])
+  engine/scheduleEngine.js PURE  block model parsing + scheduling + economics   → export Engine
+  engine/dtmEngine.js      PURE  Surpac .str/.dtm parsing, raster, block volumes  → export DtmEng
+  mountBenchline.js        DOM   helpers, scheduler UI, export modal              → mountBenchline(root, { lang }) → { setLang, destroy }
+  mountBenchline.d.ts      types for the TypeScript side
+  dtmTab.js                DOM   DTM & blast blocks tab                           → mountDtmTab(root, ctx) → { destroy }
+  terrainViewer.js         DOM   minimal WebGL 2 terrain viewer + picking         → createViewer()
+  vendor.js                chart.js and delaunator imports
+src/app/pages/BenchlinePage.tsx       lazily loaded page that attaches Benchline
+src/shared/i18n/{en,ru,hy}.ts         all strings, as bl.* keys (placeholders {0}, {1}…)
+
+benchline/                             (this folder)
+  tests/engines.test.js    node tests for both pure engines (imports them from src/features/benchline/engine)
+  standalone/benchline-standalone.html   the original app as one self-contained file (reference behaviour, RU/EN)
+  INTEGRATION.md           how it was integrated, and the acceptance checklist
 ```
 
-The scripts are classic (non-module) browser scripts that share globals, so **load order matters**: schedule-engine, then app, then dtm-engine, then terrain-viewer, then dtm-tab.
-
-External libraries (loaded from CDN in `index.html`):
-- `chart.js@4.4.1` (UMD, global `Chart`): charts on the Charts tab. If it is missing, the charts are simply not drawn.
-- `delaunator@5.0.1` (UMD, global `Delaunator`): used only to triangulate a `.str` of points loaded without a `.dtm`.
-- Google Fonts: IBM Plex Sans, IBM Plex Sans Condensed and IBM Plex Mono, with system font fallbacks.
+Libraries: `chart.js@4.4.1` (charts on the Charts tab) and `delaunator@5` (triangulating a `.str` of points loaded without a `.dtm`) are npm dependencies of Pit Flow, bundled only into the lazily loaded Benchline chunk. The IBM Plex fonts come from Google Fonts, with system font fallbacks.
 
 ## Run locally
 
-Open `index.html` directly, or serve the folder (`npx serve .` or `python3 -m http.server`). It opens with example data already loaded on both parts of the app.
+From the project root: `pnpm dev`, then open `#/benchline`. It opens with example data already loaded on both parts of the app. The original standalone version can still be opened directly: `standalone/benchline-standalone.html`.
 
 ## Tests
 
 ```
-node --test tests/engines.test.js      (or: npm test)
+cd benchline && npm test               (node --test tests/engines.test.js)
 ```
 The tests cover column detection, tonnage balance, bench precedence and capacities for all three strategies, `.dtm`/`.str` parsing, raster elevations, block area, centroid and volume, error codes, and the `.str` writer.
 

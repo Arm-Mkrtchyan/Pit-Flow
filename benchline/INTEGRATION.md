@@ -1,11 +1,21 @@
 # Integrating Benchline into an existing project
 
+> **Status: done (approach B, native integration).** Benchline is the `#/benchline` page of Pit Flow. Code is in `src/features/benchline/` (see the structure in `README.md`). The original `index.html`, `css/` and `js/` have been removed; `standalone/benchline-standalone.html` is the reference for the original behaviour. Files mentioned below map as follows: `js/schedule-engine.js` → `engine/scheduleEngine.js`, `js/dtm-engine.js` → `engine/dtmEngine.js`, `js/terrain-viewer.js` → `terrainViewer.js`, `js/app.js` → `mountBenchline.js`, `js/dtm-tab.js` → `dtmTab.js`, `index.html` body → `template.html`, `css/benchline.css` → `benchline.css`.
+>
+> Decisions taken in the host:
+> - **Language:** driven by Pit Flow's language switch (EN / RU / HY); Benchline's own RU/EN switch is removed. Strings are `bl.*` keys in `src/shared/i18n/{en,ru,hy}.ts` (RU/EN verbatim, Armenian added; a missing key fails typecheck). The loaded data survives a language change.
+> - **Theme:** the host has no dark mode, so the OS `prefers-color-scheme` is not followed; the dark palette applies under `html[data-theme="dark"]`.
+> - **Exports:** the modal keeps Copy and adds a Download button (`benchline_schedule.csv` with a BOM for Excel, `benchline_blocks.csv`, `blast_blocks.csv`, `recorded_points.str`, `recorded_points.csv`).
+> - **Storage:** `benchline-tab` stays in localStorage; `benchline-lang` is no longer used (the host persists the language).
+>
+> The guide below is kept as written, for reference.
+
 These are instructions for the engineer or coding agent adding Benchline to a host application as its own page or section. Read `README.md` first for what the app does and how its files are organised.
 
 ## 0. Before changing anything
 
 1. Inspect the host project: its framework (React, Vue, Angular, Svelte, server-rendered or plain), router, build tool, styling approach (global CSS, CSS modules, Tailwind, CSS-in-JS), theming (how dark mode is switched) and i18n setup.
-2. Open `benchline/index.html` in a browser and click through all five tabs. That is the reference behaviour (see the acceptance checklist in §6).
+2. Open the reference app (originally `benchline/index.html`, now `standalone/benchline-standalone.html`) in a browser and click through all five tabs. That is the reference behaviour (see the acceptance checklist in §6).
 3. Run `node --test benchline/tests/engines.test.js`. All 8 tests must pass before and after the integration.
 
 ## 1. Choose an approach
@@ -84,6 +94,6 @@ On the default example data (it loads automatically):
 - DTM tab: demo surface with 8,881 points and 17,520 triangles, and 29 blocks. Block `300-01` has area 625 m², volume 6,250 m³ and 16,875 t (bench 10 m, density 2.7). The totals row reads 291 106 m³ and 785 986 t.
 - Hovering the surface shows live X/Y/Z. Clicking a block highlights it and lists its vertices. In point-recording mode, clicks add P1, P2…, and Export .str produces `1, Y, X, Z, P1` lines ending in `END`.
 - The 3D/Plan switch, vertical exaggeration, fill opacity, colour modes, grid and label toggles all work.
-- RU/EN switch changes every label, including the table headers and the chart legends.
+- The language switch (RU/EN, and HY in Pit Flow) changes every label, including the table headers and the chart legends.
 - Light and dark themes are both readable. At 400 px width there is no horizontal page scroll.
-- `node --test tests/engines.test.js` passes, and there are no console errors.
+- `npm test` in `benchline/` (`node --test tests/engines.test.js`) passes, and there are no console errors.
